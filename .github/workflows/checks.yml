@@ -1,0 +1,25 @@
+name: Code Quality Checks
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tool: [lint, types, style]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ${{ matrix.tool }}
+        run: |
+          npm run ${{ matrix.tool }}
