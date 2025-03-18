@@ -10,13 +10,17 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      development:
-        patterns:
-          - "devDependencies"
-      production:
-        patterns:
-          - "dependencies"
+      versions:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      security:
+        applies-to: security-updates
+        update-types:
+          - "patch"
+          - "minor"
   - package-ecosystem: "github-actions"
     directory: ".github/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
