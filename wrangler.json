@@ -4,8 +4,6 @@
   "main": "functions/cors-proxy.js",
   "compatibility_date": "2025-03-19",
 
-  "pages_build_output_dir": "./dist",
-
   "observability": {
     "enabled": true
   }
