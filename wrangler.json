@@ -4,7 +4,7 @@
   "main": "functions/cors-proxy.js",
   "compatibility_date": "2025-03-19",
 
-  "route": "/cors-proxy/",
+  "route": "https://soten.app/cors-proxy/*",
 
   "observability": {
     "enabled": true
