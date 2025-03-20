@@ -18,7 +18,7 @@ export async function clone(url: string) {
     ref: "main",
     onMessage: console.debug,
     onProgress: console.debug,
-    corsProxy: "/cors-proxy/",
+    corsProxy: "/cors-proxy",
   });
 }
 
@@ -30,7 +30,7 @@ export async function pull() {
     onMessage: console.debug,
     onProgress: console.debug,
     fastForwardOnly: true,
-    corsProxy: "/cors-proxy/",
+    corsProxy: "/cors-proxy",
   });
 }
 

@@ -44,6 +44,8 @@ const allowMethods = ["POST", "GET", "OPTIONS"];
 export async function onRequest(context) {
   const { request } = context;
 
+  console.log("Received proxy request", request.method, request.url);
+
   if (!allowMethods.includes(request.method)) {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -56,6 +58,8 @@ export async function onRequest(context) {
   }
 
   let proxyUrl = url.toString().replace(/^.+\/cors-proxy\//, "https://");
+
+  console.log("Proxy URL", proxyUrl);
 
   try {
     new URL(proxyUrl);
@@ -76,11 +80,15 @@ export async function onRequest(context) {
     }
   }
 
+  console.log("Fetching", proxyUrl);
+
   const response = await fetch(proxyUrl, {
     method: request.method,
     headers: requestHeaders,
     body: request.body,
   });
+
+  console.log("Response", response.status);
 
   const responseHeaders = new Headers();
   for (const [name, value] of response.headers) {
@@ -88,6 +96,8 @@ export async function onRequest(context) {
       responseHeaders.set(name, value);
     }
   }
+
+  console.log("Returning response");
 
   return new Response(
     response.body,
