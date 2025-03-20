@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "corsproxy",
-  "main": "functions/corsproxy.js",
+  "main": "functions/cors-proxy.js",
   "compatibility_date": "2025-03-19",
   "observability": {
     "enabled": true
