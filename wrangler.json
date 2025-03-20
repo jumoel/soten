@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "corsproxy",
+  "main": "functions/corsproxy.js",
+  "compatibility_date": "2025-03-19",
+  "observability": {
+    "enabled": true
+  },
+
+  "routes": [
+    {
+      "pattern": "soten.app/cors-proxy/*",
+      "zone_name": "soten.app"
+    }
+  ]
+}
