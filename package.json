@@ -19,6 +19,7 @@
     "@total-typescript/ts-reset": "^0.6.1",
     "buffer": "^6.0.3",
     "isomorphic-git": "^1.29.0",
+    "jotai": "^2.12.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
