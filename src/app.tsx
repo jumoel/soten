@@ -71,30 +71,11 @@ export function App() {
       // call the GH API to fetch list of repos that the user has given permission to
 
       const fetchRepos = async () => {
-        // Define TypeScript interfaces for GitHub API responses
-        interface Installation {
-          id: number;
-          app_id: number;
-          target_id: number;
-          target_type: string;
-        }
-
-        interface InstallationsResponse {
-          total_count: number;
-          installations: Installation[];
-        }
-
         interface Repository {
-          id: number;
-          name: string;
           full_name: string;
-          html_url: string;
-          private: boolean;
-          // Add other properties as needed
         }
 
         interface RepositoriesResponse {
-          total_count: number;
           repositories: Repository[];
         }
 
