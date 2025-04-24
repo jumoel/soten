@@ -1,5 +1,7 @@
 compatibility_date = "2025-03-17"
 
+pages_build_output_dir = "dist"
+
 [vars]
 VITE_GH_CLIENT_ID = "defined in .env.local / Cloudflare dashboard"
 GH_CLIENT_SECRET = "defined in .env.local / Cloudflare dashboard"
