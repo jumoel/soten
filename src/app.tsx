@@ -7,7 +7,7 @@ export function App() {
 
   const [init, setInit] = useState(false);
   const [repoFiles, setRepoFiles] = useState<string[]>([]);
-  const [user, setUser] = useState<{ username: string; token: string } | null>(null);
+  const [user, setUser] = useState<{ username: string; token: string; installationId: string } | null>(null);
   const [repoName, setRepoName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,9 +17,10 @@ export function App() {
         const params = new URLSearchParams(window.location.hash.substring(1));
         const token = params.get("access_token");
         const username = params.get("username");
+        const installationId = params.get("app_install_id");
 
-        if (token && username) {
-          setUser({ username, token });
+        if (token && username && installationId) {
+          setUser({ username, token, installationId });
           // Clear the URL hash after extracting the data
           window.history.replaceState(null, "", window.location.pathname);
         }
@@ -98,47 +99,24 @@ export function App() {
         }
 
         // Use the installations endpoint to get only repositories the app has been granted access to
-        const response = await fetch("https://api.github.com/user/installations", {
-          headers: {
-            Authorization: `token ${user.token}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        });
 
-        if (response.ok) {
-          // Use type assertion for the response
-          const installations = (await response.json()) as InstallationsResponse;
-          const accessibleRepos: Repository[] = [];
+        const reposResponse = await fetch(
+          `https://api.github.com/user/installations/${user.installationId}/repositories`,
+          { headers: { Authorization: `token ${user.token}`, Accept: "application/vnd.github.v3+json" } },
+        );
 
-          // For each installation, fetch the repositories it has access to
-          for (const installation of installations.installations) {
-            const reposResponse = await fetch(
-              `https://api.github.com/user/installations/${installation.id}/repositories`,
-              {
-                headers: {
-                  Authorization: `token ${user.token}`,
-                  Accept: "application/vnd.github.v3+json",
-                },
-              },
-            );
+        if (reposResponse.ok) {
+          // Use type assertion for the repos response
+          const reposData = (await reposResponse.json()) as RepositoriesResponse;
 
-            if (reposResponse.ok) {
-              // Use type assertion for the repos response
-              const reposData = (await reposResponse.json()) as RepositoriesResponse;
-              accessibleRepos.push(...reposData.repositories);
-            } else {
-              console.error("Failed to fetch repositories for installation:", reposResponse.statusText);
-            }
-          }
-
-          const repoNames = accessibleRepos.map((repo) => repo.full_name);
+          const repoNames = reposData.repositories.map((repo) => repo.full_name);
 
           if (repoNames.length > 0) {
             const firstRepo = repoNames[0];
             setRepoName(firstRepo);
           }
         } else {
-          console.error("Failed to fetch installations:", response.statusText);
+          console.error("Failed to fetch repositories for installation:", reposResponse.statusText);
         }
       };
 
