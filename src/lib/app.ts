@@ -9,14 +9,13 @@ export async function init(repoName: string, user: { username: string; token: st
     .then(() => true)
     .catch(() => false);
 
+  console.log("setting user");
+  await git.setUser();
+
   if (!repoExists) {
     console.log("cloning");
     await git.clone(`https://github.com/${repoName}`, user);
   }
 
-  console.log("setting user");
-  await git.setUser();
-
   console.log("pulling");
-  await git.pull(user);
 }
