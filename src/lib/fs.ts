@@ -10,6 +10,10 @@ export async function mkRepoDir() {
   await pfs.mkdir(REPO_DIR);
 }
 
+export async function rmRepoDir() {
+  await pfs.rmdir(REPO_DIR);
+}
+
 export async function readRepoDir() {
   return pfs.readdir(REPO_DIR);
 }

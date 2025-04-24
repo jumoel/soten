@@ -2,7 +2,7 @@
 
 import http from "isomorphic-git/http/web";
 import git from "isomorphic-git";
-import { fs, wipeFs, mkRepoDir } from "./fs";
+import { fs, wipeFs, mkRepoDir, rmRepoDir } from "./fs";
 import { Buffer } from "buffer";
 
 export const REPO_DIR = "/soten";
@@ -14,7 +14,9 @@ const corsProxy = "/api/cors-proxy";
 export async function clone(url: string, user: { username: string; token: string }) {
   await wipeFs();
 
+  // Try to ensure the filesystem is ready
   await mkRepoDir();
+  await rmRepoDir();
 
   await git.clone({
     fs,
