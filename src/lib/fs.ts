@@ -15,5 +15,5 @@ export async function readRepoDir() {
 }
 
 export async function wipeFs() {
-  indexedDB.deleteDatabase(FILE_SYSTEM_NAME);
+  window.indexedDB.deleteDatabase(FILE_SYSTEM_NAME);
 }
