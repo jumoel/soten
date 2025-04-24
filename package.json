@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "dev:proxy": "wrangler pages dev ./dist",
+    "dev:proxy": "wrangler pages dev",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",

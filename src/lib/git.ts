@@ -9,7 +9,9 @@ export const REPO_DIR = "/soten";
 
 globalThis.Buffer = Buffer;
 
-export async function clone(url: string) {
+const corsProxy = "/api/cors-proxy";
+
+export async function clone(url: string, user: { username: string; token: string }) {
   await git.clone({
     fs,
     http,
@@ -18,11 +20,13 @@ export async function clone(url: string) {
     ref: "main",
     onMessage: console.debug,
     onProgress: console.debug,
-    corsProxy: "/cors-proxy",
+    corsProxy,
+
+    onAuth: () => ({ username: user.username, password: user.token }),
   });
 }
 
-export async function pull() {
+export async function pull(user: { username: string; token: string }) {
   await git.pull({
     fs,
     http,
@@ -30,7 +34,9 @@ export async function pull() {
     onMessage: console.debug,
     onProgress: console.debug,
     fastForwardOnly: true,
-    corsProxy: "/cors-proxy",
+    corsProxy,
+
+    onAuth: () => ({ username: user.username, password: user.token }),
   });
 }
 

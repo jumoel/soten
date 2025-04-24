@@ -53,13 +53,11 @@ export async function onRequest(context) {
   const url = new URL(request.url);
 
   // Check if the request is at the proper path
-  if (!url.pathname.startsWith("/cors-proxy/")) {
+  if (!url.pathname.startsWith("/api/cors-proxy/")) {
     return new Response("Not Found", { status: 404 });
   }
 
   let proxyUrl = url.toString().replace(/^.+\/cors-proxy\//, "https://");
-
-  console.log("Proxy URL", proxyUrl);
 
   try {
     new URL(proxyUrl);
@@ -80,15 +78,11 @@ export async function onRequest(context) {
     }
   }
 
-  console.log("Fetching", proxyUrl);
-
   const response = await fetch(proxyUrl, {
     method: request.method,
     headers: requestHeaders,
     body: request.body,
   });
-
-  console.log("Response", response.status);
 
   const responseHeaders = new Headers();
   for (const [name, value] of response.headers) {
@@ -96,8 +90,6 @@ export async function onRequest(context) {
       responseHeaders.set(name, value);
     }
   }
-
-  console.log("Returning response");
 
   return new Response(
     response.body,
