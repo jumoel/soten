@@ -17,7 +17,6 @@ export async function clone(url: string, user: { username: string; token: string
     http,
     dir: REPO_DIR,
     url,
-    ref: "main",
     onMessage: console.debug,
     onProgress: console.debug,
     corsProxy,
