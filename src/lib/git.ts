@@ -19,9 +19,13 @@ export async function clone(url: string, user: { username: string; token: string
     http,
     dir: REPO_DIR,
     url,
-    onMessage: console.debug,
-    onProgress: console.debug,
     corsProxy,
+
+    singleBranch: true,
+    depth: 1,
+
+    onMessage: (message) => console.debug("clone onMessage", message),
+    onProgress: (progress) => console.debug("clone onProgress", progress),
 
     onAuth: () => ({ username: user.username, password: user.token }),
   });
@@ -32,10 +36,11 @@ export async function pull(user: { username: string; token: string }) {
     fs,
     http,
     dir: REPO_DIR,
-    onMessage: console.debug,
-    onProgress: console.debug,
     fastForwardOnly: true,
     corsProxy,
+
+    onMessage: (message) => console.debug("pull onMessage", message),
+    onProgress: (progress) => console.debug("pull onProgress", progress),
 
     onAuth: () => ({ username: user.username, password: user.token }),
   });
