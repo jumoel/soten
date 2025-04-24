@@ -8,5 +8,5 @@ export async function init(repoName: string, user: { username: string; token: st
   await git.setUser();
 
   console.log("cloning");
-  await git.clone(`https://github.com/${repoName}`, user);
+  await git.clone(`https://github.com/${repoName}.git`, user);
 }
