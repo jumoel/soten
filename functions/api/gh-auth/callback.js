@@ -60,7 +60,7 @@ export async function onRequest(context) {
  */
 async function exchangeCode(code, env) {
   const params = new URLSearchParams({
-    client_id: env.GH_CLIENT_ID,
+    client_id: env.VITE_GH_CLIENT_ID,
     client_secret: env.GH_CLIENT_SECRET,
     code: code,
   });
