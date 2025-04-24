@@ -4,4 +4,4 @@ pages_build_output_dir = "dist"
 compatibility_date = "2025-02-03"
 
 [vars]
-VITE_GH_CLIENT_ID = ""
+VITE_GH_CLIENT_ID = "Iv23ctTiTOuBobqRDK3O"
