@@ -1,0 +1,5 @@
+compatibility_date = "2025-03-17"
+
+[vars]
+VITE_GH_CLIENT_ID = "define in .env.local / Cloudflare dashboard"
+GH_CLIENT_SECRET = "define in .env.local / Cloudflare dashboard"
