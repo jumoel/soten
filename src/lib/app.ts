@@ -1,7 +1,7 @@
 import { pfs, FILE_SYSTEM_NAME } from "./fs";
 import * as git from "./git";
 
-export async function init() {
+export async function init(repoName: string, user: { username: string; token: string }) {
   await indexedDB.deleteDatabase(FILE_SYSTEM_NAME);
 
   const repoExists = await pfs
@@ -11,12 +11,12 @@ export async function init() {
 
   if (!repoExists) {
     console.log("cloning");
-    await git.clone("https://github.com/jumoel/soten");
+    await git.clone(`https://github.com/${repoName}`, user);
   }
 
   console.log("setting user");
   await git.setUser();
 
   console.log("pulling");
-  await git.pull();
+  await git.pull(user);
 }
