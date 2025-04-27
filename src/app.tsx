@@ -7,7 +7,9 @@ export function App() {
 
   const [init, setInit] = useState(false);
   const [repoFiles, setRepoFiles] = useState<string[]>([]);
-  const [user, setUser] = useState<{ username: string; token: string; installationId: string } | null>(null);
+  const [user, setUser] = useState<{ username: string; token: string; installationId: string; email: string } | null>(
+    null,
+  );
   const [repoName, setRepoName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,10 +19,11 @@ export function App() {
         const params = new URLSearchParams(window.location.hash.substring(1));
         const token = params.get("access_token");
         const username = params.get("username");
+        const email = params.get("email");
         const installationId = params.get("app_install_id");
 
-        if (token && username && installationId) {
-          setUser({ username, token, installationId });
+        if (token && username && installationId && email) {
+          setUser({ username, token, installationId, email });
           // Clear the URL hash after extracting the data
           window.history.replaceState(null, "", window.location.pathname);
         }

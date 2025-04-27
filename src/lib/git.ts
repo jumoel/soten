@@ -2,7 +2,7 @@
 
 import http from "isomorphic-git/http/web";
 import git from "isomorphic-git";
-import { fs, wipeFs, mkRepoDir, rmRepoDir } from "./fs";
+import { fs, wipeFs } from "./fs";
 import { Buffer } from "buffer";
 
 export const REPO_DIR = "/soten";
@@ -11,12 +11,8 @@ globalThis.Buffer = Buffer;
 
 const corsProxy = "/api/cors-proxy";
 
-export async function clone(url: string, user: { username: string; token: string }) {
+export async function clone(url: string, user: { username: string; token: string; email: string }) {
   await wipeFs();
-
-  // Try to ensure the filesystem is ready
-  await mkRepoDir();
-  await rmRepoDir();
 
   await git.clone({
     fs,
@@ -33,6 +29,8 @@ export async function clone(url: string, user: { username: string; token: string
 
     onAuth: () => ({ username: user.username, password: user.token }),
   });
+
+  await setUser(user);
 }
 
 export async function pull(user: { username: string; token: string }) {
@@ -50,7 +48,7 @@ export async function pull(user: { username: string; token: string }) {
   });
 }
 
-export async function setUser() {
-  await git.setConfig({ fs, dir: REPO_DIR, path: "user.name", value: "soten" });
-  await git.setConfig({ fs, dir: REPO_DIR, path: "user.email", value: "soten@soten.app" });
+export async function setUser(user: { username: string; email: string }) {
+  await git.setConfig({ fs, dir: REPO_DIR, path: "user.name", value: user.username });
+  await git.setConfig({ fs, dir: REPO_DIR, path: "user.email", value: user.email });
 }

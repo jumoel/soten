@@ -42,7 +42,7 @@ export async function onRequest(context) {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${baseUrl}/#app_install_id=${appInstallId}&access_token=${tokenData.access_token}&token_type=${tokenData.token_type || "bearer"}&username=${encodeURIComponent(userInfo.login)}`,
+        Location: `${baseUrl}/#app_install_id=${appInstallId}&access_token=${tokenData.access_token}&token_type=${tokenData.token_type || "bearer"}&username=${encodeURIComponent(userInfo.login)}&email=${encodeURIComponent(userInfo.email)}`,
       },
     });
   } catch (error) {
