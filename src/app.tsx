@@ -1,40 +1,23 @@
 import { useEffect, useRef, useState } from "react";
+import { useAtom } from "jotai";
 import * as app from "./lib/app";
 import { readRepoDir } from "./lib/fs";
+import { userAtom } from "./atoms/globals";
 
 export function App() {
   const isFetchingData = useRef(false);
 
   const [init, setInit] = useState(false);
   const [repoFiles, setRepoFiles] = useState<string[]>([]);
-  const [user, setUser] = useState<{ username: string; token: string; installationId: string; email: string } | null>(
-    null,
-  );
   const [repoName, setRepoName] = useState<string | null>(null);
+  const [user] = useAtom(userAtom);
 
   useEffect(() => {
-    // Check for GitHub authentication response in URL hash
-    const handleAuthResponse = () => {
-      if (window.location.hash) {
-        const params = new URLSearchParams(window.location.hash.substring(1));
-        const token = params.get("access_token");
-        const username = params.get("username");
-        const email = params.get("email");
-        const installationId = params.get("app_install_id");
-
-        if (token && username && installationId && email) {
-          setUser({ username, token, installationId, email });
-          // Clear the URL hash after extracting the data
-          window.history.replaceState(null, "", window.location.pathname);
-        }
-      }
-    };
-
-    handleAuthResponse();
-
     if (isFetchingData.current) {
       return;
     }
+
+    console.log("user", user);
 
     if (!user) {
       return;
@@ -86,7 +69,12 @@ export function App() {
 
         const reposResponse = await fetch(
           `https://api.github.com/user/installations/${user.installationId}/repositories`,
-          { headers: { Authorization: `token ${user.token}`, Accept: "application/vnd.github.v3+json" } },
+          {
+            headers: {
+              Authorization: `token ${user.token}`,
+              Accept: "application/vnd.github.v3+json",
+            },
+          },
         );
 
         if (reposResponse.ok) {
