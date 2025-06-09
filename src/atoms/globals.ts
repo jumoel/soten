@@ -1,4 +1,4 @@
-import { createStore } from "jotai";
+import { createStore, atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
@@ -9,29 +9,41 @@ export const store = createStore();
 export const selectedRepoAtom = atomWithStorage<{ owner: string; repo: string } | null>(
   "selectedRepo",
   null,
+  undefined,
+  { getOnInit: true },
 );
 
 export enum AuthState {
-  Unauthenticated,
-  Authenticated,
+  Unauthenticated = "unauthenticated",
+  Authenticated = "authenticated",
 }
 
-export const authStateAtom = atomWithStorage<AuthState>("authState", AuthState.Unauthenticated);
+export const authStateAtom = atomWithStorage<AuthState>(
+  "authState",
+  AuthState.Unauthenticated,
+  undefined,
+  { getOnInit: true },
+);
 
 export enum RepoState {
-  Unselected,
-  Selected,
-  Fetched,
+  Unselected = "unselected",
+  Selected = "selected",
+  Fetched = "fetched",
 }
 
-export const repoStateAtom = atomWithStorage<RepoState>("repoState", RepoState.Unselected);
+export const repoStateAtom = atomWithStorage<RepoState>(
+  "repoState",
+  RepoState.Unselected,
+  undefined,
+  { getOnInit: true },
+);
 
 export const userAtom = atomWithStorage<{
   username: string;
   token: string;
   installationId: string;
   email: string;
-} | null>("githubUser", null);
+} | null>("githubUser", null, undefined, { getOnInit: true });
 
 window.addEventListener("load", () => {
   if (window.location.hash) {
@@ -97,9 +109,17 @@ store.sub(selectedRepoAtom, async () => {
   store.set(repoStateAtom, RepoState.Fetched);
 });
 
+export const repoFilesAtom = atom<string[]>([]);
+
 store.sub(repoStateAtom, async () => {
   const repoState = store.get(repoStateAtom);
+  console.log("Repo state changed:", repoState);
   if (repoState !== RepoState.Fetched) {
     return;
   }
+
+  const repoFiles = await readRepoDir();
+  console.log("Read files", repoFiles);
+  store.set(repoFilesAtom, repoFiles);
+  store.set(repoStateAtom, RepoState.Fetched);
 });
