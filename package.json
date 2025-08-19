@@ -15,11 +15,11 @@
   },
   "dependencies": {
     "@isomorphic-git/lightning-fs": "^4.6.2",
-    "@tailwindcss/vite": "^4.1.11",
+    "@tailwindcss/vite": "^4.1.12",
     "@total-typescript/ts-reset": "^0.6.1",
     "buffer": "^6.0.3",
-    "isomorphic-git": "^1.32.2",
-    "jotai": "^2.12.5",
+    "isomorphic-git": "^1.33.0",
+    "jotai": "^2.13.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
