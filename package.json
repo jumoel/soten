@@ -15,13 +15,13 @@
   },
   "dependencies": {
     "@isomorphic-git/lightning-fs": "^4.6.2",
-    "@tailwindcss/vite": "^4.1.11",
+    "@tailwindcss/vite": "^4.1.14",
     "@total-typescript/ts-reset": "^0.6.1",
     "buffer": "^6.0.3",
-    "isomorphic-git": "^1.32.2",
-    "jotai": "^2.12.5",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "isomorphic-git": "^1.34.0",
+    "jotai": "^2.15.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1.3.1",
