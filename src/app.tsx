@@ -2,11 +2,14 @@ import { useAtom } from "jotai";
 import {
   AppState,
   appStateAtom,
+  AppView,
+  appViewAtom,
   AuthState,
   authStateAtom,
   dispatch,
   Event,
-  repoFilesAtom,
+  filesAtom,
+  repoFilenamesAtom,
   userAtom,
 } from "./atoms/globals";
 import { GitHubAuthButton } from "./components/GitHubAuthButton";
@@ -15,7 +18,10 @@ export function App() {
   const [user] = useAtom(userAtom);
   const [appState] = useAtom(appStateAtom);
   const [authState] = useAtom(authStateAtom);
-  const [repoFiles] = useAtom(repoFilesAtom);
+  const [repoFiles] = useAtom(repoFilenamesAtom);
+  const [appView] = useAtom(appViewAtom);
+  const [files] = useAtom(filesAtom);
+  console.log(files);
 
   return (
     <div className="w-screen h-screen antialiased">
@@ -36,11 +42,22 @@ export function App() {
               <GitHubAuthButton />
             )}
 
-            <ul className="font-mono">
-              {repoFiles.map((file) => (
-                <li key={file}>{file}</li>
-              ))}
-            </ul>
+            {appView === AppView.Front && (
+              <ul className="font-mono">
+                {repoFiles.map((file) => (
+                  <li key={file}>
+                    <a href={"#" + file}>{file}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {appView === AppView.Note && (
+              <>
+                <a href="#/">Frontpage</a>
+                <pre>{JSON.stringify(files[window.location.hash.slice(1)])}</pre>
+              </>
+            )}
           </>
         ) : (
           <>

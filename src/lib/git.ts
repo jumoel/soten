@@ -2,7 +2,7 @@
 
 import http from "isomorphic-git/http/web";
 import git from "isomorphic-git";
-import { fs, wipeFs } from "./fs";
+import { fs, wipeFs, readRepoDir } from "./fs";
 import { Buffer } from "buffer";
 
 export const REPO_DIR = "/soten";
@@ -31,6 +31,12 @@ export async function clone(url: string, user: { username: string; token: string
   });
 
   await setUser(user);
+}
+
+export async function isInitialized() {
+  const files = await readRepoDir();
+
+  return files.includes(".git");
 }
 
 export async function pull(user: { username: string; token: string }) {

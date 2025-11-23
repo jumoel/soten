@@ -2,7 +2,7 @@ import { createStore, atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { fetchCurrentUser, fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
-import { fs, readRepoDir, rmRepoDir, wipeFs } from "../lib/fs";
+import { fs, readFile, readRepoDir, readRepoFiles, rmRepoDir, wipeFs } from "../lib/fs";
 
 export const store = createStore();
 
@@ -19,6 +19,16 @@ export enum AuthState {
 export const authStateAtom = atom(AuthState.Unauthenticated);
 
 const errorAtom = atom<string | null>(null);
+
+type TextFile = { type: "text"; content: string };
+type ImageFile = { type: "image"; content: Blob };
+export const filesAtom = atom<Record<string, TextFile | ImageFile>>({});
+
+export enum AppView {
+  Front = "Front",
+  Note = "Note",
+}
+export const appViewAtom = atom<AppView>(AppView.Front);
 
 async function init() {
   const user = store.get(userAtom);
@@ -49,6 +59,9 @@ export enum Event {
   SelectRepo = "SelectRepo",
   FetchRepoFiles = "FetchRepoFiles",
   RepoReady = "RepoReady",
+  ReadRepoFilesContent = "ReadRepoFilesContent",
+  ShowNote = "ShowNote",
+  ShowFront = "ShowFront",
 }
 
 type DEvent<T, P> = { event: T; payload: P };
@@ -63,7 +76,10 @@ type DispatchEvents =
   | DEvent<Event.Error, { event?: Event; message: string }>
   | DEvent<Event.SelectRepo, { owner: string; repo: string }>
   | DEvent<Event.FetchRepoFiles, never>
-  | DEvent<Event.RepoReady, never>;
+  | DEvent<Event.RepoReady, never>
+  | DEvent<Event.ReadRepoFilesContent, never>
+  | DEvent<Event.ShowNote, { path: string }>
+  | DEvent<Event.ShowFront, never>;
 
 export function dispatch<E extends DispatchEvents["event"]>(
   event: E,
@@ -102,8 +118,9 @@ export function dispatchInternal({ event, payload }: DispatchEvents) {
       (async () => {
         store.set(userAtom, null);
         store.set(authStateAtom, AuthState.Unauthenticated);
-        store.set(repoFilesAtom, []);
+        store.set(repoFilenamesAtom, []);
         store.set(repoReadyAtom, false);
+        store.set(appViewAtom, AppView.Front);
         await wipeFs();
       })();
 
@@ -152,10 +169,44 @@ export function dispatchInternal({ event, payload }: DispatchEvents) {
       }
 
       (async () => {
-        await git.clone(`https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`, user);
+        if (await git.isInitialized()) {
+          await git.pull(user);
+        } else {
+          await git.clone(
+            `https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`,
+            user,
+          );
+        }
 
-        const repoFiles = await readRepoDir();
-        store.set(repoFilesAtom, repoFiles);
+        const repoFiles = await readRepoFiles();
+        store.set(repoFilenamesAtom, repoFiles);
+
+        dispatch(Event.ReadRepoFilesContent);
+      })();
+
+      break;
+
+    case Event.ReadRepoFilesContent:
+      (async () => {
+        const filenames = store.get(repoFilenamesAtom);
+
+        const files = (
+          await Promise.all(
+            filenames.map(async (filename) => {
+              const content = await readFile(filename);
+
+              if (content === null) {
+                return null;
+              }
+
+              return { [filename]: content };
+            }),
+          )
+        )
+          .filter(Boolean)
+          .reduce((acc, obj) => Object.assign(acc, obj), {});
+
+        store.set(filesAtom, files);
 
         dispatch(Event.RepoReady);
       })();
@@ -164,6 +215,14 @@ export function dispatchInternal({ event, payload }: DispatchEvents) {
 
     case Event.RepoReady:
       store.set(repoReadyAtom, true);
+      break;
+
+    case Event.ShowNote:
+      store.set(appViewAtom, AppView.Note);
+      break;
+
+    case Event.ShowFront:
+      store.set(appViewAtom, AppView.Front);
       break;
 
     default:
@@ -183,6 +242,7 @@ export const userAtom = atomWithStorage<{
   email: string;
 } | null>("user", null, undefined, { getOnInit: true });
 
+// This is triggered for redirects after logins
 window.addEventListener("load", () => {
   if (window.location.hash) {
     const params = new URLSearchParams(window.location.hash.substring(1));
@@ -191,15 +251,30 @@ window.addEventListener("load", () => {
     const email = params.get("email");
     const installationId = params.get("app_install_id");
 
+    // Ensure that the URL is actually a login redirect URL
     if (token && username && installationId && email) {
       dispatch(Event.Authenticated, { username, token, installationId, email });
 
       // Clear the URL hash after extracting the data
       window.history.replaceState(null, "", window.location.pathname);
+    } else {
+      router();
     }
   }
 });
 
-export const repoFilesAtom = atom<string[]>([]);
+function router() {
+  const path = window.location.hash.substring(1);
+
+  if (path === "/") {
+    dispatch(Event.ShowFront);
+  } else {
+    dispatch(Event.ShowNote, { path });
+  }
+}
+
+window.addEventListener("hashchange", router);
+
+export const repoFilenamesAtom = atom<string[]>([]);
 
 await init();
