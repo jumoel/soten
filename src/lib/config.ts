@@ -1,9 +1,11 @@
-// Implement functions to read and write configuration values from localstorage.
-
-export const getConfigValue = async (key: string, defaultValue: string) => {
+export function getStoredValue(key: string, defaultValue: string) {
   const value = localStorage.getItem(key);
   if (value === null) {
     return defaultValue;
   }
   return value;
-};
+}
+
+export function storeValue(key: string, value: string) {
+  localStorage.setItem(key, value);
+}
