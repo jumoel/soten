@@ -2,7 +2,7 @@ import { createStore, atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { fetchCurrentUser, fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
-import { fs, readFile, readRepoDir, readRepoFiles, rmRepoDir, wipeFs } from "../lib/fs";
+import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
 
 export const store = createStore();
 
