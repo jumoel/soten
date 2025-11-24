@@ -150,6 +150,7 @@ export function dispatchInternal({ event, payload }: DispatchEvents) {
           dispatch(Event.Error, { message: "No repos found" });
         }
       })();
+
       break;
 
     case Event.SelectRepo:
@@ -159,16 +160,16 @@ export function dispatchInternal({ event, payload }: DispatchEvents) {
 
       break;
 
-    case Event.FetchRepoFiles:
-      const selectedRepo = store.get(selectedRepoAtom);
-      const user = store.get(userAtom);
-
-      if (!selectedRepo || !user) {
-        dispatch(Event.Error, { message: "Invalid state when fetching files" });
-        return;
-      }
-
+    case Event.FetchRepoFiles: {
       (async () => {
+        const selectedRepo = store.get(selectedRepoAtom);
+        const user = store.get(userAtom);
+
+        if (!selectedRepo || !user) {
+          dispatch(Event.Error, { message: "Invalid state when fetching files" });
+          return;
+        }
+
         if (await git.isInitialized()) {
           await git.pull(user);
         } else {
@@ -185,6 +186,7 @@ export function dispatchInternal({ event, payload }: DispatchEvents) {
       })();
 
       break;
+    }
 
     case Event.ReadRepoFilesContent:
       (async () => {
