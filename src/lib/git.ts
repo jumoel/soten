@@ -34,9 +34,13 @@ export async function clone(url: string, user: { username: string; token: string
 }
 
 export async function isInitialized() {
-  const files = await readRepoDir();
+  try {
+    const files = await readRepoDir();
 
-  return files.includes(".git");
+    return files.includes(".git");
+  } catch {
+    return false;
+  }
 }
 
 export async function pull(user: { username: string; token: string }) {
