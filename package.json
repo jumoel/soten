@@ -18,7 +18,7 @@
     "@tailwindcss/vite": "^4.1.11",
     "@total-typescript/ts-reset": "^0.6.1",
     "buffer": "^6.0.3",
-    "isomorphic-git": "^1.32.2",
+    "isomorphic-git": "^1.35.1",
     "jotai": "^2.12.5",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
