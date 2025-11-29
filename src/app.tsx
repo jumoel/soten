@@ -26,7 +26,7 @@ function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
   return (
     <table>
       {keys.map(([key, value]) => (
-        <tr id={key}>
+        <tr key={key}>
           <td className="p-1">
             <pre>{key}</pre>
           </td>
