@@ -39,12 +39,12 @@ async function init() {
     const user = await fetchCurrentUser(token);
 
     if (user?.login) {
-      dispatch(Event.AlreadyAuthenticated);
+      await dispatch(Event.AlreadyAuthenticated);
     } else {
-      dispatch(Event.Logout);
+      await dispatch(Event.Logout);
     }
   } else {
-    dispatch(Event.Logout);
+    await dispatch(Event.Logout);
   }
 
   store.set(appStateAtom, AppState.Initialized);
@@ -66,43 +66,45 @@ export enum Event {
 
 type DEvent<T, P> = { event: T; payload: P };
 type DispatchEvents =
-  | DEvent<Event.AlreadyAuthenticated, never>
+  | DEvent<Event.AlreadyAuthenticated, undefined>
   | DEvent<
       Event.Authenticated,
       { username: string; token: string; installationId: string; email: string }
     >
-  | DEvent<Event.Logout, never>
-  | DEvent<Event.FetchAndSelectRepos, never>
+  | DEvent<Event.Logout, undefined>
+  | DEvent<Event.FetchAndSelectRepos, undefined>
   | DEvent<Event.Error, { event?: Event; message: string }>
   | DEvent<Event.SelectRepo, { owner: string; repo: string }>
-  | DEvent<Event.FetchRepoFiles, never>
-  | DEvent<Event.RepoReady, never>
-  | DEvent<Event.ReadRepoFilesContent, never>
+  | DEvent<Event.FetchRepoFiles, undefined>
+  | DEvent<Event.RepoReady, undefined>
+  | DEvent<Event.ReadRepoFilesContent, undefined>
   | DEvent<Event.ShowNote, { path: string }>
-  | DEvent<Event.ShowFront, never>;
+  | DEvent<Event.ShowFront, undefined>;
 
-export function dispatch<E extends DispatchEvents["event"]>(
+export async function dispatch<E extends DispatchEvents["event"]>(
   event: E,
   payload?: Extract<DispatchEvents, { event: E }>["payload"],
+  chain?: Event[],
 ) {
-  const args = { event, payload } as DispatchEvents;
+  const dispatchEvent = { event, payload } as DispatchEvents;
 
-  return dispatchInternal(args);
+  return await dispatchInternal(dispatchEvent, chain);
 }
 
-export function dispatchInternal({ event, payload }: DispatchEvents) {
+export async function dispatchInternal({ event, payload }: DispatchEvents, chain?: Event[]) {
   console.log("Received Event", event, "with payload", payload);
 
   switch (event) {
     case Event.Error:
       store.set(errorAtom, payload.message);
+
       break;
 
     case Event.AlreadyAuthenticated:
       store.set(authStateAtom, AuthState.Authenticated);
       console.log(store.get(userAtom));
 
-      dispatch(Event.FetchAndSelectRepos);
+      await dispatch(Event.FetchAndSelectRepos);
 
       break;
 
@@ -110,110 +112,108 @@ export function dispatchInternal({ event, payload }: DispatchEvents) {
       store.set(userAtom, payload);
       store.set(authStateAtom, AuthState.Authenticated);
 
-      dispatch(Event.FetchAndSelectRepos);
+      await dispatch(Event.FetchAndSelectRepos);
 
       break;
 
     case Event.Logout:
-      (async () => {
-        store.set(userAtom, null);
-        store.set(authStateAtom, AuthState.Unauthenticated);
-        store.set(repoFilenamesAtom, []);
-        store.set(repoReadyAtom, false);
-        store.set(appViewAtom, AppView.Front);
-        await wipeFs();
-      })();
+      store.set(userAtom, null);
+      store.set(authStateAtom, AuthState.Unauthenticated);
+      store.set(repoFilenamesAtom, []);
+      store.set(repoReadyAtom, false);
+      store.set(appViewAtom, AppView.Front);
+      await wipeFs();
 
       break;
 
-    case Event.FetchAndSelectRepos:
-      (async () => {
-        const user = store.get(userAtom);
+    case Event.FetchAndSelectRepos: {
+      const user = store.get(userAtom);
 
-        if (!user) {
-          dispatch(Event.Error, { event, message: "Invalid installationId or token" });
-          return;
-        }
+      if (!user) {
+        await dispatch(Event.Error, { event, message: "Invalid installationId or token" });
+        break;
+      }
 
-        const repos = await fetchUserRepos(user.installationId, user.token);
+      const cachedRepo = store.get(selectedRepoAtom);
 
-        if (!repos) {
-          dispatch(Event.Error, { message: "Failed to fetch repos" });
-          return;
-        }
+      if (cachedRepo && cachedRepo.owner && cachedRepo.repo) {
+        await dispatch(Event.FetchRepoFiles);
+        break;
+      }
 
-        if (repos.length > 0) {
-          const [owner, repo] = repos[0].split("/");
+      const repos = await fetchUserRepos(user.installationId, user.token);
 
-          dispatch(Event.SelectRepo, { owner, repo });
-        } else {
-          dispatch(Event.Error, { message: "No repos found" });
-        }
-      })();
+      if (!repos) {
+        await dispatch(Event.Error, { message: "Failed to fetch repos" });
+        break;
+      }
 
-      break;
+      if (repos.length > 0) {
+        const [owner, repo] = repos[0].split("/");
 
-    case Event.SelectRepo:
-      store.set(selectedRepoAtom, payload);
-
-      dispatch(Event.FetchRepoFiles);
-
-      break;
-
-    case Event.FetchRepoFiles: {
-      (async () => {
-        const selectedRepo = store.get(selectedRepoAtom);
-        const user = store.get(userAtom);
-
-        if (!selectedRepo || !user) {
-          dispatch(Event.Error, { message: "Invalid state when fetching files" });
-          return;
-        }
-
-        if (await git.isInitialized()) {
-          await git.pull(user);
-        } else {
-          await git.clone(
-            `https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`,
-            user,
-          );
-        }
-
-        const repoFiles = await readRepoFiles();
-        store.set(repoFilenamesAtom, repoFiles);
-
-        dispatch(Event.ReadRepoFilesContent);
-      })();
+        await dispatch(Event.SelectRepo, { owner, repo });
+      } else {
+        await dispatch(Event.Error, { message: "No repos found" });
+      }
 
       break;
     }
 
-    case Event.ReadRepoFilesContent:
-      (async () => {
-        const filenames = store.get(repoFilenamesAtom);
+    case Event.SelectRepo:
+      store.set(selectedRepoAtom, payload);
 
-        const files = (
-          await Promise.all(
-            filenames.map(async (filename) => {
-              const content = await readFile(filename);
-
-              if (content === null) {
-                return null;
-              }
-
-              return { [filename]: content };
-            }),
-          )
-        )
-          .filter(Boolean)
-          .reduce((acc, obj) => Object.assign(acc, obj), {});
-
-        store.set(filesAtom, files);
-
-        dispatch(Event.RepoReady);
-      })();
+      await dispatch(Event.FetchRepoFiles);
 
       break;
+
+    case Event.FetchRepoFiles: {
+      const selectedRepo = store.get(selectedRepoAtom);
+      const user = store.get(userAtom);
+
+      if (!selectedRepo || !user) {
+        await dispatch(Event.Error, { message: "Invalid state when fetching files" });
+        break;
+      }
+
+      if (await git.isInitialized()) {
+        await git.pull(user);
+      } else {
+        await git.clone(`https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`, user);
+      }
+
+      const repoFiles = await readRepoFiles();
+      store.set(repoFilenamesAtom, repoFiles);
+
+      await dispatch(Event.ReadRepoFilesContent);
+
+      break;
+    }
+
+    case Event.ReadRepoFilesContent: {
+      const filenames = store.get(repoFilenamesAtom);
+
+      const files = (
+        await Promise.all(
+          filenames.map(async (filename) => {
+            const content = await readFile(filename);
+
+            if (content === null) {
+              return null;
+            }
+
+            return { [filename]: content };
+          }),
+        )
+      )
+        .filter(Boolean)
+        .reduce((acc, obj) => Object.assign(acc, obj), {});
+
+      store.set(filesAtom, files);
+
+      await dispatch(Event.RepoReady);
+
+      break;
+    }
 
     case Event.RepoReady:
       store.set(repoReadyAtom, true);
@@ -245,7 +245,7 @@ export const userAtom = atomWithStorage<{
 } | null>("user", null, undefined, { getOnInit: true });
 
 // This is triggered for redirects after logins
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
   if (window.location.hash) {
     const params = new URLSearchParams(window.location.hash.substring(1));
     const token = params.get("access_token");
@@ -255,23 +255,23 @@ window.addEventListener("load", () => {
 
     // Ensure that the URL is actually a login redirect URL
     if (token && username && installationId && email) {
-      dispatch(Event.Authenticated, { username, token, installationId, email });
+      await dispatch(Event.Authenticated, { username, token, installationId, email });
 
       // Clear the URL hash after extracting the data
       window.history.replaceState(null, "", window.location.pathname);
     } else {
-      router();
+      await router();
     }
   }
 });
 
-function router() {
+async function router() {
   const path = window.location.hash.substring(1);
 
   if (path === "/") {
-    dispatch(Event.ShowFront);
+    await dispatch(Event.ShowFront);
   } else {
-    dispatch(Event.ShowNote, { path });
+    await dispatch(Event.ShowNote, { path });
   }
 }
 

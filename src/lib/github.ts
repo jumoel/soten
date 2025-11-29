@@ -45,6 +45,7 @@ export async function fetchUserRepos(
   const reposResponse = await fetch(
     `https://api.github.com/user/installations/${installationId}/repositories`,
     {
+      cache: "reload",
       headers: {
         Authorization: `token ${token}`,
         Accept: "application/vnd.github.v3+json",
