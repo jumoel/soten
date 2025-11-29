@@ -14,6 +14,7 @@ import {
   userAtom,
 } from "./atoms/globals";
 import { GitHubAuthButton } from "./components/GitHubAuthButton";
+import { Suspense } from "react";
 
 function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
   const keys = Object.entries(data ?? {});
@@ -96,7 +97,9 @@ export function App() {
             {appView === AppView.Note && (
               <>
                 <a href="#/">Frontpage</a>
-                <Note path={window.location.hash.slice(1)} />
+                <Suspense fallback={"Loading..."}>
+                  <Note path={window.location.hash.slice(1)} />
+                </Suspense>
               </>
             )}
           </>
