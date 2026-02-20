@@ -139,6 +139,31 @@ Notable production dependencies:
 - Do not include links to claude.ai in commit messages or PR descriptions
 - Use only the `Co-authored-by: Claude <noreply@anthropic.com>` git trailer on AI-authored commits
 
+## Pull Request Descriptions
+
+Structure PR descriptions with these sections:
+
+**What** — executive summary of what changed. No file listings or implementation details.
+
+**Why** — the reasoning behind the change. Why is it necessary?
+
+**Details** — optional. Include only if implementation details are truly necessary to understand the change.
+
+Example:
+
+```
+## What
+Added CLAUDE.md documenting the codebase for AI assistants.
+
+## Why
+Without this file, AI assistants lack context about project conventions,
+tooling, and architecture, leading to inconsistent contributions.
+
+## Details
+The dispatch chain parameter was also removed as it was unused and
+caused lint/type failures.
+```
+
 ## CI/CD
 
 - **Primary branch**: `main`
