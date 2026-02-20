@@ -122,7 +122,7 @@ Notable production dependencies:
 ## Git Commit Conventions
 
 - Do not include links to claude.ai in commit messages or PR descriptions
-- Do include a `Claude-Session: <session-id>` git trailer on AI-authored commits
+- Use only the `Co-authored-by: Claude <noreply@anthropic.com>` git trailer on AI-authored commits
 
 ## CI/CD
 
