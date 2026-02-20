@@ -141,6 +141,7 @@ Notable production dependencies:
 
 ## CI/CD
 
+- **Primary branch**: `main`
 - **GitHub Actions** (`.github/workflows/checks.yml`): runs `lint`, `types`, `style`, `build` in parallel on every push
 - **CodeQL** (`.github/workflows/codeql.yml`): security scanning on push to `main` and PRs, plus weekly schedule
 - **Dependabot**: weekly NPM updates, monthly Actions updates
