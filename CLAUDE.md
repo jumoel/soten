@@ -6,6 +6,19 @@ This file provides guidance for AI assistants working in this repository.
 
 **Soten** is a minimal web-based Markdown note editor. Notes are stored in GitHub repositories and accessed via in-browser Git operations. There is no traditional backend — Git runs entirely in the browser using isomorphic-git with an IndexedDB-backed filesystem (LightningFS).
 
+## Environment Setup
+
+The required Node.js version is specified in `.node-version` (currently 24). Use a version manager
+(e.g. `fnm`, `nvm`) to ensure the correct version is active before doing anything else.
+
+Install dependencies with:
+
+```sh
+npm ci
+```
+
+Always use `npm ci` (not `npm install`) to ensure a clean, reproducible install from `package-lock.json`.
+
 ## Development Workflow
 
 Two terminals are required to run the app locally:
@@ -28,33 +41,34 @@ npm run types   # TypeScript type check (tsc --noEmit)
 npm run build   # Vite production build
 ```
 
-All four checks run in CI on every push. Run them locally before committing.
+All four checks run in CI on every push. **All checks must pass before committing or pushing.**
+Run them locally before every commit.
 
 ## Architecture
 
 ### Frontend (`src/`)
 
-| File/Dir | Purpose |
-|---|---|
-| `src/index.tsx` | React entry point |
-| `src/app.tsx` | Root component — renders auth UI, file list, note view |
-| `src/index.css` | Tailwind CSS imports only |
-| `src/markdown.ts` | Unified.js pipeline: Markdown → HTML + frontmatter |
+| File/Dir               | Purpose                                                    |
+| ---------------------- | ---------------------------------------------------------- |
+| `src/index.tsx`        | React entry point                                          |
+| `src/app.tsx`          | Root component — renders auth UI, file list, note view     |
+| `src/index.css`        | Tailwind CSS imports only                                  |
+| `src/markdown.ts`      | Unified.js pipeline: Markdown → HTML + frontmatter         |
 | `src/atoms/globals.ts` | All Jotai atoms, app state enums, and event dispatch logic |
-| `src/lib/git.ts` | isomorphic-git wrapper (clone, pull, user config) |
-| `src/lib/fs.ts` | LightningFS wrapper (read files, wipe IndexedDB) |
-| `src/lib/github.ts` | GitHub OAuth redirect and REST API calls |
-| `src/lib/config.ts` | localStorage helpers |
-| `src/components/` | Small UI components |
+| `src/lib/git.ts`       | isomorphic-git wrapper (clone, pull, user config)          |
+| `src/lib/fs.ts`        | LightningFS wrapper (read files, wipe IndexedDB)           |
+| `src/lib/github.ts`    | GitHub OAuth redirect and REST API calls                   |
+| `src/lib/config.ts`    | localStorage helpers                                       |
+| `src/components/`      | Small UI components                                        |
 
 ### Backend (`functions/`)
 
 Cloudflare Workers functions serving the `/api` routes:
 
-| File | Purpose |
-|---|---|
-| `functions/api/cors-proxy/[[proxy]].js` | CORS proxy for isomorphic-git HTTP requests |
-| `functions/api/gh-auth/callback.js` | GitHub OAuth callback — exchanges code for token, checks app installation |
+| File                                    | Purpose                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| `functions/api/cors-proxy/[[proxy]].js` | CORS proxy for isomorphic-git HTTP requests                               |
+| `functions/api/gh-auth/callback.js`     | GitHub OAuth callback — exchanges code for token, checks app installation |
 
 ### State Management
 
@@ -65,6 +79,7 @@ Key enums: `AppState`, `AuthState`, `AppView`.
 ### Routing
 
 Hash-based client-side routing:
+
 - `#/` → front/home view
 - `#/path/to/file` → note view
 
@@ -108,16 +123,16 @@ A `hashchange` listener drives navigation.
 
 Notable production dependencies:
 
-| Package | Role |
-|---|---|
-| `react` / `react-dom` | UI framework |
-| `jotai` | Atomic state management |
-| `isomorphic-git` | In-browser Git |
-| `@isomorphic-git/lightning-fs` | IndexedDB filesystem for isomorphic-git |
-| `unified`, `remark-*`, `rehype-*` | Markdown processing pipeline |
-| `vfile-matter` | YAML frontmatter extraction |
-| `buffer` | Node.js Buffer polyfill for the browser |
-| `@total-typescript/ts-reset` | TypeScript type improvements |
+| Package                           | Role                                    |
+| --------------------------------- | --------------------------------------- |
+| `react` / `react-dom`             | UI framework                            |
+| `jotai`                           | Atomic state management                 |
+| `isomorphic-git`                  | In-browser Git                          |
+| `@isomorphic-git/lightning-fs`    | IndexedDB filesystem for isomorphic-git |
+| `unified`, `remark-*`, `rehype-*` | Markdown processing pipeline            |
+| `vfile-matter`                    | YAML frontmatter extraction             |
+| `buffer`                          | Node.js Buffer polyfill for the browser |
+| `@total-typescript/ts-reset`      | TypeScript type improvements            |
 
 ## Git Commit Conventions
 

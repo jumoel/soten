@@ -84,14 +84,13 @@ type DispatchEvents =
 export async function dispatch<E extends DispatchEvents["event"]>(
   event: E,
   payload?: Extract<DispatchEvents, { event: E }>["payload"],
-  chain?: Event[],
 ) {
   const dispatchEvent = { event, payload } as DispatchEvents;
 
-  return await dispatchInternal(dispatchEvent, chain);
+  return await dispatchInternal(dispatchEvent);
 }
 
-export async function dispatchInternal({ event, payload }: DispatchEvents, chain?: Event[]) {
+export async function dispatchInternal({ event, payload }: DispatchEvents) {
   console.log("Received Event", event, "with payload", payload);
 
   switch (event) {
