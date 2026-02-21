@@ -7,6 +7,7 @@ import {
   appViewAtom,
   AuthState,
   authStateAtom,
+  currentPathAtom,
   dispatch,
   Event,
   filesAtom,
@@ -62,6 +63,7 @@ export function App() {
   const [authState] = useAtom(authStateAtom);
   const [repoFiles] = useAtom(repoFilenamesAtom);
   const [appView] = useAtom(appViewAtom);
+  const [currentPath] = useAtom(currentPathAtom);
 
   return (
     <div className="w-screen h-screen antialiased">
@@ -98,7 +100,7 @@ export function App() {
               <>
                 <a href="#/">Frontpage</a>
                 <Suspense fallback={"Loading..."}>
-                  <Note path={window.location.hash.slice(1)} />
+                  <Note path={currentPath} />
                 </Suspense>
               </>
             )}
