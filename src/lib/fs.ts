@@ -108,6 +108,6 @@ export async function readFile(path: string) {
   }
 }
 
-export async function wipeFs() {
-  window.indexedDB.deleteDatabase(FILE_SYSTEM_NAME);
+export function wipeFs() {
+  fs.init(FILE_SYSTEM_NAME, { wipe: true });
 }

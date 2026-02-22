@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tool: [lint, types, style, build]
+        tool: [lint, types, style, build, test]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,3 +25,15 @@ jobs:
       - name: Run ${{ matrix.tool }}
         run: |
           npm run ${{ matrix.tool }}
+
+  static-checks:
+    if: always()
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all checks passed
+        run: |
+          if [ "${{ needs.checks.result }}" != "success" ]; then
+            echo "One or more checks failed: ${{ needs.checks.result }}"
+            exit 1
+          fi

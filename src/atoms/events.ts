@@ -5,6 +5,7 @@ import {
   handleFetchRepoFiles,
   handleLogout,
   handleReadRepoFilesContent,
+  handleSelectRepo,
   handleShowFront,
   handleShowNote,
 } from "./handlers";
@@ -17,6 +18,7 @@ export enum Event {
   ReadRepoFilesContent = "ReadRepoFilesContent",
   Error = "Error",
   ShowNote = "ShowNote",
+  SelectRepo = "SelectRepo",
   ShowFront = "ShowFront",
 }
 
@@ -31,6 +33,7 @@ type DispatchEvents =
   | DEvent<Event.FetchRepoFiles, undefined>
   | DEvent<Event.ReadRepoFilesContent, undefined>
   | DEvent<Event.Error, { event?: Event; message: string }>
+  | DEvent<Event.SelectRepo, { owner: string; repo: string }>
   | DEvent<Event.ShowNote, { path: string }>
   | DEvent<Event.ShowFront, undefined>;
 
@@ -57,6 +60,8 @@ async function dispatchInternal({ event, payload }: DispatchEvents) {
       return handleFetchRepoFiles();
     case Event.ReadRepoFilesContent:
       return handleReadRepoFilesContent();
+    case Event.SelectRepo:
+      return handleSelectRepo(payload);
     case Event.Error:
       return handleError(payload);
     case Event.ShowNote:

@@ -32,8 +32,15 @@ export type User = {
 };
 
 export const errorAtom = atom<string | null>(null);
+export const authErrorAtom = atom<string | null>(null);
 export const userAtom = atomWithStorage<User | null>("user", null, undefined, { getOnInit: true });
-export const selectedRepoAtom = atom<{ owner: string; repo: string } | null>(null);
+export const reposAtom = atom<string[]>([]);
+export const selectedRepoAtom = atomWithStorage<{ owner: string; repo: string } | null>(
+  "selectedRepo",
+  null,
+  undefined,
+  { getOnInit: true },
+);
 export const repoFilenamesAtom = atom<string[]>([]);
 export const filesAtom = atom<Record<string, TextFile | ImageFile>>({});
 export const repoReadyAtom = atom<boolean>(false);
