@@ -12,6 +12,7 @@ import {
   filesAtom,
   repoFilenamesAtom,
   repoReadyAtom,
+  reposAtom,
   selectedRepoAtom,
   userAtom,
 } from "./store";
@@ -32,6 +33,7 @@ export async function handleLogout() {
   store.set(userAtom, null);
   store.set(authStateAtom, AuthState.Unauthenticated);
   store.set(selectedRepoAtom, null);
+  store.set(reposAtom, []);
   store.set(repoFilenamesAtom, []);
   store.set(filesAtom, {});
   store.set(repoReadyAtom, false);
@@ -48,13 +50,6 @@ export async function handleFetchAndSelectRepos() {
     return;
   }
 
-  const cachedRepo = store.get(selectedRepoAtom);
-
-  if (cachedRepo && cachedRepo.owner && cachedRepo.repo) {
-    await dispatch(Event.FetchRepoFiles);
-    return;
-  }
-
   const repos = await fetchUserRepos(user.installationId, user.token);
 
   if (!repos) {
@@ -67,8 +62,24 @@ export async function handleFetchAndSelectRepos() {
     return;
   }
 
-  const [owner, repo] = repos[0].split("/");
-  store.set(selectedRepoAtom, { owner, repo });
+  store.set(reposAtom, repos);
+
+  const cachedRepo = store.get(selectedRepoAtom);
+
+  if (cachedRepo && repos.includes(`${cachedRepo.owner}/${cachedRepo.repo}`)) {
+    await dispatch(Event.FetchRepoFiles);
+    return;
+  }
+
+  store.set(selectedRepoAtom, null);
+}
+
+export async function handleSelectRepo(payload: { owner: string; repo: string }) {
+  store.set(selectedRepoAtom, payload);
+  store.set(repoFilenamesAtom, []);
+  store.set(filesAtom, {});
+  store.set(repoReadyAtom, false);
+  await wipeFs();
   await dispatch(Event.FetchRepoFiles);
 }
 

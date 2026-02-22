@@ -12,9 +12,12 @@ import {
   Event,
   filesAtom,
   repoFilenamesAtom,
+  reposAtom,
+  selectedRepoAtom,
   userAtom,
 } from "./atoms/globals";
 import { GitHubAuthButton } from "./components/GitHubAuthButton";
+import { RepoSelector } from "./components/RepoSelector";
 import { Suspense } from "react";
 
 function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
@@ -64,6 +67,11 @@ export function App() {
   const [repoFiles] = useAtom(repoFilenamesAtom);
   const [appView] = useAtom(appViewAtom);
   const [currentPath] = useAtom(currentPathAtom);
+  const [repos] = useAtom(reposAtom);
+  const [selectedRepo, setSelectedRepo] = useAtom(selectedRepoAtom);
+
+  const needsRepoSelection =
+    authState === AuthState.Authenticated && repos.length > 0 && !selectedRepo;
 
   return (
     <div className="w-screen h-screen antialiased">
@@ -77,6 +85,14 @@ export function App() {
               {authState === AuthState.Authenticated && user ? (
                 <div className="my-4">
                   <p>Welcome, {user.username}!</p>
+                  {selectedRepo && (
+                    <p className="text-sm">
+                      {selectedRepo.owner}/{selectedRepo.repo}{" "}
+                      <button className="underline" onClick={() => setSelectedRepo(null)}>
+                        switch
+                      </button>
+                    </p>
+                  )}
                   <p>
                     <button onClick={() => dispatch(Event.Logout)}>Log out</button>
                   </p>
@@ -86,7 +102,9 @@ export function App() {
               )}
             </div>
 
-            {appView === AppView.Front && (
+            {needsRepoSelection && <RepoSelector />}
+
+            {!needsRepoSelection && appView === AppView.Front && (
               <ul className="font-mono">
                 {repoFiles.map((file) => (
                   <li key={file}>
@@ -96,7 +114,7 @@ export function App() {
               </ul>
             )}
 
-            {appView === AppView.Note && (
+            {!needsRepoSelection && appView === AppView.Note && (
               <>
                 <a href="#/">Frontpage</a>
                 <Suspense fallback={"Loading..."}>

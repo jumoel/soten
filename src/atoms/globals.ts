@@ -9,6 +9,8 @@ export {
   currentPathAtom,
   filesAtom,
   repoFilenamesAtom,
+  reposAtom,
+  selectedRepoAtom,
   userAtom,
 } from "./store";
 
