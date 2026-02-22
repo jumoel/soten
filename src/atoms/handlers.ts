@@ -71,6 +71,12 @@ export async function handleFetchAndSelectRepos() {
     return;
   }
 
+  if (repos.length === 1) {
+    const [owner, repo] = repos[0].split("/");
+    await dispatch(Event.SelectRepo, { owner, repo });
+    return;
+  }
+
   store.set(selectedRepoAtom, null);
 }
 
