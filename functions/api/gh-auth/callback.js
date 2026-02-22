@@ -24,11 +24,11 @@ export async function onRequest(context) {
   try {
     const tokenData = await exchangeCode(code, context.env);
 
-    console.log("Token data received", JSON.stringify(tokenData));
-
     if (!tokenData || !tokenData.access_token) {
-      const detail = tokenData?.error_description || tokenData?.error || "unknown error";
-      return new Response(`Failed to obtain access token: ${detail}`, { status: 400 });
+      return new Response(
+        `<pre>Failed to obtain access token\n\n${JSON.stringify(tokenData, null, 2)}</pre>`,
+        { status: 400, headers: { "Content-Type": "text/html" } },
+      );
     }
 
     const appInstallId = await findAppInstallationId(tokenData.access_token);
