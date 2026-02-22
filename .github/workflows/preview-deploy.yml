@@ -2,23 +2,31 @@ name: Preview Deploy
 
 # Triggered by PR comments containing '.preview'.
 # The commenter must have write access (OWNER, MEMBER, or COLLABORATOR) to prevent
-# arbitrary users from triggering deployments that consume Cloudflare quota.
+# arbitrary users from triggering deployments that consume quota.
 #
-# Required repository secrets:
-#   CLOUDFLARE_API_TOKEN  – Cloudflare API token with Pages:Edit permission
-#   CLOUDFLARE_ACCOUNT_ID – Cloudflare account ID
+# No Cloudflare credentials are required in GitHub. The workflow pushes the PR
+# content to a dedicated preview branch (`preview-pr-N`). Cloudflare Pages detects
+# the push via its existing GitHub App integration and deploys automatically.
 #
-# Note: Cloudflare's own deploy bot only comments automatically when the Cloudflare
-# Pages Git integration is used. When deploying via GitHub Actions + wrangler, the
-# deployment comment is posted here by the github-actions[bot] instead.
+# The branch alias URL is predictable: https://preview-pr-N.soten.pages.dev
+# This lets us post the URL immediately without polling the Cloudflare API.
+#
+# One-time Cloudflare dashboard setup required:
+#   - In the soten Pages project, ensure preview deployments are enabled for all
+#     branches (the default) or add `preview-pr-*` to the preview branch include list.
+#
+# Preview branches are deleted automatically when the PR is closed.
 
 on:
   issue_comment:
     types: [created]
+  pull_request:
+    types: [closed]
 
 jobs:
   deploy-preview:
     if: >-
+      github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '.preview') &&
       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
@@ -26,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
 
     steps:
@@ -41,7 +49,7 @@ jobs:
               content: 'rocket',
             });
 
-      - name: Get PR head SHA and branch
+      - name: Get PR head SHA
         id: pr
         uses: actions/github-script@v7
         with:
@@ -52,55 +60,67 @@ jobs:
               pull_number: context.issue.number,
             });
             core.setOutput('head_sha', pr.head.sha);
-            core.setOutput('head_ref', pr.head.ref);
 
       - uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.head_sha }}
+          # Full history not needed; we just push this SHA to the preview branch.
+          fetch-depth: 1
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run build
-
-      - name: Deploy to Cloudflare Pages
-        id: deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=soten --branch=${{ steps.pr.outputs.head_ref }}
+      - name: Push to preview branch
+        run: |
+          git push origin HEAD:refs/heads/preview-pr-${{ github.event.issue.number }} --force
 
       - name: Post deployment comment
         uses: actions/github-script@v7
         with:
           script: |
+            const pr = context.issue.number;
             const sha = '${{ steps.pr.outputs.head_sha }}';
-            const branch = '${{ steps.pr.outputs.head_ref }}';
-            const deployUrl = '${{ steps.deploy.outputs.deployment-url }}';
-            const aliasUrl = '${{ steps.deploy.outputs.pages-deployment-alias-url }}';
+            const previewUrl = `https://preview-pr-${pr}.soten.pages.dev`;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-
-            const urlLine = aliasUrl
-              ? `| **Preview URL** | [${aliasUrl}](${aliasUrl}) |`
-              : `| **Preview URL** | [${deployUrl}](${deployUrl}) |`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: pr,
               body: [
                 '### Cloudflare Pages Preview',
                 '',
+                'Deployment triggered. Cloudflare will build and publish in ~1 minute.',
+                '',
                 `| | |`,
                 `|---|---|`,
-                urlLine,
+                `| **Preview URL** | [${previewUrl}](${previewUrl}) |`,
                 `| **Commit** | [\`${sha.substring(0, 7)}\`](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/commit/${sha}) |`,
-                `| **Branch** | \`${branch}\` |`,
-                `| **Build log** | [View run](${runUrl}) |`,
+                `| **Branch** | \`preview-pr-${pr}\` |`,
+                `| **Trigger** | [Run ${context.runId}](${runUrl}) |`,
               ].join('\n'),
             });
+
+  cleanup-preview:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Delete preview branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = `preview-pr-${context.payload.pull_request.number}`;
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${branch}`,
+              });
+              core.info(`Deleted branch ${branch}`);
+            } catch (e) {
+              // 422 = ref does not exist; nothing to clean up
+              if (e.status !== 422) throw e;
+              core.info(`Branch ${branch} did not exist, nothing to delete`);
+            }
