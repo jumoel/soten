@@ -24,10 +24,11 @@ export async function onRequest(context) {
   try {
     const tokenData = await exchangeCode(code, context.env);
 
-    console.log("Token data received");
+    console.log("Token data received", JSON.stringify(tokenData));
 
     if (!tokenData || !tokenData.access_token) {
-      return new Response("Failed to obtain access token", { status: 400 });
+      const detail = tokenData?.error_description || tokenData?.error || "unknown error";
+      return new Response(`Failed to obtain access token: ${detail}`, { status: 400 });
     }
 
     const appInstallId = await findAppInstallationId(tokenData.access_token);
@@ -149,6 +150,6 @@ async function findAppInstallationId(token) {
     );
   } catch (error) {
     console.error("Error checking app installation:", error);
-    return false;
+    return null;
   }
 }
