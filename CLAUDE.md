@@ -136,6 +136,29 @@ Notable production dependencies:
 
 ## Git Commit Conventions
 
+Use semantic commit messages with a type prefix:
+
+| Type | When to use |
+| --------- | -------------------------------------------- |
+| `feat` | New feature or user-visible capability |
+| `fix` | Bug fix |
+| `refactor` | Code restructuring with no behaviour change |
+| `chore` | Maintenance — deps, config, tooling, cleanup |
+| `docs` | Documentation only |
+| `style` | Formatting only (Prettier, whitespace, etc.) |
+| `test` | Test additions or changes |
+
+Format: `<type>(<optional scope>): <short description>`
+
+Examples:
+- `feat: add keyboard shortcut to save note`
+- `fix: prevent duplicate clone on fast navigation`
+- `chore(deps): bump vite from 6.3.4 to 6.3.5`
+- `refactor(atoms): split globals.ts into focused modules`
+
+Additional rules:
+- Keep the subject line under 72 characters
+- Use the imperative mood ("add", "fix", "remove" — not "added", "fixes")
 - Do not include links to claude.ai in commit messages or PR descriptions
 - Use only the `Co-authored-by: Claude <noreply@anthropic.com>` git trailer on AI-authored commits
 
