@@ -25,10 +25,7 @@ export async function onRequest(context) {
     const tokenData = await exchangeCode(code, context.env);
 
     if (!tokenData || !tokenData.access_token) {
-      return new Response(errorPage(baseUrl, "Failed to obtain access token", tokenData), {
-        status: 400,
-        headers: { "Content-Type": "text/html" },
-      });
+      return errorRedirect(baseUrl, tokenData?.error_description || tokenData?.error);
     }
 
     const appInstallId = await findAppInstallationId(tokenData.access_token);
@@ -56,10 +53,7 @@ export async function onRequest(context) {
     });
   } catch (error) {
     console.error("Error during GitHub OAuth flow:", error);
-    return new Response(errorPage(baseUrl, "Server error", { message: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "text/html" },
-    });
+    return errorRedirect(baseUrl, error.message);
   }
 }
 
@@ -157,24 +151,11 @@ async function findAppInstallationId(token) {
   }
 }
 
-function errorPage(baseUrl, title, detail) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}</title>
-<style>
-  body { font-family: system-ui, sans-serif; max-width: 480px; margin: 80px auto; padding: 0 16px; }
-  pre { background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto; }
-  a { display: inline-block; margin-top: 24px; padding: 10px 20px; background: #24292f; color: #fff; text-decoration: none; border-radius: 6px; }
-  a:hover { background: #32383f; }
-</style>
-</head>
-<body>
-<h1>${title}</h1>
-<pre>${JSON.stringify(detail, null, 2)}</pre>
-<a href="${baseUrl}">Log out and try again</a>
-</body>
-</html>`;
+function errorRedirect(baseUrl, detail) {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: `${baseUrl}/#auth_error=${encodeURIComponent(detail || "Unknown error")}`,
+    },
+  });
 }

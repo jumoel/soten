@@ -3,6 +3,7 @@ export {
   AppState,
   appStateAtom,
   AuthState,
+  authErrorAtom,
   authStateAtom,
   AppView,
   appViewAtom,
