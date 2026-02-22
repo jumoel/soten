@@ -26,6 +26,7 @@ handlers.ts directly calls `fetchUserRepos()`, `git.clone()`, `readRepoFiles()`,
 `handlers.ts` imports `{ dispatch, Event }` from `./events`. `events.ts` imports all handlers from `./handlers`. A naive `vi.mock('./events')` replaces the **entire** module — including the `Event` enum. Test assertions like `expect(dispatch).toHaveBeenCalledWith(Event.SelectRepo, ...)` would then fail because `Event` is `undefined`.
 
 **Solution:** Use a partial mock that preserves the real `Event` enum:
+
 ```ts
 vi.mock("./events", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./events")>();
@@ -44,10 +45,12 @@ vi.mock("./events", async (importOriginal) => {
 ### 6. Shared singleton store requires careful per-test cleanup
 
 The Jotai `store` and all atoms are module-level singletons — all tests in a file share the same instances. `atomWithStorage` atoms (`userAtom`, `selectedRepoAtom`) both read from and write to `localStorage`. Between tests, we must:
+
 1. Reset every atom to its default via `store.set()`
 2. Call `localStorage.clear()` **after** atom resets (because `store.set()` on `atomWithStorage` writes to localStorage)
 
 The specific atoms that need resetting in `beforeEach`:
+
 ```ts
 store.set(appStateAtom, AppState.Initializing);
 store.set(authStateAtom, AuthState.Unauthenticated);
@@ -73,6 +76,7 @@ localStorage.clear();
 Install `vitest` and `jsdom` as devDependencies. Vitest integrates natively with Vite (already used) and supports ESM, TypeScript, and `vi.mock()` out of the box. `jsdom` is required for the browser-like test environment (handlers use `window.location`, `localStorage`).
 
 **Changes:**
+
 - `npm install -D vitest jsdom`
 - Add `"test": "vitest run"` to `package.json` scripts
 - Add `/// <reference types="vitest" />` and a `test` config block to `vite.config.ts`:
@@ -89,6 +93,7 @@ Install `vitest` and `jsdom` as devDependencies. Vitest integrates natively with
 The file currently runs `await init()` and `window.addEventListener(...)` as top-level side effects. This makes it un-importable in tests.
 
 **Refactor:**
+
 - Export `parseOAuthHash`, `parseAuthError`, `init`, and `router` as named exports
 - Move the two side-effect lines (`window.addEventListener` + `await init()`) into a new `src/atoms/init.run.ts` that imports and calls them:
   ```ts
@@ -104,11 +109,13 @@ The file currently runs `await init()` and `window.addEventListener(...)` as top
 File: `src/atoms/handlers.test.ts`
 
 All test functions explicitly import from `'vitest'` — do NOT use Vitest globals. This avoids ESLint "no-undef" errors without any config changes:
+
 ```ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
 ```
 
 Mock boundaries (via `vi.mock()`):
+
 - `../lib/github` → mock `fetchUserRepos`
 - `../lib/git` → mock `clone`, `pull`, `isInitialized`
 - `../lib/fs` → mock `wipeFs`, `readRepoFiles`, `readFile`
@@ -144,6 +151,7 @@ File: `src/atoms/init.test.ts`
 Same conventions: explicit vitest imports, partial mock for `./events`, import from `./store` directly.
 
 Mock boundaries:
+
 - `../lib/github` → mock `fetchCurrentUser`
 - `./events` → partial mock (preserve `Event` enum, mock `dispatch`)
 - Set `window.location.hash` directly (jsdom supports this), spy on `window.history.replaceState`
@@ -196,6 +204,7 @@ Test through the exported `onRequest()` with mock context objects. Use `vi.spyOn
 ### Step 7: Add `test` to CI
 
 Update `.github/workflows/checks.yml`:
+
 - Add `test` to the matrix: `tool: [lint, types, style, build, test]`
 
 ### Step 8: Run all quality checks
@@ -206,25 +215,25 @@ Run `npm run lint`, `npm run types`, `npm run style`, `npm run build`, and `npm 
 
 ## Summary of production code changes
 
-| File | Change | Why |
-|---|---|---|
-| `src/atoms/init.ts` | Export `parseOAuthHash`, `parseAuthError`, `init`, `router`; remove the 2 side-effect lines at bottom | Make init logic importable without triggering it |
-| `src/atoms/init.run.ts` | **New file** — 3 lines: import + addEventListener + await init() | Preserve existing boot behavior |
-| `src/atoms/globals.ts` | Change `import "./init"` → `import "./init.run"` | Point to the new side-effect entry |
-| `package.json` | Add `vitest` + `jsdom` devDeps, add `test` script | Test infrastructure |
-| `vite.config.ts` | Add `test` config block with jsdom environment | Vitest environment config |
-| `.github/workflows/checks.yml` | Add `test` to matrix | CI |
+| File                           | Change                                                                                                | Why                                              |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `src/atoms/init.ts`            | Export `parseOAuthHash`, `parseAuthError`, `init`, `router`; remove the 2 side-effect lines at bottom | Make init logic importable without triggering it |
+| `src/atoms/init.run.ts`        | **New file** — 3 lines: import + addEventListener + await init()                                      | Preserve existing boot behavior                  |
+| `src/atoms/globals.ts`         | Change `import "./init"` → `import "./init.run"`                                                      | Point to the new side-effect entry               |
+| `package.json`                 | Add `vitest` + `jsdom` devDeps, add `test` script                                                     | Test infrastructure                              |
+| `vite.config.ts`               | Add `test` config block with jsdom environment                                                        | Vitest environment config                        |
+| `.github/workflows/checks.yml` | Add `test` to matrix                                                                                  | CI                                               |
 
 No changes to handlers.ts, events.ts, store.ts, git.ts, github.ts, or any component files.
 
 ## New test files
 
-| File | Tests | Env | Lines (est.) |
-|---|---|---|---|
-| `src/atoms/handlers.test.ts` | 18 cases | jsdom (default) | ~250 |
-| `src/atoms/init.test.ts` | 7 cases | jsdom (default) | ~120 |
-| `src/lib/github.test.ts` | 7 cases | jsdom (default) | ~100 |
-| `functions/api/gh-auth/callback.test.js` | 5 cases | node (override) | ~120 |
+| File                                     | Tests    | Env             | Lines (est.) |
+| ---------------------------------------- | -------- | --------------- | ------------ |
+| `src/atoms/handlers.test.ts`             | 18 cases | jsdom (default) | ~250         |
+| `src/atoms/init.test.ts`                 | 7 cases  | jsdom (default) | ~120         |
+| `src/lib/github.test.ts`                 | 7 cases  | jsdom (default) | ~100         |
+| `functions/api/gh-auth/callback.test.js` | 5 cases  | node (override) | ~120         |
 
 ## Key conventions for all test files
 

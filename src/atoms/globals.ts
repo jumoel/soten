@@ -17,4 +17,4 @@ export {
 
 export { Event, dispatch } from "./events";
 
-import "./init";
+import "./init.run";

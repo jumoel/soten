@@ -2,7 +2,7 @@ import { fetchCurrentUser } from "../lib/github";
 import { store, AppState, appStateAtom, authErrorAtom, userAtom } from "./store";
 import { dispatch, Event } from "./events";
 
-function parseOAuthHash(): {
+export function parseOAuthHash(): {
   username: string;
   token: string;
   installationId: string;
@@ -25,7 +25,7 @@ function parseOAuthHash(): {
   return null;
 }
 
-async function router() {
+export async function router() {
   const path = window.location.hash.substring(1);
 
   if (path === "/") {
@@ -35,7 +35,7 @@ async function router() {
   }
 }
 
-function parseAuthError(): string | null {
+export function parseAuthError(): string | null {
   if (!window.location.hash) {
     return null;
   }
@@ -44,7 +44,7 @@ function parseAuthError(): string | null {
   return params.get("auth_error");
 }
 
-async function init() {
+export async function init() {
   const authError = parseAuthError();
 
   if (authError) {
@@ -84,7 +84,3 @@ async function init() {
     await router();
   }
 }
-
-window.addEventListener("hashchange", router);
-
-await init();
