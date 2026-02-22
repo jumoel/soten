@@ -10,16 +10,22 @@ export async function onRequest(context) {
   console.log("Received gh-auth request", request.method, request.url, { code, state });
 
   if (!code) {
-    return new Response("No code provided", { status: 400 });
+    // No code — start a fresh OAuth flow (handles return from app installation)
+    const clientId = context.env.VITE_GH_CLIENT_ID;
+    const redirectUri = `${baseUrl}/api/gh-auth/callback`;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`,
+      },
+    });
   }
 
   try {
     const tokenData = await exchangeCode(code, context.env);
 
-    console.log("Token data received");
-
     if (!tokenData || !tokenData.access_token) {
-      return new Response("Failed to obtain access token", { status: 400 });
+      return errorRedirect(baseUrl, tokenData?.error_description || tokenData?.error);
     }
 
     const appInstallId = await findAppInstallationId(tokenData.access_token);
@@ -32,7 +38,7 @@ export async function onRequest(context) {
       return new Response(null, {
         status: 302,
         headers: {
-          Location: `https://github.com/apps/soten-notes/installations/new?state=app_installed&redirect_uri=${encodeURIComponent(`${baseUrl}/api/gh-auth/callback?code=${code}`)}`,
+          Location: `https://github.com/apps/soten-notes/installations/new?state=app_installed&redirect_uri=${encodeURIComponent(`${baseUrl}/api/gh-auth/callback`)}`,
         },
       });
     }
@@ -47,7 +53,7 @@ export async function onRequest(context) {
     });
   } catch (error) {
     console.error("Error during GitHub OAuth flow:", error);
-    return new Response("Server error", { status: 500 });
+    return errorRedirect(baseUrl, error.message);
   }
 }
 
@@ -141,6 +147,15 @@ async function findAppInstallationId(token) {
     );
   } catch (error) {
     console.error("Error checking app installation:", error);
-    return false;
+    return null;
   }
+}
+
+function errorRedirect(baseUrl, detail) {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: `${baseUrl}/#auth_error=${encodeURIComponent(detail || "Unknown error")}`,
+    },
+  });
 }

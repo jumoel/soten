@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tool: [lint, types, style, build]
+        tool: [lint, types, style, build, test]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

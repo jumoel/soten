@@ -6,15 +6,19 @@ import {
   AppView,
   appViewAtom,
   AuthState,
+  authErrorAtom,
   authStateAtom,
   currentPathAtom,
   dispatch,
   Event,
   filesAtom,
   repoFilenamesAtom,
+  reposAtom,
+  selectedRepoAtom,
   userAtom,
 } from "./atoms/globals";
 import { GitHubAuthButton } from "./components/GitHubAuthButton";
+import { RepoSelector } from "./components/RepoSelector";
 import { Suspense } from "react";
 
 function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
@@ -64,6 +68,12 @@ export function App() {
   const [repoFiles] = useAtom(repoFilenamesAtom);
   const [appView] = useAtom(appViewAtom);
   const [currentPath] = useAtom(currentPathAtom);
+  const [repos] = useAtom(reposAtom);
+  const [selectedRepo, setSelectedRepo] = useAtom(selectedRepoAtom);
+  const [authError, setAuthError] = useAtom(authErrorAtom);
+
+  const needsRepoSelection =
+    authState === AuthState.Authenticated && repos.length > 0 && !selectedRepo;
 
   return (
     <div className="w-screen h-screen antialiased">
@@ -74,9 +84,30 @@ export function App() {
               <h1 className="text-3xl">soten</h1>
               <h2>Notes written with markdown, backed by git.</h2>
 
+              {authError && (
+                <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
+                  <p className="text-red-800 font-medium">Login failed</p>
+                  <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">{authError}</pre>
+                  <button
+                    className="mt-3 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 text-sm"
+                    onClick={() => setAuthError(null)}
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
               {authState === AuthState.Authenticated && user ? (
                 <div className="my-4">
                   <p>Welcome, {user.username}!</p>
+                  {selectedRepo && (
+                    <p className="text-sm">
+                      {selectedRepo.owner}/{selectedRepo.repo}{" "}
+                      <button className="underline" onClick={() => setSelectedRepo(null)}>
+                        switch
+                      </button>
+                    </p>
+                  )}
                   <p>
                     <button onClick={() => dispatch(Event.Logout)}>Log out</button>
                   </p>
@@ -86,7 +117,9 @@ export function App() {
               )}
             </div>
 
-            {appView === AppView.Front && (
+            {needsRepoSelection && <RepoSelector />}
+
+            {!needsRepoSelection && appView === AppView.Front && (
               <ul className="font-mono">
                 {repoFiles.map((file) => (
                   <li key={file}>
@@ -96,7 +129,7 @@ export function App() {
               </ul>
             )}
 
-            {appView === AppView.Note && (
+            {!needsRepoSelection && appView === AppView.Note && (
               <>
                 <a href="#/">Frontpage</a>
                 <Suspense fallback={"Loading..."}>
