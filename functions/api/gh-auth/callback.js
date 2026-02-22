@@ -10,7 +10,15 @@ export async function onRequest(context) {
   console.log("Received gh-auth request", request.method, request.url, { code, state });
 
   if (!code) {
-    return new Response("No code provided", { status: 400 });
+    // No code — start a fresh OAuth flow (handles return from app installation)
+    const clientId = context.env.VITE_GH_CLIENT_ID;
+    const redirectUri = `${baseUrl}/api/gh-auth/callback`;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`,
+      },
+    });
   }
 
   try {
@@ -32,7 +40,7 @@ export async function onRequest(context) {
       return new Response(null, {
         status: 302,
         headers: {
-          Location: `https://github.com/apps/soten-notes/installations/new?state=app_installed&redirect_uri=${encodeURIComponent(`${baseUrl}/api/gh-auth/callback?code=${code}`)}`,
+          Location: `https://github.com/apps/soten-notes/installations/new?state=app_installed&redirect_uri=${encodeURIComponent(`${baseUrl}/api/gh-auth/callback`)}`,
         },
       });
     }
