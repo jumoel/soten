@@ -160,7 +160,7 @@ Additional rules:
 - Keep the subject line under 72 characters
 - Use the imperative mood ("add", "fix", "remove" — not "added", "fixes")
 - Do not include links to claude.ai in commit messages or PR descriptions
-- Use only the `Co-authored-by: Claude <noreply@anthropic.com>` git trailer on AI-authored commits
+- Use only the `Co-authored-by: Claude <noreply@anthropic.com>` git trailer on AI-authored commits (commit messages only — omit from PR descriptions)
 
 ## Pull Request Descriptions
 
