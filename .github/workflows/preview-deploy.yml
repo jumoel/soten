@@ -58,13 +58,17 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ steps.pr.outputs.head_sha }}
-          # Full history not needed; we just push this SHA to the preview branch.
+          # Check out the trusted base branch only — we never populate the working tree
+          # with PR code. The PR commit is fetched by its SHA and pushed directly.
+          ref: main
           fetch-depth: 1
 
-      - name: Push to preview branch
+      - name: Push PR commit to preview branch
+        env:
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
         run: |
-          git push origin HEAD:refs/heads/preview --force
+          git fetch origin "$HEAD_SHA"
+          git push origin "$HEAD_SHA:refs/heads/preview" --force
 
       - name: Wait for Cloudflare Pages deployment
         id: wait
