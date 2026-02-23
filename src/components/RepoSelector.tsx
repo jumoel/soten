@@ -1,10 +1,7 @@
-import { useAtom } from "jotai";
-import { reposAtom, dispatch, Event } from "../atoms/globals";
+import { send } from "../atoms/globals";
 import { t } from "../i18n";
 
-export function RepoSelector() {
-  const [repos] = useAtom(reposAtom);
-
+export function RepoSelector({ repos }: { repos: string[] }) {
   return (
     <div className="my-4">
       <p className="mb-2 font-semibold">{t("repo.selectRepository")}</p>
@@ -15,7 +12,7 @@ export function RepoSelector() {
             <li key={fullName} className="my-1">
               <button
                 className="px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-700 font-mono text-sm"
-                onClick={() => dispatch(Event.SelectRepo, { owner, repo })}
+                onClick={() => send({ type: "SELECT_REPO", repo: { owner, repo } })}
               >
                 {fullName}
               </button>
