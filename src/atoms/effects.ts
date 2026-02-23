@@ -1,12 +1,12 @@
 import { fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
 import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
-import type { AppMachineState, AppEvent, Files, Repo } from "./machine";
-import { store, cachedRepoAtom, type User } from "./store";
+import type { AppMachineState, AppEvent, ResolvedEvent, Files, Repo } from "./machine";
+import type { User } from "./store";
 
 type Send = (event: AppEvent) => Promise<void>;
 
-export async function runEffect(state: AppMachineState, event: AppEvent, send: Send) {
+export async function runEffect(state: AppMachineState, event: ResolvedEvent, send: Send) {
   switch (state.name) {
     case "fetchingRepos":
       await effectFetchRepos(state.user, send);
@@ -39,9 +39,7 @@ async function effectFetchRepos(user: User, send: Send) {
     return;
   }
 
-  const cachedRepo: Repo | null = store.get(cachedRepoAtom);
-
-  await send({ type: "REPOS_LOADED", repos, cachedRepo });
+  await send({ type: "REPOS_LOADED", repos });
 }
 
 async function effectLoadRepo(user: User, repo: Repo, send: Send) {

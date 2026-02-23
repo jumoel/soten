@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../lib/fs", () => ({
   wipeFs: vi.fn(),
@@ -16,7 +16,13 @@ vi.mock("../lib/github", () => ({
   fetchUserRepos: vi.fn(),
 }));
 
-import { transition, type AppMachineState } from "./machine";
+vi.mock("./effects", () => ({
+  runEffect: vi.fn(),
+}));
+
+import { transition, send, machineStateAtom, type AppMachineState } from "./machine";
+import { store, cachedUserAtom, cachedRepoAtom } from "./store";
+import { runEffect } from "./effects";
 
 const mockUser = {
   username: "testuser",
@@ -261,5 +267,112 @@ describe("transition", () => {
       const next = transition(state, { type: "SHOW_FRONT" });
       expect(next).toBe(state);
     });
+  });
+});
+
+describe("send", () => {
+  beforeEach(() => {
+    store.set(machineStateAtom, { name: "initializing" });
+    store.set(cachedUserAtom, null);
+    store.set(cachedRepoAtom, null);
+    localStorage.clear();
+    vi.mocked(runEffect).mockReset();
+  });
+
+  it("transitions state and calls runEffect", async () => {
+    await send({ type: "AUTHENTICATED", user: mockUser });
+
+    expect(store.get(machineStateAtom)).toEqual({ name: "fetchingRepos", user: mockUser });
+    expect(runEffect).toHaveBeenCalledOnce();
+  });
+
+  it("does not call runEffect for invalid transitions", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await send({ type: "SHOW_FRONT" });
+
+    expect(store.get(machineStateAtom)).toEqual({ name: "initializing" });
+    expect(runEffect).not.toHaveBeenCalled();
+  });
+
+  it("syncs cachedUserAtom on auth", async () => {
+    await send({ type: "AUTHENTICATED", user: mockUser });
+
+    expect(store.get(cachedUserAtom)).toEqual(mockUser);
+  });
+
+  it("clears cache on logout", async () => {
+    store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
+    store.set(cachedUserAtom, mockUser);
+    store.set(cachedRepoAtom, { owner: "acme", repo: "notes" });
+
+    await send({ type: "LOGOUT" });
+
+    expect(store.get(cachedUserAtom)).toBeNull();
+    expect(store.get(cachedRepoAtom)).toBeNull();
+  });
+
+  it("enriches REPOS_LOADED with cachedRepo from store", async () => {
+    store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
+    store.set(cachedRepoAtom, { owner: "acme", repo: "notes" });
+
+    await send({ type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] });
+
+    const state = store.get(machineStateAtom);
+    expect(state).toEqual({
+      name: "loadingRepo",
+      user: mockUser,
+      repo: { owner: "acme", repo: "notes" },
+      repos: ["acme/notes", "acme/wiki"],
+    });
+  });
+
+  it("processes queued events sequentially", async () => {
+    const order: string[] = [];
+
+    vi.mocked(runEffect).mockImplementation(async (...args) => {
+      order.push(`effect:${args[0].name}`);
+      if (args[0].name === "fetchingRepos") {
+        await args[2]({ type: "REPOS_LOADED", repos: ["acme/notes"] });
+      }
+    });
+
+    await send({ type: "AUTHENTICATED", user: mockUser });
+
+    expect(order).toEqual(["effect:fetchingRepos", "effect:loadingRepo"]);
+    expect(store.get(machineStateAtom)).toEqual({
+      name: "loadingRepo",
+      user: mockUser,
+      repo: { owner: "acme", repo: "notes" },
+      repos: ["acme/notes"],
+    });
+  });
+
+  it("queued events see fresh state, not stale state", async () => {
+    const statesSeenByEffect: string[] = [];
+
+    vi.mocked(runEffect).mockImplementation(async (state) => {
+      statesSeenByEffect.push(state.name);
+    });
+
+    store.set(machineStateAtom, {
+      name: "ready",
+      user: mockUser,
+      repo: { owner: "acme", repo: "notes" },
+      repos: ["acme/notes"],
+      filenames: [],
+      files: {},
+      view: { name: "front" },
+    });
+
+    await send({ type: "SHOW_NOTE", path: "/a.md" });
+    await send({ type: "SHOW_FRONT" });
+
+    expect(statesSeenByEffect).toEqual(["ready", "ready"]);
+
+    const finalState = store.get(machineStateAtom);
+    expect(finalState.name).toBe("ready");
+    if (finalState.name === "ready") {
+      expect(finalState.view).toEqual({ name: "front" });
+    }
   });
 });

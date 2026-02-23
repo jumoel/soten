@@ -34,7 +34,7 @@ export type AppEvent =
   | { type: "AUTHENTICATED"; user: User }
   | { type: "AUTH_ERROR"; message: string }
   | { type: "NO_AUTH" }
-  | { type: "REPOS_LOADED"; repos: string[]; cachedRepo: Repo | null }
+  | { type: "REPOS_LOADED"; repos: string[] }
   | { type: "FETCH_ERROR"; message: string }
   | { type: "SELECT_REPO"; repo: Repo }
   | { type: "REPO_READY"; filenames: string[]; files: Files }
@@ -44,7 +44,11 @@ export type AppEvent =
   | { type: "SWITCH_REPO" }
   | { type: "LOGOUT" };
 
-export function transition(state: AppMachineState, event: AppEvent): AppMachineState {
+export type ResolvedEvent =
+  | Exclude<AppEvent, { type: "REPOS_LOADED" }>
+  | { type: "REPOS_LOADED"; repos: string[]; cachedRepo: Repo | null };
+
+export function transition(state: AppMachineState, event: ResolvedEvent): AppMachineState {
   switch (state.name) {
     case "initializing":
       switch (event.type) {
@@ -161,6 +165,12 @@ function repoFromState(state: AppMachineState): Repo | null {
 }
 
 function syncCache(prev: AppMachineState, next: AppMachineState) {
+  if (next.name === "unauthenticated" || next.name === "initializing") {
+    store.set(cachedUserAtom, null);
+    store.set(cachedRepoAtom, null);
+    return;
+  }
+
   const prevUser = userFromState(prev);
   const nextUser = userFromState(next);
   if (prevUser !== nextUser) {
@@ -174,15 +184,35 @@ function syncCache(prev: AppMachineState, next: AppMachineState) {
   }
 }
 
+function resolve(event: AppEvent): ResolvedEvent {
+  if (event.type === "REPOS_LOADED") {
+    return { ...event, cachedRepo: store.get(cachedRepoAtom) };
+  }
+  return event;
+}
+
+const queue: AppEvent[] = [];
+let draining = false;
+
 export async function send(event: AppEvent) {
-  const current = store.get(machineStateAtom);
-  const next = transition(current, event);
+  queue.push(event);
+  if (draining) return;
+  draining = true;
 
-  console.log("send", event.type, { from: current.name, to: next.name, event });
+  while (queue.length > 0) {
+    const e = queue.shift()!;
+    const resolved = resolve(e);
+    const current = store.get(machineStateAtom);
+    const next = transition(current, resolved);
 
-  if (next === current) return;
+    console.log("send", e.type, { from: current.name, to: next.name, event: e });
 
-  store.set(machineStateAtom, next);
-  syncCache(current, next);
-  await runEffect(next, event, send);
+    if (next !== current) {
+      store.set(machineStateAtom, next);
+      syncCache(current, next);
+      await runEffect(next, resolved, send);
+    }
+  }
+
+  draining = false;
 }
