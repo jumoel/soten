@@ -3,7 +3,7 @@ import { renderMarkdown } from "./markdown";
 import { machineStateAtom, send, type AppMachineState, type Files } from "./atoms/globals";
 import { GitHubAuthButton } from "./components/GitHubAuthButton";
 import { RepoSelector } from "./components/RepoSelector";
-import { Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 
 function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
   const keys = Object.entries(data ?? {});
@@ -31,7 +31,7 @@ function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
 async function Note({ path, files }: { path: string; files: Files }) {
   const file = files[path];
 
-  if (file.type !== "text") {
+  if (!file || file.type !== "text") {
     return null;
   }
 
@@ -41,6 +41,14 @@ async function Note({ path, files }: { path: string; files: Files }) {
       <Frontmatter data={md.frontmatter} />
       <div className="prose" dangerouslySetInnerHTML={{ __html: md.html }} />
     </>
+  );
+}
+
+function Layout({ children }: { children: ReactNode }) {
+  return (
+    <div className="w-screen h-screen antialiased">
+      <div className="max-w-sm m-auto">{children}</div>
+    </div>
   );
 }
 
@@ -106,91 +114,77 @@ export function App() {
   switch (state.name) {
     case "initializing":
       return (
-        <div className="w-screen h-screen antialiased">
-          <div className="max-w-sm m-auto">
-            <div>Initializing...</div>
-          </div>
-        </div>
+        <Layout>
+          <div>Initializing...</div>
+        </Layout>
       );
 
     case "unauthenticated":
       return (
-        <div className="w-screen h-screen antialiased">
-          <div className="max-w-sm m-auto">
-            <div className="text-center">
-              <h1 className="text-3xl">soten</h1>
-              <h2>Notes written with markdown, backed by git.</h2>
-              {state.authError && (
-                <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
-                  <p className="text-red-800 font-medium">Login failed</p>
-                  <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">
-                    {state.authError}
-                  </pre>
-                </div>
-              )}
-              <GitHubAuthButton />
-            </div>
+        <Layout>
+          <div className="text-center">
+            <h1 className="text-3xl">soten</h1>
+            <h2>Notes written with markdown, backed by git.</h2>
+            {state.authError && (
+              <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
+                <p className="text-red-800 font-medium">Login failed</p>
+                <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">
+                  {state.authError}
+                </pre>
+              </div>
+            )}
+            <GitHubAuthButton />
           </div>
-        </div>
+        </Layout>
       );
 
     case "fetchingRepos":
       return (
-        <div className="w-screen h-screen antialiased">
-          <div className="max-w-sm m-auto">
-            <Header user={state.user} />
-            <p>Loading repositories...</p>
-          </div>
-        </div>
+        <Layout>
+          <Header user={state.user} />
+          <p>Loading repositories...</p>
+        </Layout>
       );
 
     case "selectingRepo":
       return (
-        <div className="w-screen h-screen antialiased">
-          <div className="max-w-sm m-auto">
-            <Header user={state.user} />
-            <RepoSelector repos={state.repos} />
-          </div>
-        </div>
+        <Layout>
+          <Header user={state.user} />
+          <RepoSelector repos={state.repos} />
+        </Layout>
       );
 
     case "loadingRepo":
       return (
-        <div className="w-screen h-screen antialiased">
-          <div className="max-w-sm m-auto">
-            <Header user={state.user} repo={state.repo} />
-            <p>
-              Loading {state.repo.owner}/{state.repo.repo}...
-            </p>
-          </div>
-        </div>
+        <Layout>
+          <Header user={state.user} repo={state.repo} />
+          <p>
+            Loading {state.repo.owner}/{state.repo.repo}...
+          </p>
+        </Layout>
       );
 
     case "ready":
       return (
-        <div className="w-screen h-screen antialiased">
-          <div className="max-w-sm m-auto">
-            <Header
-              user={state.user}
-              repo={state.repo}
-              onSwitchRepo={() => send({ type: "SWITCH_REPO" })}
-            />
-            <ReadyView state={state} />
-          </div>
-        </div>
+        <Layout>
+          <Header
+            user={state.user}
+            repo={state.repo}
+            onSwitchRepo={() => send({ type: "SWITCH_REPO" })}
+          />
+          <ReadyView state={state} />
+        </Layout>
       );
 
     case "error":
       return (
-        <div className="w-screen h-screen antialiased">
-          <div className="max-w-sm m-auto">
-            <Header user={state.user} />
-            <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
-              <p className="text-red-800 font-medium">Error</p>
-              <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">{state.message}</pre>
-            </div>
+        <Layout>
+          <Header user={state.user} />
+          <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
+            <p className="text-red-800 font-medium">Error</p>
+            <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">{state.message}</pre>
           </div>
-        </div>
+        </Layout>
       );
   }
 }

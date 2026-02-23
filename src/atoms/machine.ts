@@ -152,6 +152,28 @@ export function transition(state: AppMachineState, event: AppEvent): AppMachineS
 
 export const machineStateAtom = atom<AppMachineState>({ name: "initializing" });
 
+function userFromState(state: AppMachineState): User | null {
+  return "user" in state ? state.user : null;
+}
+
+function repoFromState(state: AppMachineState): Repo | null {
+  return "repo" in state ? state.repo : null;
+}
+
+function syncCache(prev: AppMachineState, next: AppMachineState) {
+  const prevUser = userFromState(prev);
+  const nextUser = userFromState(next);
+  if (prevUser !== nextUser) {
+    store.set(cachedUserAtom, nextUser);
+  }
+
+  const prevRepo = repoFromState(prev);
+  const nextRepo = repoFromState(next);
+  if (prevRepo !== nextRepo) {
+    store.set(cachedRepoAtom, nextRepo);
+  }
+}
+
 export async function send(event: AppEvent) {
   const current = store.get(machineStateAtom);
   const next = transition(current, event);
@@ -161,23 +183,6 @@ export async function send(event: AppEvent) {
   if (next === current) return;
 
   store.set(machineStateAtom, next);
-
-  if (event.type === "AUTHENTICATED") {
-    store.set(cachedUserAtom, event.user);
-  }
-
-  if (event.type === "LOGOUT") {
-    store.set(cachedUserAtom, null);
-    store.set(cachedRepoAtom, null);
-  }
-
-  if (
-    event.type === "SELECT_REPO" ||
-    (event.type === "REPOS_LOADED" && next.name === "loadingRepo")
-  ) {
-    const repo = next.name === "loadingRepo" ? next.repo : null;
-    if (repo) store.set(cachedRepoAtom, repo);
-  }
-
+  syncCache(current, next);
   await runEffect(next, event, send);
 }
