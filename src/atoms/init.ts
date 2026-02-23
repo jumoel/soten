@@ -1,6 +1,6 @@
 import { fetchCurrentUser } from "../lib/github";
-import { store, AppState, appStateAtom, authErrorAtom, userAtom } from "./store";
-import { dispatch, Event } from "./events";
+import { store, cachedUserAtom } from "./store";
+import { send } from "./machine";
 
 export function parseOAuthHash(): {
   username: string;
@@ -29,9 +29,9 @@ export async function router() {
   const path = window.location.hash.substring(1);
 
   if (path === "/") {
-    await dispatch(Event.ShowFront);
+    await send({ type: "SHOW_FRONT" });
   } else {
-    await dispatch(Event.ShowNote, { path });
+    await send({ type: "SHOW_NOTE", path });
   }
 }
 
@@ -48,37 +48,33 @@ export async function init() {
   const authError = parseAuthError();
 
   if (authError) {
-    store.set(authErrorAtom, authError);
+    await send({ type: "AUTH_ERROR", message: authError });
     window.history.replaceState(null, "", window.location.pathname);
-    store.set(appStateAtom, AppState.Initialized);
     return;
   }
 
   const oauthParams = parseOAuthHash();
 
   if (oauthParams) {
-    await dispatch(Event.Authenticated, oauthParams);
+    await send({ type: "AUTHENTICATED", user: oauthParams });
     window.history.replaceState(null, "", window.location.pathname);
-    store.set(appStateAtom, AppState.Initialized);
     return;
   }
 
-  const user = store.get(userAtom);
+  const user = store.get(cachedUserAtom);
   const token = user?.token;
 
   if (token) {
     const currentUser = await fetchCurrentUser(token);
 
     if (currentUser?.login) {
-      await dispatch(Event.Authenticated, user);
+      await send({ type: "AUTHENTICATED", user });
     } else {
-      await dispatch(Event.Logout);
+      await send({ type: "NO_AUTH" });
     }
   } else {
-    await dispatch(Event.Logout);
+    await send({ type: "NO_AUTH" });
   }
-
-  store.set(appStateAtom, AppState.Initialized);
 
   if (window.location.hash) {
     await router();

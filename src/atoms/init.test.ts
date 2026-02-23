@@ -4,24 +4,13 @@ vi.mock("../lib/github", () => ({
   fetchCurrentUser: vi.fn(),
 }));
 
-vi.mock("./events", () => ({
-  Event: {
-    Authenticated: "Authenticated",
-    Logout: "Logout",
-    FetchAndSelectRepos: "FetchAndSelectRepos",
-    FetchRepoFiles: "FetchRepoFiles",
-    ReadRepoFilesContent: "ReadRepoFilesContent",
-    Error: "Error",
-    ShowNote: "ShowNote",
-    SelectRepo: "SelectRepo",
-    ShowFront: "ShowFront",
-  },
-  dispatch: vi.fn(),
+vi.mock("./machine", () => ({
+  send: vi.fn(),
 }));
 
 import { fetchCurrentUser } from "../lib/github";
-import { dispatch, Event } from "./events";
-import { store, AppState, appStateAtom, authErrorAtom, userAtom } from "./store";
+import { send } from "./machine";
+import { store, cachedUserAtom } from "./store";
 import { parseAuthError, parseOAuthHash, init } from "./init";
 
 const mockUser = {
@@ -32,9 +21,7 @@ const mockUser = {
 };
 
 beforeEach(() => {
-  store.set(appStateAtom, AppState.Initializing);
-  store.set(authErrorAtom, null);
-  store.set(userAtom, null);
+  store.set(cachedUserAtom, null);
   localStorage.clear();
   window.location.hash = "";
 });
@@ -110,10 +97,8 @@ describe("init", () => {
 
     await init();
 
-    expect(store.get(authErrorAtom)).toBe("bad_token");
+    expect(send).toHaveBeenCalledWith({ type: "AUTH_ERROR", message: "bad_token" });
     expect(replaceState).toHaveBeenCalledWith(null, "", window.location.pathname);
-    expect(store.get(appStateAtom)).toBe(AppState.Initialized);
-    expect(dispatch).not.toHaveBeenCalled();
   });
 
   it("handles OAuth params in hash", async () => {
@@ -123,63 +108,62 @@ describe("init", () => {
 
     await init();
 
-    expect(dispatch).toHaveBeenCalledWith(Event.Authenticated, {
-      username: "testuser",
-      token: "tok_123",
-      installationId: "inst_456",
-      email: "test@example.com",
+    expect(send).toHaveBeenCalledWith({
+      type: "AUTHENTICATED",
+      user: {
+        username: "testuser",
+        token: "tok_123",
+        installationId: "inst_456",
+        email: "test@example.com",
+      },
     });
     expect(replaceState).toHaveBeenCalledWith(null, "", window.location.pathname);
-    expect(store.get(appStateAtom)).toBe(AppState.Initialized);
   });
 
   it("re-authenticates returning user with valid token", async () => {
-    store.set(userAtom, mockUser);
+    store.set(cachedUserAtom, mockUser);
     vi.mocked(fetchCurrentUser).mockResolvedValue({ login: "testuser" });
 
     await init();
 
     expect(fetchCurrentUser).toHaveBeenCalledWith("tok_123");
-    expect(dispatch).toHaveBeenCalledWith(Event.Authenticated, mockUser);
-    expect(store.get(appStateAtom)).toBe(AppState.Initialized);
+    expect(send).toHaveBeenCalledWith({ type: "AUTHENTICATED", user: mockUser });
   });
 
-  it("logs out returning user with expired token", async () => {
-    store.set(userAtom, mockUser);
+  it("sends NO_AUTH for returning user with expired token", async () => {
+    store.set(cachedUserAtom, mockUser);
     vi.mocked(fetchCurrentUser).mockResolvedValue(null);
 
     await init();
 
     expect(fetchCurrentUser).toHaveBeenCalledWith("tok_123");
-    expect(dispatch).toHaveBeenCalledWith(Event.Logout);
-    expect(store.get(appStateAtom)).toBe(AppState.Initialized);
+    expect(send).toHaveBeenCalledWith({ type: "NO_AUTH" });
   });
 
-  it("logs out when no cached user", async () => {
+  it("sends NO_AUTH when no cached user", async () => {
     await init();
 
-    expect(dispatch).toHaveBeenCalledWith(Event.Logout);
-    expect(store.get(appStateAtom)).toBe(AppState.Initialized);
+    expect(send).toHaveBeenCalledWith({ type: "NO_AUTH" });
   });
 
   it("routes after authentication when hash is present", async () => {
-    store.set(userAtom, mockUser);
+    store.set(cachedUserAtom, mockUser);
     vi.mocked(fetchCurrentUser).mockResolvedValue({ login: "testuser" });
     window.location.hash = "#/some/note.md";
 
     await init();
 
-    expect(dispatch).toHaveBeenCalledWith(Event.Authenticated, mockUser);
-    expect(dispatch).toHaveBeenCalledWith(Event.ShowNote, { path: "/some/note.md" });
+    expect(send).toHaveBeenCalledWith({ type: "AUTHENTICATED", user: mockUser });
+    expect(send).toHaveBeenCalledWith({ type: "SHOW_NOTE", path: "/some/note.md" });
   });
 
   it("routes to front when hash is #/", async () => {
-    store.set(userAtom, mockUser);
+    store.set(cachedUserAtom, mockUser);
     vi.mocked(fetchCurrentUser).mockResolvedValue({ login: "testuser" });
     window.location.hash = "#/";
 
     await init();
 
-    expect(dispatch).toHaveBeenCalledWith(Event.ShowFront);
+    expect(send).toHaveBeenCalledWith({ type: "SHOW_FRONT" });
   });
 });
