@@ -11,12 +11,13 @@ export async function runEffect(state: AppMachineState, event: AppEvent, send: S
     case "fetchingRepos":
       await effectFetchRepos(state.user, send);
       break;
-    case "loadingRepo":
-      if (event.type === "SELECT_REPO") {
-        wipeFs();
-      }
+    case "loadingRepo": {
+      const shouldWipe =
+        event.type === "SELECT_REPO" || (event.type === "REPOS_LOADED" && !event.cachedRepo);
+      if (shouldWipe) wipeFs();
       await effectLoadRepo(state.user, state.repo, send);
       break;
+    }
     case "unauthenticated":
       if (event.type === "LOGOUT") {
         wipeFs();
