@@ -42,13 +42,16 @@ export type AppEvent =
   | { type: "SHOW_NOTE"; path: string }
   | { type: "SHOW_FRONT" }
   | { type: "SWITCH_REPO" }
+  | { type: "RETRY" }
   | { type: "LOGOUT" };
 
-export type ResolvedEvent =
-  | Exclude<AppEvent, { type: "REPOS_LOADED" }>
-  | { type: "REPOS_LOADED"; repos: string[]; cachedRepo: Repo | null };
+export type TransitionContext = { cachedRepo: Repo | null };
 
-export function transition(state: AppMachineState, event: ResolvedEvent): AppMachineState {
+export function transition(
+  state: AppMachineState,
+  event: AppEvent,
+  ctx: TransitionContext,
+): AppMachineState {
   switch (state.name) {
     case "initializing":
       switch (event.type) {
@@ -75,7 +78,8 @@ export function transition(state: AppMachineState, event: ResolvedEvent): AppMac
     case "fetchingRepos":
       switch (event.type) {
         case "REPOS_LOADED": {
-          const { repos, cachedRepo } = event;
+          const { repos } = event;
+          const { cachedRepo } = ctx;
           if (cachedRepo && repos.includes(`${cachedRepo.owner}/${cachedRepo.repo}`)) {
             return { name: "loadingRepo", user: state.user, repo: cachedRepo, repos };
           }
@@ -145,6 +149,8 @@ export function transition(state: AppMachineState, event: ResolvedEvent): AppMac
 
     case "error":
       switch (event.type) {
+        case "RETRY":
+          return { name: "fetchingRepos", user: state.user };
         case "LOGOUT":
           return { name: "unauthenticated", authError: null };
         default:
@@ -157,11 +163,23 @@ export function transition(state: AppMachineState, event: ResolvedEvent): AppMac
 export const machineStateAtom = atom<AppMachineState>({ name: "initializing" });
 
 function userFromState(state: AppMachineState): User | null {
-  return "user" in state ? state.user : null;
+  switch (state.name) {
+    case "initializing":
+    case "unauthenticated":
+      return null;
+    default:
+      return state.user;
+  }
 }
 
 function repoFromState(state: AppMachineState): Repo | null {
-  return "repo" in state ? state.repo : null;
+  switch (state.name) {
+    case "loadingRepo":
+    case "ready":
+      return state.repo;
+    default:
+      return null;
+  }
 }
 
 function syncCache(prev: AppMachineState, next: AppMachineState) {
@@ -184,35 +202,36 @@ function syncCache(prev: AppMachineState, next: AppMachineState) {
   }
 }
 
-function resolve(event: AppEvent): ResolvedEvent {
-  if (event.type === "REPOS_LOADED") {
-    return { ...event, cachedRepo: store.get(cachedRepoAtom) };
-  }
-  return event;
-}
-
 const queue: AppEvent[] = [];
 let draining = false;
 
+// Pipeline: for each queued event:
+//   1. Build context (read cached repo from storage atoms)
+//   2. Compute next state via transition() — pure, no side effects
+//   3. Write next state to machineStateAtom
+//   4. Sync localStorage cache (cachedUserAtom, cachedRepoAtom)
+//   5. Run async effects (API calls, git ops) which may send() new events
 export async function send(event: AppEvent) {
   queue.push(event);
   if (draining) return;
   draining = true;
 
-  while (queue.length > 0) {
-    const e = queue.shift()!;
-    const resolved = resolve(e);
-    const current = store.get(machineStateAtom);
-    const next = transition(current, resolved);
+  try {
+    while (queue.length > 0) {
+      const e = queue.shift()!;
+      const ctx: TransitionContext = { cachedRepo: store.get(cachedRepoAtom) };
+      const current = store.get(machineStateAtom);
+      const next = transition(current, e, ctx);
 
-    console.log("send", e.type, { from: current.name, to: next.name, event: e });
+      console.log("send", e.type, { from: current.name, to: next.name, event: e });
 
-    if (next !== current) {
-      store.set(machineStateAtom, next);
-      syncCache(current, next);
-      await runEffect(next, resolved, send);
+      if (next !== current) {
+        store.set(machineStateAtom, next);
+        syncCache(current, next);
+        await runEffect(next, e, ctx, send);
+      }
     }
+  } finally {
+    draining = false;
   }
-
-  draining = false;
 }
