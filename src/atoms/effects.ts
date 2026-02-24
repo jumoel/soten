@@ -1,19 +1,24 @@
 import { fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
 import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
-import type { AppMachineState, AppEvent, ResolvedEvent, Files, Repo } from "./machine";
+import type { AppMachineState, AppEvent, TransitionContext, Files, Repo } from "./machine";
 import type { User } from "./store";
 
 type Send = (event: AppEvent) => Promise<void>;
 
-export async function runEffect(state: AppMachineState, event: ResolvedEvent, send: Send) {
+export async function runEffect(
+  state: AppMachineState,
+  event: AppEvent,
+  ctx: TransitionContext,
+  send: Send,
+) {
   switch (state.name) {
     case "fetchingRepos":
       await effectFetchRepos(state.user, send);
       break;
     case "loadingRepo": {
       const shouldWipe =
-        event.type === "SELECT_REPO" || (event.type === "REPOS_LOADED" && !event.cachedRepo);
+        event.type === "SELECT_REPO" || (event.type === "REPOS_LOADED" && !ctx.cachedRepo);
       if (shouldWipe) wipeFs();
       await effectLoadRepo(state.user, state.repo, send);
       break;
@@ -27,19 +32,24 @@ export async function runEffect(state: AppMachineState, event: ResolvedEvent, se
 }
 
 async function effectFetchRepos(user: User, send: Send) {
-  const repos = await fetchUserRepos(user.installationId, user.token);
+  try {
+    const repos = await fetchUserRepos(user.installationId, user.token);
 
-  if (!repos) {
-    await send({ type: "FETCH_ERROR", message: "Failed to fetch repos" });
-    return;
+    if (!repos) {
+      await send({ type: "FETCH_ERROR", message: "Failed to fetch repos" });
+      return;
+    }
+
+    if (repos.length === 0) {
+      await send({ type: "FETCH_ERROR", message: "No repos found" });
+      return;
+    }
+
+    await send({ type: "REPOS_LOADED", repos });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to fetch repos";
+    await send({ type: "FETCH_ERROR", message });
   }
-
-  if (repos.length === 0) {
-    await send({ type: "FETCH_ERROR", message: "No repos found" });
-    return;
-  }
-
-  await send({ type: "REPOS_LOADED", repos });
 }
 
 async function effectLoadRepo(user: User, repo: Repo, send: Send) {
