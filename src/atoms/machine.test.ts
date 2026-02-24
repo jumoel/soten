@@ -20,7 +20,13 @@ vi.mock("./effects", () => ({
   runEffect: vi.fn(),
 }));
 
-import { transition, send, machineStateAtom, type AppMachineState } from "./machine";
+import {
+  transition,
+  send,
+  machineStateAtom,
+  type AppMachineState,
+  type TransitionContext,
+} from "./machine";
 import { store, cachedUserAtom, cachedRepoAtom } from "./store";
 import { runEffect } from "./effects";
 
@@ -31,28 +37,30 @@ const mockUser = {
   email: "test@example.com",
 };
 
+const noCache: TransitionContext = { cachedRepo: null };
+
 describe("transition", () => {
   describe("initializing", () => {
     const state: AppMachineState = { name: "initializing" };
 
     it("AUTHENTICATED → fetchingRepos", () => {
-      const next = transition(state, { type: "AUTHENTICATED", user: mockUser });
+      const next = transition(state, { type: "AUTHENTICATED", user: mockUser }, noCache);
       expect(next).toEqual({ name: "fetchingRepos", user: mockUser });
     });
 
     it("AUTH_ERROR → unauthenticated with error", () => {
-      const next = transition(state, { type: "AUTH_ERROR", message: "bad_token" });
+      const next = transition(state, { type: "AUTH_ERROR", message: "bad_token" }, noCache);
       expect(next).toEqual({ name: "unauthenticated", authError: "bad_token" });
     });
 
     it("NO_AUTH → unauthenticated", () => {
-      const next = transition(state, { type: "NO_AUTH" });
+      const next = transition(state, { type: "NO_AUTH" }, noCache);
       expect(next).toEqual({ name: "unauthenticated", authError: null });
     });
 
     it("invalid event returns same state", () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SHOW_FRONT" });
+      const next = transition(state, { type: "SHOW_FRONT" }, noCache);
       expect(next).toBe(state);
     });
   });
@@ -61,13 +69,13 @@ describe("transition", () => {
     const state: AppMachineState = { name: "unauthenticated", authError: null };
 
     it("AUTHENTICATED → fetchingRepos", () => {
-      const next = transition(state, { type: "AUTHENTICATED", user: mockUser });
+      const next = transition(state, { type: "AUTHENTICATED", user: mockUser }, noCache);
       expect(next).toEqual({ name: "fetchingRepos", user: mockUser });
     });
 
     it("invalid event returns same state", () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SHOW_FRONT" });
+      const next = transition(state, { type: "SHOW_FRONT" }, noCache);
       expect(next).toBe(state);
     });
   });
@@ -77,11 +85,11 @@ describe("transition", () => {
 
     it("REPOS_LOADED with cached repo → loadingRepo", () => {
       const cachedRepo = { owner: "acme", repo: "notes" };
-      const next = transition(state, {
-        type: "REPOS_LOADED",
-        repos: ["acme/notes", "acme/wiki"],
-        cachedRepo,
-      });
+      const next = transition(
+        state,
+        { type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] },
+        { cachedRepo },
+      );
       expect(next).toEqual({
         name: "loadingRepo",
         user: mockUser,
@@ -91,11 +99,7 @@ describe("transition", () => {
     });
 
     it("REPOS_LOADED with single repo → loadingRepo", () => {
-      const next = transition(state, {
-        type: "REPOS_LOADED",
-        repos: ["acme/notes"],
-        cachedRepo: null,
-      });
+      const next = transition(state, { type: "REPOS_LOADED", repos: ["acme/notes"] }, noCache);
       expect(next).toEqual({
         name: "loadingRepo",
         user: mockUser,
@@ -105,11 +109,11 @@ describe("transition", () => {
     });
 
     it("REPOS_LOADED with multiple repos and no cache → selectingRepo", () => {
-      const next = transition(state, {
-        type: "REPOS_LOADED",
-        repos: ["acme/notes", "acme/wiki"],
-        cachedRepo: null,
-      });
+      const next = transition(
+        state,
+        { type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] },
+        noCache,
+      );
       expect(next).toEqual({
         name: "selectingRepo",
         user: mockUser,
@@ -118,11 +122,11 @@ describe("transition", () => {
     });
 
     it("REPOS_LOADED with stale cached repo → selectingRepo", () => {
-      const next = transition(state, {
-        type: "REPOS_LOADED",
-        repos: ["acme/notes", "acme/wiki"],
-        cachedRepo: { owner: "acme", repo: "old" },
-      });
+      const next = transition(
+        state,
+        { type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] },
+        { cachedRepo: { owner: "acme", repo: "old" } },
+      );
       expect(next).toEqual({
         name: "selectingRepo",
         user: mockUser,
@@ -131,12 +135,16 @@ describe("transition", () => {
     });
 
     it("FETCH_ERROR → error", () => {
-      const next = transition(state, { type: "FETCH_ERROR", message: "Failed to fetch repos" });
+      const next = transition(
+        state,
+        { type: "FETCH_ERROR", message: "Failed to fetch repos" },
+        noCache,
+      );
       expect(next).toEqual({ name: "error", user: mockUser, message: "Failed to fetch repos" });
     });
 
     it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" });
+      const next = transition(state, { type: "LOGOUT" }, noCache);
       expect(next).toEqual({ name: "unauthenticated", authError: null });
     });
   });
@@ -150,7 +158,7 @@ describe("transition", () => {
 
     it("SELECT_REPO → loadingRepo", () => {
       const repo = { owner: "acme", repo: "notes" };
-      const next = transition(state, { type: "SELECT_REPO", repo });
+      const next = transition(state, { type: "SELECT_REPO", repo }, noCache);
       expect(next).toEqual({
         name: "loadingRepo",
         user: mockUser,
@@ -160,7 +168,7 @@ describe("transition", () => {
     });
 
     it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" });
+      const next = transition(state, { type: "LOGOUT" }, noCache);
       expect(next).toEqual({ name: "unauthenticated", authError: null });
     });
   });
@@ -175,11 +183,11 @@ describe("transition", () => {
 
     it("REPO_READY → ready with front view", () => {
       const files = { "/soten/a.md": { type: "text" as const, content: "# A" } };
-      const next = transition(state, {
-        type: "REPO_READY",
-        filenames: ["/soten/a.md"],
-        files,
-      });
+      const next = transition(
+        state,
+        { type: "REPO_READY", filenames: ["/soten/a.md"], files },
+        noCache,
+      );
       expect(next).toEqual({
         name: "ready",
         user: mockUser,
@@ -192,12 +200,12 @@ describe("transition", () => {
     });
 
     it("LOAD_ERROR → error", () => {
-      const next = transition(state, { type: "LOAD_ERROR", message: "clone failed" });
+      const next = transition(state, { type: "LOAD_ERROR", message: "clone failed" }, noCache);
       expect(next).toEqual({ name: "error", user: mockUser, message: "clone failed" });
     });
 
     it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" });
+      const next = transition(state, { type: "LOGOUT" }, noCache);
       expect(next).toEqual({ name: "unauthenticated", authError: null });
     });
   });
@@ -214,19 +222,19 @@ describe("transition", () => {
     };
 
     it("SHOW_NOTE → ready with note view", () => {
-      const next = transition(state, { type: "SHOW_NOTE", path: "/soten/a.md" });
+      const next = transition(state, { type: "SHOW_NOTE", path: "/soten/a.md" }, noCache);
       expect(next).toEqual({ ...state, view: { name: "note", path: "/soten/a.md" } });
     });
 
     it("SHOW_FRONT → ready with front view", () => {
       const noteState = { ...state, view: { name: "note" as const, path: "/soten/a.md" } };
-      const next = transition(noteState, { type: "SHOW_FRONT" });
+      const next = transition(noteState, { type: "SHOW_FRONT" }, noCache);
       expect(next).toEqual({ ...noteState, view: { name: "front" } });
     });
 
     it("SELECT_REPO → loadingRepo", () => {
       const repo = { owner: "acme", repo: "wiki" };
-      const next = transition(state, { type: "SELECT_REPO", repo });
+      const next = transition(state, { type: "SELECT_REPO", repo }, noCache);
       expect(next).toEqual({
         name: "loadingRepo",
         user: mockUser,
@@ -236,7 +244,7 @@ describe("transition", () => {
     });
 
     it("SWITCH_REPO → selectingRepo", () => {
-      const next = transition(state, { type: "SWITCH_REPO" });
+      const next = transition(state, { type: "SWITCH_REPO" }, noCache);
       expect(next).toEqual({
         name: "selectingRepo",
         user: mockUser,
@@ -245,7 +253,7 @@ describe("transition", () => {
     });
 
     it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" });
+      const next = transition(state, { type: "LOGOUT" }, noCache);
       expect(next).toEqual({ name: "unauthenticated", authError: null });
     });
   });
@@ -257,14 +265,19 @@ describe("transition", () => {
       message: "something went wrong",
     };
 
+    it("RETRY → fetchingRepos", () => {
+      const next = transition(state, { type: "RETRY" }, noCache);
+      expect(next).toEqual({ name: "fetchingRepos", user: mockUser });
+    });
+
     it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" });
+      const next = transition(state, { type: "LOGOUT" }, noCache);
       expect(next).toEqual({ name: "unauthenticated", authError: null });
     });
 
     it("invalid event returns same state", () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SHOW_FRONT" });
+      const next = transition(state, { type: "SHOW_FRONT" }, noCache);
       expect(next).toBe(state);
     });
   });
@@ -311,7 +324,7 @@ describe("send", () => {
     expect(store.get(cachedRepoAtom)).toBeNull();
   });
 
-  it("enriches REPOS_LOADED with cachedRepo from store", async () => {
+  it("passes cachedRepo from store as context to transition", async () => {
     store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
     store.set(cachedRepoAtom, { owner: "acme", repo: "notes" });
 
@@ -332,7 +345,7 @@ describe("send", () => {
     vi.mocked(runEffect).mockImplementation(async (...args) => {
       order.push(`effect:${args[0].name}`);
       if (args[0].name === "fetchingRepos") {
-        await args[2]({ type: "REPOS_LOADED", repos: ["acme/notes"] });
+        await args[3]({ type: "REPOS_LOADED", repos: ["acme/notes"] });
       }
     });
 
@@ -374,5 +387,20 @@ describe("send", () => {
     if (finalState.name === "ready") {
       expect(finalState.view).toEqual({ name: "front" });
     }
+  });
+
+  it("recovers from thrown effect (draining resets)", async () => {
+    vi.mocked(runEffect).mockRejectedValueOnce(new Error("effect exploded"));
+
+    await expect(send({ type: "AUTHENTICATED", user: mockUser })).rejects.toThrow(
+      "effect exploded",
+    );
+
+    vi.mocked(runEffect).mockReset();
+
+    store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
+    await send({ type: "LOGOUT" });
+
+    expect(store.get(machineStateAtom)).toEqual({ name: "unauthenticated", authError: null });
   });
 });

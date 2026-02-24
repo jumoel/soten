@@ -131,6 +131,12 @@ export function App() {
           <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
             <p className="text-red-800 font-medium">Error</p>
             <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">{state.message}</pre>
+            <button
+              className="mt-3 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 text-sm"
+              onClick={() => send({ type: "RETRY" })}
+            >
+              Try again
+            </button>
           </div>
         </Layout>
       );
