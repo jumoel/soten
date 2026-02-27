@@ -43,7 +43,6 @@ jobs:
               ref: 'main',
               inputs: {
                 sha: pr.head.sha,
-                pr_number: String(context.issue.number),
                 comment_id: String(context.payload.comment.id),
               },
             });
