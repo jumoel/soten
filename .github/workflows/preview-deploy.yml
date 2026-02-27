@@ -4,8 +4,8 @@ name: Preview Deploy
 # The commenter must have write access (OWNER, MEMBER, or COLLABORATOR) to prevent
 # arbitrary users from triggering deployments that consume quota.
 #
-# This workflow only validates and dispatches. All privileged operations (git push,
-# PR comments) happen in preview-deploy-run.yml, which runs under workflow_dispatch.
+# This workflow validates, adds the 'preview' label, and dispatches. Git operations
+# happen in preview-deploy-run.yml, which runs under workflow_dispatch.
 # The two-workflow split is required because issue_comment is an untrusted trigger:
 # CodeQL flags any git fetch/push of PR content in that context.
 
@@ -24,6 +24,7 @@ jobs:
 
     permissions:
       actions: write
+      issues: write
 
     steps:
       - name: Get PR head SHA and dispatch deploy
@@ -34,6 +35,13 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['preview'],
             });
 
             await github.rest.actions.createWorkflowDispatch({
