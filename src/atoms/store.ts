@@ -48,6 +48,37 @@ const prettyDate = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   timeZone: "UTC",
 });
+const prettyDateTime = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "UTC",
+});
+
+function parseTimestampFilename(stem: string): Date | null {
+  // Compact datetime: YYYYMMDDHHmmss (14 digits) or YYYYMMDDHHmm (12 digits)
+  const compactMatch = stem.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?$/);
+  if (compactMatch) {
+    const [, y, mo, d, h, mi, s] = compactMatch;
+    const date = new Date(Date.UTC(+y, +mo - 1, +d, +h, +mi, +(s ?? 0)));
+    if (!isNaN(date.getTime()) && date.getFullYear() >= 2000 && date.getFullYear() <= 2100) {
+      return date;
+    }
+  }
+
+  // Unix timestamp in seconds (10 digits) or milliseconds (13 digits)
+  if (/^\d{10}$/.test(stem) || /^\d{13}$/.test(stem)) {
+    const ms = stem.length === 10 ? +stem * 1000 : +stem;
+    const date = new Date(ms);
+    if (!isNaN(date.getTime()) && date.getFullYear() >= 2000 && date.getFullYear() <= 2100) {
+      return date;
+    }
+  }
+
+  return null;
+}
 
 function noteTitle(relativePath: string, content: string | null): string {
   if (content) {
@@ -63,8 +94,11 @@ function noteTitle(relativePath: string, content: string | null): string {
     return "Day: " + prettyDate.format(date);
   }
 
-  const name = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
-  return "Unnamed note \u00B7 " + name;
+  const stem = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
+  const tsDate = parseTimestampFilename(stem);
+  if (tsDate) return prettyDateTime.format(tsDate);
+
+  return "Unnamed note \u00B7 " + stem;
 }
 
 export type NoteListEntry = { path: string; relativePath: string; title: string };
