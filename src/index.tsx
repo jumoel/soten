@@ -1,20 +1,19 @@
 import "@total-typescript/ts-reset";
 
-import { StrictMode, Suspense } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Provider } from "jotai";
+import { RouterProvider } from "@tanstack/react-router";
 
-import { App } from "./app.tsx";
 import { store } from "./atoms/globals.ts";
+import { router } from "./router.tsx";
 
 const root = createRoot(document.getElementById("root")!);
 
 root.render(
   <StrictMode>
     <Provider store={store}>
-      <Suspense fallback="Loading...">
-        <App />
-      </Suspense>
+      <RouterProvider router={router} />
     </Provider>
   </StrictMode>,
 );

@@ -6,8 +6,6 @@ import {
   handleLogout,
   handleReadRepoFilesContent,
   handleSelectRepo,
-  handleShowFront,
-  handleShowNote,
 } from "./handlers";
 
 export enum Event {
@@ -17,9 +15,7 @@ export enum Event {
   FetchRepoFiles = "FetchRepoFiles",
   ReadRepoFilesContent = "ReadRepoFilesContent",
   Error = "Error",
-  ShowNote = "ShowNote",
   SelectRepo = "SelectRepo",
-  ShowFront = "ShowFront",
 }
 
 type DEvent<T, P> = { event: T; payload: P };
@@ -33,9 +29,7 @@ type DispatchEvents =
   | DEvent<Event.FetchRepoFiles, undefined>
   | DEvent<Event.ReadRepoFilesContent, undefined>
   | DEvent<Event.Error, { event?: Event; message: string }>
-  | DEvent<Event.SelectRepo, { owner: string; repo: string }>
-  | DEvent<Event.ShowNote, { path: string }>
-  | DEvent<Event.ShowFront, undefined>;
+  | DEvent<Event.SelectRepo, { owner: string; repo: string }>;
 
 export async function dispatch<E extends DispatchEvents["event"]>(
   event: E,
@@ -64,10 +58,6 @@ async function dispatchInternal({ event, payload }: DispatchEvents) {
       return handleSelectRepo(payload);
     case Event.Error:
       return handleError(payload);
-    case Event.ShowNote:
-      return handleShowNote(payload);
-    case Event.ShowFront:
-      return handleShowFront();
     default:
       console.warn("Unimplemented event received:", event, "with payload", payload);
   }

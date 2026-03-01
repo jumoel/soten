@@ -24,9 +24,7 @@ vi.mock("./events", () => ({
     FetchRepoFiles: "FetchRepoFiles",
     ReadRepoFilesContent: "ReadRepoFilesContent",
     Error: "Error",
-    ShowNote: "ShowNote",
     SelectRepo: "SelectRepo",
-    ShowFront: "ShowFront",
   },
   dispatch: vi.fn(),
 }));
@@ -37,11 +35,8 @@ import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
 import { dispatch, Event } from "./events";
 import {
   store,
-  AppView,
   AuthState,
-  appViewAtom,
   authStateAtom,
-  currentPathAtom,
   errorAtom,
   filesAtom,
   repoFilenamesAtom,
@@ -58,8 +53,6 @@ import {
   handleLogout,
   handleReadRepoFilesContent,
   handleSelectRepo,
-  handleShowFront,
-  handleShowNote,
 } from "./handlers";
 
 const mockUser = {
@@ -71,7 +64,6 @@ const mockUser = {
 
 beforeEach(() => {
   store.set(authStateAtom, AuthState.Unauthenticated);
-  store.set(appViewAtom, AppView.Front);
   store.set(errorAtom, null);
   store.set(userAtom, null);
   store.set(reposAtom, []);
@@ -79,7 +71,6 @@ beforeEach(() => {
   store.set(repoFilenamesAtom, []);
   store.set(filesAtom, {});
   store.set(repoReadyAtom, false);
-  store.set(currentPathAtom, "/");
   localStorage.clear();
 });
 
@@ -264,7 +255,6 @@ describe("handleLogout", () => {
     store.set(filesAtom, { "/soten/readme.md": { type: "text", content: "hi" } });
     store.set(repoReadyAtom, true);
     store.set(errorAtom, "old error");
-    store.set(appViewAtom, AppView.Note);
 
     await handleLogout();
 
@@ -276,29 +266,7 @@ describe("handleLogout", () => {
     expect(store.get(filesAtom)).toEqual({});
     expect(store.get(repoReadyAtom)).toBe(false);
     expect(store.get(errorAtom)).toBeNull();
-    expect(store.get(appViewAtom)).toBe(AppView.Front);
     expect(wipeFs).toHaveBeenCalled();
-  });
-});
-
-describe("handleShowNote", () => {
-  it("sets currentPath and appView to Note", () => {
-    handleShowNote({ path: "/soten/readme.md" });
-
-    expect(store.get(currentPathAtom)).toBe("/soten/readme.md");
-    expect(store.get(appViewAtom)).toBe(AppView.Note);
-  });
-});
-
-describe("handleShowFront", () => {
-  it("sets currentPath to / and appView to Front", () => {
-    store.set(currentPathAtom, "/soten/readme.md");
-    store.set(appViewAtom, AppView.Note);
-
-    handleShowFront();
-
-    expect(store.get(currentPathAtom)).toBe("/");
-    expect(store.get(appViewAtom)).toBe(AppView.Front);
   });
 });
 

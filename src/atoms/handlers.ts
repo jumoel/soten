@@ -3,11 +3,8 @@ import * as git from "../lib/git";
 import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
 import {
   store,
-  AppView,
   AuthState,
-  appViewAtom,
   authStateAtom,
-  currentPathAtom,
   errorAtom,
   filesAtom,
   repoFilenamesAtom,
@@ -38,7 +35,6 @@ export async function handleLogout() {
   store.set(filesAtom, {});
   store.set(repoReadyAtom, false);
   store.set(errorAtom, null);
-  store.set(appViewAtom, AppView.Front);
   await wipeFs();
 }
 
@@ -135,14 +131,4 @@ export async function handleReadRepoFilesContent() {
 
 export function handleError(payload: { message: string }) {
   store.set(errorAtom, payload.message);
-}
-
-export function handleShowNote(payload: { path: string }) {
-  store.set(currentPathAtom, payload.path);
-  store.set(appViewAtom, AppView.Note);
-}
-
-export function handleShowFront() {
-  store.set(currentPathAtom, "/");
-  store.set(appViewAtom, AppView.Front);
 }

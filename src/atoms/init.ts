@@ -25,16 +25,6 @@ export function parseOAuthHash(): {
   return null;
 }
 
-export async function router() {
-  const path = window.location.hash.substring(1);
-
-  if (path === "/") {
-    await dispatch(Event.ShowFront);
-  } else {
-    await dispatch(Event.ShowNote, { path });
-  }
-}
-
 export function parseAuthError(): string | null {
   if (!window.location.hash) {
     return null;
@@ -79,8 +69,4 @@ export async function init() {
   }
 
   store.set(appStateAtom, AppState.Initialized);
-
-  if (window.location.hash) {
-    await router();
-  }
 }

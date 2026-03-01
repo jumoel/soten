@@ -1,5 +1,3 @@
-import { init, router } from "./init";
-
-window.addEventListener("hashchange", router);
+import { init } from "./init";
 
 await init();
