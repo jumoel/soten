@@ -3,6 +3,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { renderMarkdown } from "../markdown";
 import { filesAtom } from "../atoms/globals";
+import { REPO_DIR } from "../lib/git";
 
 function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
   const keys = Object.entries(data ?? {});
@@ -46,7 +47,7 @@ async function Note({ path }: { path: string }) {
 
 export function NotePage() {
   const { _splat } = useParams({ strict: false });
-  const path = "/" + (_splat ?? "");
+  const path = REPO_DIR + "/" + (_splat ?? "");
 
   return (
     <>
