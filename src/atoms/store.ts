@@ -2,6 +2,7 @@ import { createStore, atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { extractTitle } from "../markdown";
 import { REPO_DIR } from "../lib/constants";
+import { t } from "../i18n";
 
 export const store = createStore();
 
@@ -91,14 +92,14 @@ function noteTitle(relativePath: string, content: string | null): string {
   const dateMatch = filename.match(dateFileRe);
   if (dateMatch) {
     const date = new Date(Date.UTC(+dateMatch[1], +dateMatch[2] - 1, +dateMatch[3]));
-    return "Day: " + prettyDate.format(date);
+    return t("note.dayPrefix", { date: prettyDate.format(date) });
   }
 
   const stem = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
   const tsDate = parseTimestampFilename(stem);
-  if (tsDate) return "Unnamed note \u00B7 " + prettyDateTime.format(tsDate);
+  if (tsDate) return t("note.unnamedWithDate", { date: prettyDateTime.format(tsDate) });
 
-  return "Unnamed note \u00B7 " + stem;
+  return t("note.unnamedWithStem", { stem });
 }
 
 export type NoteListEntry = { path: string; relativePath: string; title: string };

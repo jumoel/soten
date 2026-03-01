@@ -1,12 +1,13 @@
 import { useAtom } from "jotai";
 import { reposAtom, dispatch, Event } from "../atoms/globals";
+import { t } from "../i18n";
 
 export function RepoSelector() {
   const [repos] = useAtom(reposAtom);
 
   return (
     <div className="my-4">
-      <p className="mb-2 font-semibold">Select a repository:</p>
+      <p className="mb-2 font-semibold">{t("repo.selectRepository")}</p>
       <ul>
         {repos.map((fullName) => {
           const [owner, repo] = fullName.split("/");
@@ -29,7 +30,7 @@ export function RepoSelector() {
           rel="noopener noreferrer"
           className="underline"
         >
-          Manage repository access on GitHub
+          {t("repo.manageAccess")}
         </a>
       </p>
     </div>
