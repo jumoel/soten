@@ -6,6 +6,7 @@ export {
   authErrorAtom,
   authStateAtom,
   filesAtom,
+  noteListAtom,
   repoFilenamesAtom,
   reposAtom,
   selectedRepoAtom,
