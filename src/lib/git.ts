@@ -3,9 +3,10 @@
 import http from "isomorphic-git/http/web";
 import git from "isomorphic-git";
 import { fs, wipeFs, readRepoDir } from "./fs";
+import { REPO_DIR } from "./constants";
 import { Buffer } from "buffer";
 
-export const REPO_DIR = "/soten";
+export { REPO_DIR };
 
 globalThis.Buffer = Buffer;
 

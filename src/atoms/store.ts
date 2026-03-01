@@ -1,7 +1,7 @@
 import { createStore, atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { extractTitle } from "../markdown";
-import { REPO_DIR } from "../lib/git";
+import { REPO_DIR } from "../lib/constants";
 
 export const store = createStore();
 
