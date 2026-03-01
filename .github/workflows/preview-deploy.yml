@@ -25,6 +25,7 @@ jobs:
     permissions:
       actions: write
       issues: write
+      pull-requests: write
 
     steps:
       - name: Get PR head SHA and dispatch deploy
