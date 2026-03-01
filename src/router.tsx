@@ -15,11 +15,16 @@ const indexRoute = createRoute({
 
 const noteRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "note/$",
+  path: "note",
+});
+
+const noteViewRoute = createRoute({
+  getParentRoute: () => noteRoute,
+  path: "$",
   component: NotePage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, noteRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, noteRoute.addChildren([noteViewRoute])]);
 
 export const router = createRouter({ routeTree });
 
