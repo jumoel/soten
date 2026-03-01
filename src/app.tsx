@@ -30,7 +30,7 @@ export function App() {
   return (
     <div className="w-screen h-screen antialiased">
       <div className="max-w-sm m-auto">
-        {appState == AppState.Initialized ? (
+        {appState === AppState.Initialized ? (
           <>
             <div className="text-center">
               <h1 className="text-3xl">soten</h1>
@@ -79,9 +79,7 @@ export function App() {
             {needsRepoSelection ? <RepoSelector /> : <Outlet />}
           </>
         ) : (
-          <>
-            <div>Initializing...</div>
-          </>
+          <div>Initializing...</div>
         )}
       </div>
     </div>

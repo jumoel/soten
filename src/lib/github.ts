@@ -11,13 +11,6 @@ interface UserResponse {
 }
 
 export async function fetchCurrentUser(token: string) {
-  /*
-  curl -L \
-  -H "Accept: application/vnd.github+json" \
-  -H "X-GitHub-Api-Version: 2022-11-28" \
-  https://api.github.com/user
-  */
-
   const userResponse = await fetch("https://api.github.com/user", {
     headers: {
       Authorization: `token ${token}`,
