@@ -15,12 +15,6 @@ export enum AuthState {
 }
 export const authStateAtom = atom(AuthState.Unauthenticated);
 
-export enum AppView {
-  Front = "Front",
-  Note = "Note",
-}
-export const appViewAtom = atom<AppView>(AppView.Front);
-
 export type TextFile = { type: "text"; content: string };
 export type ImageFile = { type: "image"; content: Blob };
 
@@ -44,4 +38,3 @@ export const selectedRepoAtom = atomWithStorage<{ owner: string; repo: string } 
 export const repoFilenamesAtom = atom<string[]>([]);
 export const filesAtom = atom<Record<string, TextFile | ImageFile>>({});
 export const repoReadyAtom = atom<boolean>(false);
-export const currentPathAtom = atom<string>("/");

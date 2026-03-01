@@ -17,6 +17,7 @@
   "dependencies": {
     "@isomorphic-git/lightning-fs": "^4.6.2",
     "@tailwindcss/vite": "^4.1.11",
+    "@tanstack/react-router": "^1.163.3",
     "@total-typescript/ts-reset": "^0.6.1",
     "buffer": "^6.0.3",
     "isomorphic-git": "^1.32.2",

@@ -12,9 +12,7 @@ vi.mock("./events", () => ({
     FetchRepoFiles: "FetchRepoFiles",
     ReadRepoFilesContent: "ReadRepoFilesContent",
     Error: "Error",
-    ShowNote: "ShowNote",
     SelectRepo: "SelectRepo",
-    ShowFront: "ShowFront",
   },
   dispatch: vi.fn(),
 }));
@@ -160,26 +158,5 @@ describe("init", () => {
 
     expect(dispatch).toHaveBeenCalledWith(Event.Logout);
     expect(store.get(appStateAtom)).toBe(AppState.Initialized);
-  });
-
-  it("routes after authentication when hash is present", async () => {
-    store.set(userAtom, mockUser);
-    vi.mocked(fetchCurrentUser).mockResolvedValue({ login: "testuser" });
-    window.location.hash = "#/some/note.md";
-
-    await init();
-
-    expect(dispatch).toHaveBeenCalledWith(Event.Authenticated, mockUser);
-    expect(dispatch).toHaveBeenCalledWith(Event.ShowNote, { path: "/some/note.md" });
-  });
-
-  it("routes to front when hash is #/", async () => {
-    store.set(userAtom, mockUser);
-    vi.mocked(fetchCurrentUser).mockResolvedValue({ login: "testuser" });
-    window.location.hash = "#/";
-
-    await init();
-
-    expect(dispatch).toHaveBeenCalledWith(Event.ShowFront);
   });
 });
