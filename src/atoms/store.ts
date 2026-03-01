@@ -96,7 +96,7 @@ function noteTitle(relativePath: string, content: string | null): string {
 
   const stem = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
   const tsDate = parseTimestampFilename(stem);
-  if (tsDate) return prettyDateTime.format(tsDate);
+  if (tsDate) return "Unnamed note \u00B7 " + prettyDateTime.format(tsDate);
 
   return "Unnamed note \u00B7 " + stem;
 }
