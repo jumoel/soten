@@ -36,11 +36,16 @@ function collectText(node: Nodes): string {
   return "";
 }
 
+function stripWikilinks(text: string): string {
+  return text.replace(/\[\[([^\]]+)\]\]/g, "$1");
+}
+
 export function extractTitle(markdown: string): string | null {
   const tree = titleParser.parse(markdown);
   for (const node of tree.children) {
     if (node.type === "heading" && node.depth === 1) {
-      return collectText(node) || null;
+      const raw = collectText(node);
+      return raw ? stripWikilinks(raw) : null;
     }
   }
   return null;
