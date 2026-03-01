@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { renderMarkdown } from "../markdown";
 import { filesAtom } from "../atoms/globals";
 import { REPO_DIR } from "../lib/git";
+import { t } from "../i18n";
 
 function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
   const keys = Object.entries(data ?? {});
@@ -51,8 +52,8 @@ export function NotePage() {
 
   return (
     <>
-      <Link to="/">Frontpage</Link>
-      <Suspense fallback={"Loading..."}>
+      <Link to="/">{t("note.frontpage")}</Link>
+      <Suspense fallback={t("note.loading")}>
         <Note path={path} />
       </Suspense>
     </>

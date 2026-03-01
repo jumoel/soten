@@ -1,6 +1,7 @@
 import { fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
 import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
+import { t } from "../i18n";
 import {
   store,
   AuthState,
@@ -42,19 +43,19 @@ export async function handleFetchAndSelectRepos() {
   const user = store.get(userAtom);
 
   if (!user) {
-    await dispatch(Event.Error, { message: "Invalid installationId or token" });
+    await dispatch(Event.Error, { message: t("error.invalidAuth") });
     return;
   }
 
   const repos = await fetchUserRepos(user.installationId, user.token);
 
   if (!repos) {
-    await dispatch(Event.Error, { message: "Failed to fetch repos" });
+    await dispatch(Event.Error, { message: t("error.fetchReposFailed") });
     return;
   }
 
   if (repos.length === 0) {
-    await dispatch(Event.Error, { message: "No repos found" });
+    await dispatch(Event.Error, { message: t("error.noRepos") });
     return;
   }
 
@@ -90,7 +91,7 @@ export async function handleFetchRepoFiles() {
   const user = store.get(userAtom);
 
   if (!selectedRepo || !user) {
-    await dispatch(Event.Error, { message: "Invalid state when fetching files" });
+    await dispatch(Event.Error, { message: t("error.invalidState") });
     return;
   }
 

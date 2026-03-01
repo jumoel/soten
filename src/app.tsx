@@ -14,6 +14,7 @@ import {
 } from "./atoms/globals";
 import { GitHubAuthButton } from "./components/GitHubAuthButton";
 import { RepoSelector } from "./components/RepoSelector";
+import { t } from "./i18n";
 
 export function App() {
   const [user] = useAtom(userAtom);
@@ -34,29 +35,29 @@ export function App() {
           <>
             <div className="text-center">
               <h1 className="text-3xl">soten</h1>
-              <h2>Notes written with markdown, backed by git.</h2>
+              <h2>{t("app.tagline")}</h2>
 
               {authError && (
                 <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
-                  <p className="text-red-800 font-medium">Login failed</p>
+                  <p className="text-red-800 font-medium">{t("auth.loginFailed")}</p>
                   <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">{authError}</pre>
                   <button
                     className="mt-3 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 text-sm"
                     onClick={() => setAuthError(null)}
                   >
-                    Try again
+                    {t("auth.tryAgain")}
                   </button>
                 </div>
               )}
 
               {authState === AuthState.Authenticated && user ? (
                 <div className="my-4">
-                  <p>Welcome, {user.username}!</p>
+                  <p>{t("auth.welcome", { username: user.username })}</p>
                   {selectedRepo && (
                     <p className="text-sm">
                       {selectedRepo.owner}/{selectedRepo.repo}{" "}
                       <button className="underline" onClick={() => setSelectedRepo(null)}>
-                        switch
+                        {t("auth.switchRepo")}
                       </button>
                     </p>
                   )}
@@ -67,7 +68,7 @@ export function App() {
                         navigate({ to: "/" });
                       }}
                     >
-                      Log out
+                      {t("auth.logout")}
                     </button>
                   </p>
                 </div>
@@ -79,7 +80,7 @@ export function App() {
             {needsRepoSelection ? <RepoSelector /> : <Outlet />}
           </>
         ) : (
-          <div>Initializing...</div>
+          <div>{t("app.initializing")}</div>
         )}
       </div>
     </div>
