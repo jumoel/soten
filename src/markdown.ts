@@ -6,7 +6,7 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified, type Plugin } from "unified";
 import { matter } from "vfile-matter";
-import type { Root } from "mdast";
+import type { Nodes, Root } from "mdast";
 
 const remarkFrontmatterMatter: Plugin<[], Root> = function () {
   return function transformer(_tree, file) {
@@ -27,6 +27,29 @@ const processor = unified()
   .use(remarkRehype, { allowDangerousHtml: true })
   .use(rehypeRaw)
   .use(rehypeStringify);
+
+const titleParser = unified().use(remarkParse).use(remarkFrontmatter);
+
+function collectText(node: Nodes): string {
+  if (node.type === "text") return node.value;
+  if ("children" in node) return node.children.map(collectText).join("");
+  return "";
+}
+
+function stripWikilinks(text: string): string {
+  return text.replace(/\[\[([^\]]+)\]\]/g, "$1");
+}
+
+export function extractTitle(markdown: string): string | null {
+  const tree = titleParser.parse(markdown);
+  for (const node of tree.children) {
+    if (node.type === "heading" && node.depth === 1) {
+      const raw = collectText(node);
+      return raw ? stripWikilinks(raw) : null;
+    }
+  }
+  return null;
+}
 
 export async function renderMarkdown(markdown: string): Promise<{
   frontmatter: Record<string, unknown> | null;
