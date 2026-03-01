@@ -91,14 +91,9 @@ export async function onRequest(context) {
     }
   }
 
-  return new Response(
-    response.body,
-    Object.assign(
-      {
-        status: response.status,
-        statusText: response.statusText,
-      },
-      responseHeaders,
-    ),
-  );
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
 }

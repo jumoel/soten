@@ -30,9 +30,7 @@ export async function onRequest(context) {
 
     const appInstallId = await findAppInstallationId(tokenData.access_token);
 
-    const hasAppInstalled = appInstallId !== null;
-
-    if (!hasAppInstalled) {
+    if (appInstallId === null) {
       // Redirect to GitHub app installation page
       console.log("App not installed, redirecting to installation page");
       return new Response(null, {
@@ -142,8 +140,7 @@ async function findAppInstallationId(token) {
     // Look for our app in the list of installations
     // The app_slug should match the one used in the installation URL
     return (
-      data.installations.filter((installation) => installation.app_slug === "soten-notes").pop()
-        ?.id ?? null
+      data.installations.find((installation) => installation.app_slug === "soten-notes")?.id ?? null
     );
   } catch (error) {
     console.error("Error checking app installation:", error);

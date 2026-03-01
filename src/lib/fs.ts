@@ -6,14 +6,6 @@ export const pfs = fs.promises;
 
 import { REPO_DIR } from "./git";
 
-export async function mkRepoDir() {
-  await pfs.mkdir(REPO_DIR);
-}
-
-export async function rmRepoDir() {
-  await pfs.rmdir(REPO_DIR);
-}
-
 export async function readRepoDir() {
   return pfs.readdir(REPO_DIR);
 }
@@ -52,7 +44,9 @@ export async function readRepoFiles() {
 }
 
 function isImage(path: string) {
-  return [".jpg", ".png", ".jpeg", ".gif"].some((ext) => path.endsWith(ext));
+  return [".jpg", ".png", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"].some((ext) =>
+    path.endsWith(ext),
+  );
 }
 
 function mimeFromFilename(path: string) {
