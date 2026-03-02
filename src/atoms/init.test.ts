@@ -10,7 +10,7 @@ vi.mock("./machine", () => ({
 
 import { fetchCurrentUser } from "../lib/github";
 import { send } from "./machine";
-import { store, cachedUserAtom } from "./store";
+import { store, machineAtom, userAtom } from "./store";
 import { parseAuthError, parseOAuthHash, init } from "./init";
 
 const mockUser = {
@@ -21,9 +21,11 @@ const mockUser = {
 };
 
 beforeEach(() => {
-  store.set(cachedUserAtom, null);
+  store.set(machineAtom, { phase: "initializing" });
+  store.set(userAtom, null);
   localStorage.clear();
   window.location.hash = "";
+  vi.clearAllMocks();
 });
 
 describe("parseAuthError", () => {
@@ -97,8 +99,9 @@ describe("init", () => {
 
     await init();
 
-    expect(send).toHaveBeenCalledWith({ type: "AUTH_ERROR", message: "bad_token" });
+    expect(store.get(machineAtom)).toEqual({ phase: "unauthenticated", authError: "bad_token" });
     expect(replaceState).toHaveBeenCalledWith(null, "", window.location.pathname);
+    expect(send).not.toHaveBeenCalled();
   });
 
   it("handles OAuth params in hash", async () => {
@@ -109,7 +112,7 @@ describe("init", () => {
     await init();
 
     expect(send).toHaveBeenCalledWith({
-      type: "AUTHENTICATED",
+      type: "AUTHENTICATE",
       user: {
         username: "testuser",
         token: "tok_123",
@@ -121,28 +124,40 @@ describe("init", () => {
   });
 
   it("re-authenticates returning user with valid token", async () => {
-    store.set(cachedUserAtom, mockUser);
+    store.set(userAtom, mockUser);
     vi.mocked(fetchCurrentUser).mockResolvedValue({ login: "testuser" });
 
     await init();
 
     expect(fetchCurrentUser).toHaveBeenCalledWith("tok_123");
-    expect(send).toHaveBeenCalledWith({ type: "AUTHENTICATED", user: mockUser });
+    expect(send).toHaveBeenCalledWith({ type: "AUTHENTICATE", user: mockUser });
   });
 
-  it("sends NO_AUTH for returning user with expired token", async () => {
-    store.set(cachedUserAtom, mockUser);
+  it("goes to unauthenticated when returning user has expired token", async () => {
+    store.set(userAtom, mockUser);
     vi.mocked(fetchCurrentUser).mockResolvedValue(null);
 
     await init();
 
     expect(fetchCurrentUser).toHaveBeenCalledWith("tok_123");
-    expect(send).toHaveBeenCalledWith({ type: "NO_AUTH" });
+    expect(store.get(machineAtom)).toEqual({ phase: "unauthenticated", authError: null });
+    expect(store.get(userAtom)).toBeNull();
   });
 
-  it("sends NO_AUTH when no cached user", async () => {
+  it("goes to unauthenticated when no cached user", async () => {
     await init();
 
-    expect(send).toHaveBeenCalledWith({ type: "NO_AUTH" });
+    expect(store.get(machineAtom)).toEqual({ phase: "unauthenticated", authError: null });
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("goes to unauthenticated when fetchCurrentUser throws", async () => {
+    store.set(userAtom, mockUser);
+    vi.mocked(fetchCurrentUser).mockRejectedValue(new Error("network error"));
+
+    await init();
+
+    expect(store.get(machineAtom)).toEqual({ phase: "unauthenticated", authError: null });
+    expect(store.get(userAtom)).toBeNull();
   });
 });

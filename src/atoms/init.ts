@@ -1,5 +1,5 @@
 import { fetchCurrentUser } from "../lib/github";
-import { store, cachedUserAtom } from "./store";
+import { store, machineAtom, userAtom } from "./store";
 import { send } from "./machine";
 
 export function parseOAuthHash(): {
@@ -38,31 +38,37 @@ export async function init() {
   const authError = parseAuthError();
 
   if (authError) {
-    await send({ type: "AUTH_ERROR", message: authError });
     window.history.replaceState(null, "", window.location.pathname);
+    store.set(machineAtom, { phase: "unauthenticated", authError });
     return;
   }
 
   const oauthParams = parseOAuthHash();
 
   if (oauthParams) {
-    await send({ type: "AUTHENTICATED", user: oauthParams });
     window.history.replaceState(null, "", window.location.pathname);
+    await send({ type: "AUTHENTICATE", user: oauthParams });
     return;
   }
 
-  const user = store.get(cachedUserAtom);
+  const user = store.get(userAtom);
   const token = user?.token;
 
   if (token) {
-    const currentUser = await fetchCurrentUser(token);
+    try {
+      const currentUser = await fetchCurrentUser(token);
 
-    if (currentUser?.login) {
-      await send({ type: "AUTHENTICATED", user });
-    } else {
-      await send({ type: "NO_AUTH" });
+      if (currentUser?.login) {
+        await send({ type: "AUTHENTICATE", user });
+      } else {
+        store.set(userAtom, null);
+        store.set(machineAtom, { phase: "unauthenticated", authError: null });
+      }
+    } catch {
+      store.set(userAtom, null);
+      store.set(machineAtom, { phase: "unauthenticated", authError: null });
     }
   } else {
-    await send({ type: "NO_AUTH" });
+    store.set(machineAtom, { phase: "unauthenticated", authError: null });
   }
 }

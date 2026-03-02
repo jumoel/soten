@@ -12,7 +12,7 @@ export function RepoSelector({ repos }: { repos: string[] }) {
             <li key={fullName} className="my-1">
               <button
                 className="px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-700 font-mono text-sm"
-                onClick={() => send({ type: "SELECT_REPO", repo: { owner, repo } })}
+                onClick={() => send({ type: "SELECT_REPO", owner, repo })}
               >
                 {fullName}
               </button>

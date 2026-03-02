@@ -1,46 +1,34 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
+import { store, machineAtom, noteListAtom } from "./store";
+import type { AppMachine, TextFile, ImageFile } from "./store";
 
-vi.mock("./init.run", () => ({}));
-vi.mock("../lib/fs", () => ({
-  fs: {},
-  readFile: vi.fn(),
-  readRepoFiles: vi.fn(),
-  wipeFs: vi.fn(),
-}));
-
-import { store } from "./store";
-import { machineStateAtom, type AppMachineState, type Files } from "./machine";
-import { noteListAtom } from "./globals";
-
-const mockUser = {
+const baseUser = {
   username: "testuser",
   token: "tok_123",
   installationId: "inst_456",
   email: "test@example.com",
 };
 
-function makeReadyState(
-  filenames: string[],
-  files: Files,
-): Extract<AppMachineState, { name: "ready" }> {
-  return {
-    name: "ready",
-    user: mockUser,
-    repo: { owner: "test", repo: "notes" },
-    repos: ["test/notes"],
-    filenames,
-    files,
-  };
-}
+const baseReady: Extract<AppMachine, { phase: "ready" }> = {
+  phase: "ready",
+  user: baseUser,
+  repos: ["acme/notes"],
+  selectedRepo: { owner: "acme", repo: "notes" },
+  filenames: [],
+  files: {},
+};
 
 beforeEach(() => {
-  store.set(machineStateAtom, makeReadyState([], {}));
+  store.set(machineAtom, { phase: "initializing" });
 });
 
 function setNote(relativePath: string, content: string | null) {
   const path = "/soten/" + relativePath;
-  const files: Files = content ? { [path]: { type: "text", content } } : {};
-  store.set(machineStateAtom, makeReadyState([path], files));
+  const files: Record<string, TextFile | ImageFile> = {};
+  if (content) {
+    files[path] = { type: "text", content };
+  }
+  store.set(machineAtom, { ...baseReady, filenames: [path], files });
 }
 
 function getTitle() {
@@ -112,15 +100,21 @@ describe("noteListAtom titles", () => {
 
   it("skips uploads/ files", () => {
     const path = "/soten/uploads/image.png";
-    store.set(machineStateAtom, makeReadyState([path], {}));
+    store.set(machineAtom, { ...baseReady, filenames: [path], files: {} });
 
     expect(store.get(noteListAtom)).toEqual([]);
   });
 
   it("uses relativePath as title for non-md files", () => {
     const path = "/soten/data.json";
-    store.set(machineStateAtom, makeReadyState([path], {}));
+    store.set(machineAtom, { ...baseReady, filenames: [path], files: {} });
 
     expect(store.get(noteListAtom)[0].title).toBe("data.json");
+  });
+
+  it("returns empty array when not in ready phase", () => {
+    store.set(machineAtom, { phase: "initializing" });
+
+    expect(store.get(noteListAtom)).toEqual([]);
   });
 });
