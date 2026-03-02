@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
+vi.mock("./init.run", () => ({}));
+vi.mock("../lib/fs", () => ({
+  fs: {},
+  readFile: vi.fn(),
+  readRepoFiles: vi.fn(),
+  wipeFs: vi.fn(),
+}));
+
 import { store } from "./store";
 import { machineStateAtom, type AppMachineState, type Files } from "./machine";
 import { noteListAtom } from "./globals";
