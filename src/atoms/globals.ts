@@ -2,7 +2,7 @@ import { atom } from "jotai";
 import { store } from "./store";
 import type { User, TextFile, ImageFile } from "./store";
 import { machineStateAtom, send } from "./machine";
-import type { AppMachineState, AppEvent, Repo, Files, View } from "./machine";
+import type { AppMachineState, AppEvent, Repo, Files } from "./machine";
 import { extractTitle } from "../markdown";
 import { REPO_DIR } from "../lib/constants";
 import { t } from "../i18n";
@@ -10,11 +10,13 @@ import { t } from "../i18n";
 export { store };
 export type { User, TextFile, ImageFile };
 export { machineStateAtom, send };
-export type { AppMachineState, AppEvent, Repo, Files, View };
+export type { AppMachineState, AppEvent, Repo, Files };
+
+const EMPTY_FILES: Record<string, TextFile | ImageFile> = {};
 
 export const filesAtom = atom<Record<string, TextFile | ImageFile>>((get) => {
   const state = get(machineStateAtom);
-  return state.name === "ready" ? state.files : {};
+  return state.name === "ready" ? state.files : EMPTY_FILES;
 });
 
 const dateFileRe = /^(\d{4})-(\d{2})-(\d{2})\.md$/;

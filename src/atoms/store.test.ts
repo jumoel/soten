@@ -21,7 +21,6 @@ function makeReadyState(
     repos: ["test/notes"],
     filenames,
     files,
-    view: { name: "front" },
   };
 }
 

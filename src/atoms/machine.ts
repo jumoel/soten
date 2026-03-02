@@ -11,7 +11,6 @@ import { runEffect } from "./effects";
 
 export type Repo = { owner: string; repo: string };
 export type Files = Record<string, TextFile | ImageFile>;
-export type View = { name: "front" } | { name: "note"; path: string };
 
 export type AppMachineState =
   | { name: "initializing" }
@@ -26,7 +25,6 @@ export type AppMachineState =
       repos: string[];
       filenames: string[];
       files: Files;
-      view: View;
     }
   | { name: "error"; user: User; message: string };
 
@@ -39,8 +37,6 @@ export type AppEvent =
   | { type: "SELECT_REPO"; repo: Repo }
   | { type: "REPO_READY"; filenames: string[]; files: Files }
   | { type: "LOAD_ERROR"; message: string }
-  | { type: "SHOW_NOTE"; path: string }
-  | { type: "SHOW_FRONT" }
   | { type: "SWITCH_REPO" }
   | { type: "RETRY" }
   | { type: "LOGOUT" };
@@ -119,7 +115,6 @@ export function transition(
             repos: state.repos,
             filenames: event.filenames,
             files: event.files,
-            view: { name: "front" },
           };
         case "LOAD_ERROR":
           return { name: "error", user: state.user, message: event.message };
@@ -132,10 +127,6 @@ export function transition(
 
     case "ready":
       switch (event.type) {
-        case "SHOW_NOTE":
-          return { ...state, view: { name: "note", path: event.path } };
-        case "SHOW_FRONT":
-          return { ...state, view: { name: "front" } };
         case "SELECT_REPO":
           return { name: "loadingRepo", user: state.user, repo: event.repo, repos: state.repos };
         case "SWITCH_REPO":
@@ -222,8 +213,6 @@ export async function send(event: AppEvent) {
       const ctx: TransitionContext = { cachedRepo: store.get(cachedRepoAtom) };
       const current = store.get(machineStateAtom);
       const next = transition(current, e, ctx);
-
-      console.log("send", e.type, { from: current.name, to: next.name, event: e });
 
       if (next !== current) {
         store.set(machineStateAtom, next);

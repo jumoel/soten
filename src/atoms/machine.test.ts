@@ -60,7 +60,7 @@ describe("transition", () => {
 
     it("invalid event returns same state", () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SHOW_FRONT" }, noCache);
+      const next = transition(state, { type: "SWITCH_REPO" }, noCache);
       expect(next).toBe(state);
     });
   });
@@ -75,7 +75,7 @@ describe("transition", () => {
 
     it("invalid event returns same state", () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SHOW_FRONT" }, noCache);
+      const next = transition(state, { type: "SWITCH_REPO" }, noCache);
       expect(next).toBe(state);
     });
   });
@@ -181,7 +181,7 @@ describe("transition", () => {
       repos: ["acme/notes"],
     };
 
-    it("REPO_READY → ready with front view", () => {
+    it("REPO_READY → ready", () => {
       const files = { "/soten/a.md": { type: "text" as const, content: "# A" } };
       const next = transition(
         state,
@@ -195,7 +195,6 @@ describe("transition", () => {
         repos: ["acme/notes"],
         filenames: ["/soten/a.md"],
         files,
-        view: { name: "front" },
       });
     });
 
@@ -218,19 +217,7 @@ describe("transition", () => {
       repos: ["acme/notes"],
       filenames: ["/soten/a.md"],
       files: { "/soten/a.md": { type: "text", content: "# A" } },
-      view: { name: "front" },
     };
-
-    it("SHOW_NOTE → ready with note view", () => {
-      const next = transition(state, { type: "SHOW_NOTE", path: "/soten/a.md" }, noCache);
-      expect(next).toEqual({ ...state, view: { name: "note", path: "/soten/a.md" } });
-    });
-
-    it("SHOW_FRONT → ready with front view", () => {
-      const noteState = { ...state, view: { name: "note" as const, path: "/soten/a.md" } };
-      const next = transition(noteState, { type: "SHOW_FRONT" }, noCache);
-      expect(next).toEqual({ ...noteState, view: { name: "front" } });
-    });
 
     it("SELECT_REPO → loadingRepo", () => {
       const repo = { owner: "acme", repo: "wiki" };
@@ -277,7 +264,7 @@ describe("transition", () => {
 
     it("invalid event returns same state", () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SHOW_FRONT" }, noCache);
+      const next = transition(state, { type: "SWITCH_REPO" }, noCache);
       expect(next).toBe(state);
     });
   });
@@ -301,7 +288,7 @@ describe("send", () => {
 
   it("does not call runEffect for invalid transitions", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    await send({ type: "SHOW_FRONT" });
+    await send({ type: "SWITCH_REPO" });
 
     expect(store.get(machineStateAtom)).toEqual({ name: "initializing" });
     expect(runEffect).not.toHaveBeenCalled();
@@ -367,26 +354,15 @@ describe("send", () => {
       statesSeenByEffect.push(state.name);
     });
 
-    store.set(machineStateAtom, {
-      name: "ready",
-      user: mockUser,
-      repo: { owner: "acme", repo: "notes" },
-      repos: ["acme/notes"],
-      filenames: [],
-      files: {},
-      view: { name: "front" },
-    });
+    store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
 
-    await send({ type: "SHOW_NOTE", path: "/a.md" });
-    await send({ type: "SHOW_FRONT" });
+    const p1 = send({ type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] });
+    const p2 = send({ type: "LOGOUT" });
+    await p1;
+    await p2;
 
-    expect(statesSeenByEffect).toEqual(["ready", "ready"]);
-
-    const finalState = store.get(machineStateAtom);
-    expect(finalState.name).toBe("ready");
-    if (finalState.name === "ready") {
-      expect(finalState.view).toEqual({ name: "front" });
-    }
+    expect(statesSeenByEffect).toEqual(["selectingRepo", "unauthenticated"]);
+    expect(store.get(machineStateAtom).name).toBe("unauthenticated");
   });
 
   it("recovers from thrown effect (draining resets)", async () => {
