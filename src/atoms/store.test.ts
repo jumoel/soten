@@ -1,17 +1,46 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { store, repoFilenamesAtom, filesAtom, noteListAtom } from "./store";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
+vi.mock("./init.run", () => ({}));
+vi.mock("../lib/fs", () => ({
+  fs: {},
+  readFile: vi.fn(),
+  readRepoFiles: vi.fn(),
+  wipeFs: vi.fn(),
+}));
+
+import { store } from "./store";
+import { machineStateAtom, type AppMachineState, type Files } from "./machine";
+import { noteListAtom } from "./globals";
+
+const mockUser = {
+  username: "testuser",
+  token: "tok_123",
+  installationId: "inst_456",
+  email: "test@example.com",
+};
+
+function makeReadyState(
+  filenames: string[],
+  files: Files,
+): Extract<AppMachineState, { name: "ready" }> {
+  return {
+    name: "ready",
+    user: mockUser,
+    repo: { owner: "test", repo: "notes" },
+    repos: ["test/notes"],
+    filenames,
+    files,
+  };
+}
 
 beforeEach(() => {
-  store.set(repoFilenamesAtom, []);
-  store.set(filesAtom, {});
+  store.set(machineStateAtom, makeReadyState([], {}));
 });
 
 function setNote(relativePath: string, content: string | null) {
   const path = "/soten/" + relativePath;
-  store.set(repoFilenamesAtom, [path]);
-  if (content) {
-    store.set(filesAtom, { [path]: { type: "text", content } });
-  }
+  const files: Files = content ? { [path]: { type: "text", content } } : {};
+  store.set(machineStateAtom, makeReadyState([path], files));
 }
 
 function getTitle() {
@@ -83,14 +112,14 @@ describe("noteListAtom titles", () => {
 
   it("skips uploads/ files", () => {
     const path = "/soten/uploads/image.png";
-    store.set(repoFilenamesAtom, [path]);
+    store.set(machineStateAtom, makeReadyState([path], {}));
 
     expect(store.get(noteListAtom)).toEqual([]);
   });
 
   it("uses relativePath as title for non-md files", () => {
     const path = "/soten/data.json";
-    store.set(repoFilenamesAtom, [path]);
+    store.set(machineStateAtom, makeReadyState([path], {}));
 
     expect(store.get(noteListAtom)[0].title).toBe("data.json");
   });
