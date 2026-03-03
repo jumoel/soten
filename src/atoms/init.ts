@@ -1,6 +1,9 @@
 import { fetchCurrentUser } from "../lib/github";
+import type { AppMachine } from "./store";
 import { store, machineAtom, userAtom } from "./store";
 import { send } from "./machine";
+
+const unauthenticated: AppMachine = { phase: "unauthenticated", authError: null };
 
 export function parseOAuthHash(): {
   username: string;
@@ -62,13 +65,13 @@ export async function init() {
         await send({ type: "AUTHENTICATE", user });
       } else {
         store.set(userAtom, null);
-        store.set(machineAtom, { phase: "unauthenticated", authError: null });
+        store.set(machineAtom, unauthenticated);
       }
     } catch {
       store.set(userAtom, null);
-      store.set(machineAtom, { phase: "unauthenticated", authError: null });
+      store.set(machineAtom, unauthenticated);
     }
   } else {
-    store.set(machineAtom, { phase: "unauthenticated", authError: null });
+    store.set(machineAtom, unauthenticated);
   }
 }

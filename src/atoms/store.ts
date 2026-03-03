@@ -17,29 +17,23 @@ export type User = {
 };
 
 export const userAtom = atomWithStorage<User | null>("user", null, undefined, { getOnInit: true });
-export const selectedRepoAtom = atomWithStorage<{ owner: string; repo: string } | null>(
-  "selectedRepo",
-  null,
-  undefined,
-  { getOnInit: true },
-);
+export type Repo = { owner: string; repo: string };
+
+export const selectedRepoAtom = atomWithStorage<Repo | null>("selectedRepo", null, undefined, {
+  getOnInit: true,
+});
 
 export type AppMachine =
   | { phase: "initializing" }
   | { phase: "unauthenticated"; authError: string | null }
   | { phase: "fetchingRepos"; user: User }
   | { phase: "selectingRepo"; user: User; repos: string[] }
-  | {
-      phase: "cloningRepo";
-      user: User;
-      repos: string[];
-      selectedRepo: { owner: string; repo: string };
-    }
+  | { phase: "cloningRepo"; user: User; repos: string[]; selectedRepo: Repo }
   | {
       phase: "loadingFiles";
       user: User;
       repos: string[];
-      selectedRepo: { owner: string; repo: string };
+      selectedRepo: Repo;
       filenames: string[];
       loaded: number;
     }
@@ -47,7 +41,7 @@ export type AppMachine =
       phase: "ready";
       user: User;
       repos: string[];
-      selectedRepo: { owner: string; repo: string };
+      selectedRepo: Repo;
       filenames: string[];
       files: Record<string, TextFile | ImageFile>;
     }
@@ -55,9 +49,11 @@ export type AppMachine =
 
 export const machineAtom = atom<AppMachine>({ phase: "initializing" });
 
+const emptyFiles: Record<string, TextFile | ImageFile> = {};
+
 export const filesAtom = atom<Record<string, TextFile | ImageFile>>((get) => {
   const m = get(machineAtom);
-  return m.phase === "ready" ? m.files : {};
+  return m.phase === "ready" ? m.files : emptyFiles;
 });
 
 const dateFileRe = /^(\d{4})-(\d{2})-(\d{2})\.md$/;

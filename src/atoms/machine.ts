@@ -2,10 +2,8 @@ import { fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
 import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
 import { t } from "../i18n";
-import type { User, TextFile, ImageFile } from "./store";
+import type { User, TextFile, ImageFile, Repo } from "./store";
 import { store, machineAtom, userAtom, selectedRepoAtom } from "./store";
-
-type Repo = { owner: string; repo: string };
 
 export type Transition =
   | { type: "AUTHENTICATE"; user: User }
@@ -50,6 +48,8 @@ export async function send(transition: Transition): Promise<void> {
   } catch (e) {
     if (e instanceof AbortError) return;
     throw e;
+  } finally {
+    if (activeController === controller) activeController = null;
   }
 }
 
@@ -129,16 +129,18 @@ async function cloneAndLoad(
 ): Promise<void> {
   store.set(machineAtom, { phase: "cloningRepo", user, repos, selectedRepo });
 
+  const url = `https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`;
+
   try {
     if (await git.isInitialized()) {
       try {
         await git.pull(user);
       } catch {
         wipeFs();
-        await git.clone(`https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`, user);
+        await git.clone(url, user);
       }
     } else {
-      await git.clone(`https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`, user);
+      await git.clone(url, user);
     }
   } catch (e) {
     store.set(machineAtom, {
@@ -178,15 +180,6 @@ async function cloneAndLoad(
     for (const result of results) {
       if (result) files[result.filename] = result.content;
     }
-
-    store.set(machineAtom, {
-      phase: "loadingFiles",
-      user,
-      repos,
-      selectedRepo,
-      filenames,
-      loaded: Math.min(i + BATCH_SIZE, filenames.length),
-    });
   }
 
   checkAborted();
