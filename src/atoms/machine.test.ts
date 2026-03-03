@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../lib/fs", () => ({
-  wipeFs: vi.fn(),
-  readRepoFiles: vi.fn(),
-  readFile: vi.fn(),
+vi.mock("../lib/github", () => ({
+  fetchUserRepos: vi.fn(),
 }));
 
 vi.mock("../lib/git", () => ({
@@ -12,23 +10,18 @@ vi.mock("../lib/git", () => ({
   isInitialized: vi.fn(),
 }));
 
-vi.mock("../lib/github", () => ({
-  fetchUserRepos: vi.fn(),
+vi.mock("../lib/fs", () => ({
+  wipeFs: vi.fn(),
+  readRepoFiles: vi.fn(),
+  readFile: vi.fn(),
 }));
 
-vi.mock("./effects", () => ({
-  runEffect: vi.fn(),
-}));
-
-import {
-  transition,
-  send,
-  machineStateAtom,
-  type AppMachineState,
-  type TransitionContext,
-} from "./machine";
-import { store, cachedUserAtom, cachedRepoAtom } from "./store";
-import { runEffect } from "./effects";
+import { fetchUserRepos } from "../lib/github";
+import * as git from "../lib/git";
+import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
+import { send } from "./machine";
+import { store, machineAtom, userAtom, selectedRepoAtom } from "./store";
+import type { AppMachine } from "./store";
 
 const mockUser = {
   username: "testuser",
@@ -37,346 +30,227 @@ const mockUser = {
   email: "test@example.com",
 };
 
-const noCache: TransitionContext = { cachedRepo: null };
+beforeEach(() => {
+  store.set(machineAtom, { phase: "initializing" });
+  store.set(userAtom, null);
+  store.set(selectedRepoAtom, null);
+  localStorage.clear();
+  vi.clearAllMocks();
+});
 
-describe("transition", () => {
-  describe("initializing", () => {
-    const state: AppMachineState = { name: "initializing" };
+function machine(): AppMachine {
+  return store.get(machineAtom);
+}
 
-    it("AUTHENTICATED → fetchingRepos", () => {
-      const next = transition(state, { type: "AUTHENTICATED", user: mockUser }, noCache);
-      expect(next).toEqual({ name: "fetchingRepos", user: mockUser });
-    });
+describe("AUTHENTICATE", () => {
+  it("auto-clones single repo and reaches ready", async () => {
+    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
+    vi.mocked(git.isInitialized).mockResolvedValue(false);
+    vi.mocked(readRepoFiles).mockResolvedValue(["/soten/a.md"]);
+    vi.mocked(readFile).mockResolvedValue({ type: "text", content: "# Hello" });
 
-    it("AUTH_ERROR → unauthenticated with error", () => {
-      const next = transition(state, { type: "AUTH_ERROR", message: "bad_token" }, noCache);
-      expect(next).toEqual({ name: "unauthenticated", authError: "bad_token" });
-    });
+    await send({ type: "AUTHENTICATE", user: mockUser });
 
-    it("NO_AUTH → unauthenticated", () => {
-      const next = transition(state, { type: "NO_AUTH" }, noCache);
-      expect(next).toEqual({ name: "unauthenticated", authError: null });
-    });
-
-    it("invalid event returns same state", () => {
-      vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SWITCH_REPO" }, noCache);
-      expect(next).toBe(state);
-    });
+    const m = machine();
+    expect(m.phase).toBe("ready");
+    if (m.phase !== "ready") return;
+    expect(m.user).toEqual(mockUser);
+    expect(m.repos).toEqual(["acme/notes"]);
+    expect(m.selectedRepo).toEqual({ owner: "acme", repo: "notes" });
+    expect(m.files).toEqual({ "/soten/a.md": { type: "text", content: "# Hello" } });
+    expect(git.clone).toHaveBeenCalledWith("https://github.com/acme/notes.git", mockUser);
   });
 
-  describe("unauthenticated", () => {
-    const state: AppMachineState = { name: "unauthenticated", authError: null };
+  it("shows selectingRepo when multiple repos returned", async () => {
+    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes", "acme/wiki"]);
 
-    it("AUTHENTICATED → fetchingRepos", () => {
-      const next = transition(state, { type: "AUTHENTICATED", user: mockUser }, noCache);
-      expect(next).toEqual({ name: "fetchingRepos", user: mockUser });
-    });
+    await send({ type: "AUTHENTICATE", user: mockUser });
 
-    it("invalid event returns same state", () => {
-      vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SWITCH_REPO" }, noCache);
-      expect(next).toBe(state);
-    });
+    const m = machine();
+    expect(m.phase).toBe("selectingRepo");
+    if (m.phase !== "selectingRepo") return;
+    expect(m.repos).toEqual(["acme/notes", "acme/wiki"]);
+    expect(m.user).toEqual(mockUser);
   });
 
-  describe("fetchingRepos", () => {
-    const state: AppMachineState = { name: "fetchingRepos", user: mockUser };
+  it("goes to error when fetchUserRepos returns null", async () => {
+    vi.mocked(fetchUserRepos).mockResolvedValue(null);
 
-    it("REPOS_LOADED with cached repo → loadingRepo", () => {
-      const cachedRepo = { owner: "acme", repo: "notes" };
-      const next = transition(
-        state,
-        { type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] },
-        { cachedRepo },
-      );
-      expect(next).toEqual({
-        name: "loadingRepo",
-        user: mockUser,
-        repo: cachedRepo,
-        repos: ["acme/notes", "acme/wiki"],
-      });
-    });
+    await send({ type: "AUTHENTICATE", user: mockUser });
 
-    it("REPOS_LOADED with single repo → loadingRepo", () => {
-      const next = transition(state, { type: "REPOS_LOADED", repos: ["acme/notes"] }, noCache);
-      expect(next).toEqual({
-        name: "loadingRepo",
-        user: mockUser,
-        repo: { owner: "acme", repo: "notes" },
-        repos: ["acme/notes"],
-      });
-    });
-
-    it("REPOS_LOADED with multiple repos and no cache → selectingRepo", () => {
-      const next = transition(
-        state,
-        { type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] },
-        noCache,
-      );
-      expect(next).toEqual({
-        name: "selectingRepo",
-        user: mockUser,
-        repos: ["acme/notes", "acme/wiki"],
-      });
-    });
-
-    it("REPOS_LOADED with stale cached repo → selectingRepo", () => {
-      const next = transition(
-        state,
-        { type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] },
-        { cachedRepo: { owner: "acme", repo: "old" } },
-      );
-      expect(next).toEqual({
-        name: "selectingRepo",
-        user: mockUser,
-        repos: ["acme/notes", "acme/wiki"],
-      });
-    });
-
-    it("FETCH_ERROR → error", () => {
-      const next = transition(
-        state,
-        { type: "FETCH_ERROR", message: "Failed to fetch repos" },
-        noCache,
-      );
-      expect(next).toEqual({ name: "error", user: mockUser, message: "Failed to fetch repos" });
-    });
-
-    it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" }, noCache);
-      expect(next).toEqual({ name: "unauthenticated", authError: null });
-    });
+    expect(machine().phase).toBe("error");
   });
 
-  describe("selectingRepo", () => {
-    const state: AppMachineState = {
-      name: "selectingRepo",
-      user: mockUser,
-      repos: ["acme/notes", "acme/wiki"],
-    };
+  it("goes to error when fetchUserRepos returns empty array", async () => {
+    vi.mocked(fetchUserRepos).mockResolvedValue([]);
 
-    it("SELECT_REPO → loadingRepo", () => {
-      const repo = { owner: "acme", repo: "notes" };
-      const next = transition(state, { type: "SELECT_REPO", repo }, noCache);
-      expect(next).toEqual({
-        name: "loadingRepo",
-        user: mockUser,
-        repo,
-        repos: ["acme/notes", "acme/wiki"],
-      });
-    });
+    await send({ type: "AUTHENTICATE", user: mockUser });
 
-    it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" }, noCache);
-      expect(next).toEqual({ name: "unauthenticated", authError: null });
-    });
+    expect(machine().phase).toBe("error");
   });
 
-  describe("loadingRepo", () => {
-    const state: AppMachineState = {
-      name: "loadingRepo",
-      user: mockUser,
-      repo: { owner: "acme", repo: "notes" },
-      repos: ["acme/notes"],
-    };
+  it("uses cached repo when valid", async () => {
+    store.set(selectedRepoAtom, { owner: "acme", repo: "notes" });
+    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes", "acme/wiki"]);
+    vi.mocked(git.isInitialized).mockResolvedValue(false);
+    vi.mocked(readRepoFiles).mockResolvedValue([]);
 
-    it("REPO_READY → ready", () => {
-      const files = { "/soten/a.md": { type: "text" as const, content: "# A" } };
-      const next = transition(
-        state,
-        { type: "REPO_READY", filenames: ["/soten/a.md"], files },
-        noCache,
-      );
-      expect(next).toEqual({
-        name: "ready",
-        user: mockUser,
-        repo: { owner: "acme", repo: "notes" },
-        repos: ["acme/notes"],
-        filenames: ["/soten/a.md"],
-        files,
-      });
-    });
+    await send({ type: "AUTHENTICATE", user: mockUser });
 
-    it("LOAD_ERROR → error", () => {
-      const next = transition(state, { type: "LOAD_ERROR", message: "clone failed" }, noCache);
-      expect(next).toEqual({ name: "error", user: mockUser, message: "clone failed" });
-    });
-
-    it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" }, noCache);
-      expect(next).toEqual({ name: "unauthenticated", authError: null });
-    });
+    expect(machine().phase).toBe("ready");
+    expect(git.clone).toHaveBeenCalledWith("https://github.com/acme/notes.git", mockUser);
   });
 
-  describe("ready", () => {
-    const state: AppMachineState = {
-      name: "ready",
-      user: mockUser,
-      repo: { owner: "acme", repo: "notes" },
-      repos: ["acme/notes"],
-      filenames: ["/soten/a.md"],
-      files: { "/soten/a.md": { type: "text", content: "# A" } },
-    };
-
-    it("SELECT_REPO → loadingRepo", () => {
-      const repo = { owner: "acme", repo: "wiki" };
-      const next = transition(state, { type: "SELECT_REPO", repo }, noCache);
-      expect(next).toEqual({
-        name: "loadingRepo",
-        user: mockUser,
-        repo,
-        repos: ["acme/notes"],
-      });
+  it("filters out files that fail to read", async () => {
+    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
+    vi.mocked(git.isInitialized).mockResolvedValue(false);
+    vi.mocked(readRepoFiles).mockResolvedValue(["/soten/a.md", "/soten/bad.md"]);
+    vi.mocked(readFile).mockImplementation(async (path: string) => {
+      if (path === "/soten/a.md") return { type: "text", content: "# A" };
+      return null;
     });
 
-    it("SWITCH_REPO → selectingRepo", () => {
-      const next = transition(state, { type: "SWITCH_REPO" }, noCache);
-      expect(next).toEqual({
-        name: "selectingRepo",
-        user: mockUser,
-        repos: ["acme/notes"],
-      });
-    });
+    await send({ type: "AUTHENTICATE", user: mockUser });
 
-    it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" }, noCache);
-      expect(next).toEqual({ name: "unauthenticated", authError: null });
-    });
-  });
-
-  describe("error", () => {
-    const state: AppMachineState = {
-      name: "error",
-      user: mockUser,
-      message: "something went wrong",
-    };
-
-    it("RETRY → fetchingRepos", () => {
-      const next = transition(state, { type: "RETRY" }, noCache);
-      expect(next).toEqual({ name: "fetchingRepos", user: mockUser });
-    });
-
-    it("LOGOUT → unauthenticated", () => {
-      const next = transition(state, { type: "LOGOUT" }, noCache);
-      expect(next).toEqual({ name: "unauthenticated", authError: null });
-    });
-
-    it("invalid event returns same state", () => {
-      vi.spyOn(console, "warn").mockImplementation(() => {});
-      const next = transition(state, { type: "SWITCH_REPO" }, noCache);
-      expect(next).toBe(state);
-    });
+    const m = machine();
+    if (m.phase !== "ready") throw new Error("expected ready");
+    expect(m.files).toEqual({ "/soten/a.md": { type: "text", content: "# A" } });
   });
 });
 
-describe("send", () => {
-  beforeEach(() => {
-    store.set(machineStateAtom, { name: "initializing" });
-    store.set(cachedUserAtom, null);
-    store.set(cachedRepoAtom, null);
-    localStorage.clear();
-    vi.mocked(runEffect).mockReset();
-  });
-
-  it("transitions state and calls runEffect", async () => {
-    await send({ type: "AUTHENTICATED", user: mockUser });
-
-    expect(store.get(machineStateAtom)).toEqual({ name: "fetchingRepos", user: mockUser });
-    expect(runEffect).toHaveBeenCalledOnce();
-  });
-
-  it("does not call runEffect for invalid transitions", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-    await send({ type: "SWITCH_REPO" });
-
-    expect(store.get(machineStateAtom)).toEqual({ name: "initializing" });
-    expect(runEffect).not.toHaveBeenCalled();
-  });
-
-  it("syncs cachedUserAtom on auth", async () => {
-    await send({ type: "AUTHENTICATED", user: mockUser });
-
-    expect(store.get(cachedUserAtom)).toEqual(mockUser);
-  });
-
-  it("clears cache on logout", async () => {
-    store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
-    store.set(cachedUserAtom, mockUser);
-    store.set(cachedRepoAtom, { owner: "acme", repo: "notes" });
+describe("LOGOUT", () => {
+  it("resets to unauthenticated and wipes fs", async () => {
+    store.set(machineAtom, {
+      phase: "ready",
+      user: mockUser,
+      repos: ["acme/notes"],
+      selectedRepo: { owner: "acme", repo: "notes" },
+      filenames: [],
+      files: {},
+    });
 
     await send({ type: "LOGOUT" });
 
-    expect(store.get(cachedUserAtom)).toBeNull();
-    expect(store.get(cachedRepoAtom)).toBeNull();
+    expect(machine()).toEqual({ phase: "unauthenticated", authError: null });
+    expect(store.get(userAtom)).toBeNull();
+    expect(store.get(selectedRepoAtom)).toBeNull();
+    expect(wipeFs).toHaveBeenCalled();
   });
+});
 
-  it("passes cachedRepo from store as context to transition", async () => {
-    store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
-    store.set(cachedRepoAtom, { owner: "acme", repo: "notes" });
-
-    await send({ type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] });
-
-    const state = store.get(machineStateAtom);
-    expect(state).toEqual({
-      name: "loadingRepo",
+describe("SELECT_REPO", () => {
+  it("clones selected repo and reaches ready from selectingRepo", async () => {
+    store.set(machineAtom, {
+      phase: "selectingRepo",
       user: mockUser,
-      repo: { owner: "acme", repo: "notes" },
       repos: ["acme/notes", "acme/wiki"],
     });
+    vi.mocked(git.isInitialized).mockResolvedValue(false);
+    vi.mocked(readRepoFiles).mockResolvedValue(["/soten/readme.md"]);
+    vi.mocked(readFile).mockResolvedValue({ type: "text", content: "# Readme" });
+
+    await send({ type: "SELECT_REPO", owner: "acme", repo: "notes" });
+
+    const m = machine();
+    expect(m.phase).toBe("ready");
+    if (m.phase !== "ready") return;
+    expect(m.selectedRepo).toEqual({ owner: "acme", repo: "notes" });
+    expect(m.files).toEqual({ "/soten/readme.md": { type: "text", content: "# Readme" } });
   });
 
-  it("processes queued events sequentially", async () => {
-    const order: string[] = [];
-
-    vi.mocked(runEffect).mockImplementation(async (...args) => {
-      order.push(`effect:${args[0].name}`);
-      if (args[0].name === "fetchingRepos") {
-        await args[3]({ type: "REPOS_LOADED", repos: ["acme/notes"] });
-      }
-    });
-
-    await send({ type: "AUTHENTICATED", user: mockUser });
-
-    expect(order).toEqual(["effect:fetchingRepos", "effect:loadingRepo"]);
-    expect(store.get(machineStateAtom)).toEqual({
-      name: "loadingRepo",
+  it("wipes fs before cloning", async () => {
+    store.set(machineAtom, {
+      phase: "selectingRepo",
       user: mockUser,
-      repo: { owner: "acme", repo: "notes" },
       repos: ["acme/notes"],
     });
-  });
+    vi.mocked(git.isInitialized).mockResolvedValue(false);
+    vi.mocked(readRepoFiles).mockResolvedValue([]);
 
-  it("queued events see fresh state, not stale state", async () => {
-    const statesSeenByEffect: string[] = [];
-
-    vi.mocked(runEffect).mockImplementation(async (state) => {
-      statesSeenByEffect.push(state.name);
+    const callOrder: string[] = [];
+    vi.mocked(wipeFs).mockImplementation(() => {
+      callOrder.push("wipeFs");
+    });
+    vi.mocked(git.clone).mockImplementation(async () => {
+      callOrder.push("clone");
     });
 
-    store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
+    await send({ type: "SELECT_REPO", owner: "acme", repo: "notes" });
 
-    const p1 = send({ type: "REPOS_LOADED", repos: ["acme/notes", "acme/wiki"] });
-    const p2 = send({ type: "LOGOUT" });
-    await p1;
-    await p2;
+    expect(callOrder.indexOf("wipeFs")).toBeLessThan(callOrder.indexOf("clone"));
+  });
+});
 
-    expect(statesSeenByEffect).toEqual(["selectingRepo", "unauthenticated"]);
-    expect(store.get(machineStateAtom).name).toBe("unauthenticated");
+describe("SWITCH_REPO", () => {
+  it("goes to selectingRepo from ready", async () => {
+    store.set(machineAtom, {
+      phase: "ready",
+      user: mockUser,
+      repos: ["acme/notes", "acme/wiki"],
+      selectedRepo: { owner: "acme", repo: "notes" },
+      filenames: [],
+      files: {},
+    });
+
+    await send({ type: "SWITCH_REPO" });
+
+    const m = machine();
+    expect(m.phase).toBe("selectingRepo");
+    if (m.phase !== "selectingRepo") return;
+    expect(m.repos).toEqual(["acme/notes", "acme/wiki"]);
+  });
+});
+
+describe("RETRY", () => {
+  it("re-enters authenticate flow from error", async () => {
+    store.set(machineAtom, { phase: "error", message: "Failed", user: mockUser });
+    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
+    vi.mocked(git.isInitialized).mockResolvedValue(false);
+    vi.mocked(readRepoFiles).mockResolvedValue([]);
+
+    await send({ type: "RETRY" });
+
+    expect(machine().phase).toBe("ready");
   });
 
-  it("recovers from thrown effect (draining resets)", async () => {
-    vi.mocked(runEffect).mockRejectedValueOnce(new Error("effect exploded"));
+  it("wipes fs before retrying", async () => {
+    store.set(machineAtom, { phase: "error", message: "Failed", user: mockUser });
+    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
+    vi.mocked(git.isInitialized).mockResolvedValue(false);
+    vi.mocked(readRepoFiles).mockResolvedValue([]);
 
-    await expect(send({ type: "AUTHENTICATED", user: mockUser })).rejects.toThrow(
-      "effect exploded",
-    );
+    await send({ type: "RETRY" });
 
-    vi.mocked(runEffect).mockReset();
+    expect(wipeFs).toHaveBeenCalled();
+  });
+});
 
-    store.set(machineStateAtom, { name: "fetchingRepos", user: mockUser });
-    await send({ type: "LOGOUT" });
+describe("error recovery", () => {
+  it("falls back to wipe + clone when pull fails", async () => {
+    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
+    vi.mocked(git.isInitialized).mockResolvedValue(true);
+    vi.mocked(git.pull).mockRejectedValue(new Error("corrupt"));
+    vi.mocked(git.clone).mockResolvedValue(undefined);
+    vi.mocked(readRepoFiles).mockResolvedValue([]);
 
-    expect(store.get(machineStateAtom)).toEqual({ name: "unauthenticated", authError: null });
+    await send({ type: "AUTHENTICATE", user: mockUser });
+
+    expect(git.pull).toHaveBeenCalled();
+    expect(wipeFs).toHaveBeenCalled();
+    expect(git.clone).toHaveBeenCalled();
+    expect(machine().phase).toBe("ready");
+  });
+
+  it("goes to error when clone fails", async () => {
+    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
+    vi.mocked(git.isInitialized).mockResolvedValue(false);
+    vi.mocked(git.clone).mockRejectedValue(new Error("network failure"));
+
+    await send({ type: "AUTHENTICATE", user: mockUser });
+
+    const m = machine();
+    expect(m.phase).toBe("error");
+    if (m.phase !== "error") return;
+    expect(m.message).toBe("network failure");
   });
 });
