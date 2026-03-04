@@ -1,4 +1,4 @@
-export { store, machineAtom, filesAtom, noteListAtom } from "./store";
+export { store, machineAtom, filesAtom, noteListAtom, renderedNoteAtom } from "./store";
 export { send } from "./machine";
 
 import "./init.run";

@@ -1,8 +1,7 @@
 import { useAtom } from "jotai";
 import { Link, useParams } from "@tanstack/react-router";
 import { Suspense } from "react";
-import { renderMarkdown } from "../markdown";
-import { filesAtom } from "../atoms/globals";
+import { renderedNoteAtom } from "../atoms/globals";
 import { REPO_DIR } from "../lib/git";
 import { t } from "../i18n";
 
@@ -29,19 +28,14 @@ function Frontmatter({ data }: { data: Record<string, unknown> | null }) {
   );
 }
 
-async function Note({ path }: { path: string }) {
-  const [files] = useAtom(filesAtom);
-  const file = files[path];
+function Note({ path }: { path: string }) {
+  const [rendered] = useAtom(renderedNoteAtom(path));
+  if (!rendered) return null;
 
-  if (file.type !== "text") {
-    return null;
-  }
-
-  const md = await renderMarkdown(file.content);
   return (
     <>
-      <Frontmatter data={md.frontmatter} />
-      <div className="prose" dangerouslySetInnerHTML={{ __html: md.html }} />
+      <Frontmatter data={rendered.frontmatter} />
+      <div className="prose" dangerouslySetInnerHTML={{ __html: rendered.html }} />
     </>
   );
 }

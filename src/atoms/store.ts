@@ -1,6 +1,6 @@
 import { createStore, atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
-import { extractTitle } from "../markdown";
+import { atomWithStorage, atomFamily } from "jotai/utils";
+import { extractTitle, renderMarkdown } from "../markdown";
 import { REPO_DIR } from "../lib/constants";
 import { t } from "../i18n";
 
@@ -113,6 +113,17 @@ function noteTitle(relativePath: string, content: string | null): string {
 
   return t("note.unnamedWithStem", { stem });
 }
+
+export type RenderedNote = { frontmatter: Record<string, unknown> | null; html: string };
+
+export const renderedNoteAtom = atomFamily((path: string) =>
+  atom(async (get) => {
+    const files = get(filesAtom);
+    const file = files[path];
+    if (!file || file.type !== "text") return null;
+    return renderMarkdown(file.content);
+  }),
+);
 
 export type NoteListEntry = { path: string; relativePath: string; title: string };
 
