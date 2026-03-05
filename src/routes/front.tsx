@@ -3,6 +3,8 @@ import { useAtom } from "jotai";
 import { noteListAtom, pageSizeAtom } from "../atoms/globals";
 import { NoteCard } from "../components/NoteCard";
 import { Button } from "../components/Button";
+import { Stack } from "../components/ds/Stack";
+import { Text } from "../components/ds/Text";
 import { t } from "../i18n";
 
 export function FrontPage() {
@@ -15,7 +17,7 @@ export function FrontPage() {
   const pageNotes = notes.slice(safePage * pageSize, (safePage + 1) * pageSize);
 
   return (
-    <div className="flex flex-col gap-3">
+    <Stack>
       {pageNotes.map((note) => (
         <NoteCard key={note.path} note={note} />
       ))}
@@ -29,9 +31,9 @@ export function FrontPage() {
           >
             {t("pagination.previous")}
           </Button>
-          <span className="text-sm text-gray-500">
+          <Text variant="secondary" as="span">
             {t("pagination.pageOf", { page: safePage + 1, total: totalPages })}
-          </span>
+          </Text>
           <Button
             variant="ghost"
             className="text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-default"
@@ -42,6 +44,6 @@ export function FrontPage() {
           </Button>
         </div>
       )}
-    </div>
+    </Stack>
   );
 }

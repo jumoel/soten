@@ -2,6 +2,8 @@ import { useAtom } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
 import { machineAtom, send, pageSizeAtom } from "../atoms/globals";
 import { RepoSelector } from "../components/RepoSelector";
+import { Text } from "../components/ds/Text";
+import { TextInput } from "../components/ds/TextInput";
 import { t } from "../i18n";
 
 export function SettingsPage() {
@@ -15,10 +17,10 @@ export function SettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <label className="block mb-1 font-semibold text-sm" htmlFor="page-size">
+        <Text variant="label" as="label" className="mb-1" htmlFor="page-size">
           {t("settings.pageSize")}
-        </label>
-        <input
+        </Text>
+        <TextInput
           id="page-size"
           type="number"
           min={1}
@@ -28,7 +30,7 @@ export function SettingsPage() {
             const val = parseInt(e.target.value, 10);
             if (!isNaN(val) && val >= 1) setPageSize(val);
           }}
-          className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+          className="w-20"
         />
       </div>
       <RepoSelector

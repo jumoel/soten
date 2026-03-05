@@ -107,9 +107,81 @@ Follow a Tufte-inspired aesthetic: maximise information density, but allow restr
 - **Density first** — prefer tight padding (`px-4 py-3`, `gap-3`) over generous spacing; content should be readable, not airy
 - **Restrained chrome is welcome** — subtle borders, gentle rounding (`rounded`), and off-white surfaces improve legibility and visual comfort; avoid heavy shadows, animations, and ornament that competes with content
 - **Typography over boxes** — establish hierarchy through font weight, size, and small-caps labels rather than heavy containers
-- **Hairline rules with a strong accent** — thin (`border` / 1px) perimeter in light gray (`border-gray-200`) combined with a single stronger left-edge accent (e.g. `border-l-[3px] border-l-gray-500`) gives cards definition without visual noise
+- **Hairline rules with a strong accent** — thin (`border` / 1px) perimeter in light gray (`border-gray-200`) combined with a single stronger left-edge accent (e.g. `border-l-[3px] border-l-gray-400`) gives cards definition without visual noise
 - **Off-white backgrounds** — `bg-gray-50` is the preferred card/surface background; it is distinct from the page without introducing colour
 - **Muted, purposeful colour** — grays are preferred; colour should carry meaning, not decoration
+
+#### Design System Components
+
+When building new UI, compose from design system components in `src/components/ds/` and existing components in `src/components/`. Do not write raw Tailwind class strings for patterns that already have a component. If a new pattern is needed, add a ds/ component first, then use it. Never introduce colours outside the palette below.
+
+| Component                  | Purpose                           | When to use                              |
+| -------------------------- | --------------------------------- | ---------------------------------------- |
+| `ds/Card`                  | Surface with left accent border   | Content cards, list items, visual weight |
+| `ds/Stack`                 | Vertical flex layout              | Spacing groups of elements vertically    |
+| `ds/DividedList`           | List with hairline dividers       | Simple text lists (nav, settings)        |
+| `ds/TextInput`             | Styled form input                 | Any text/number input field              |
+| `ds/Toolbar`               | Horizontal bar with bottom border | Top bars, action bars                    |
+| `ds/Text`                  | Typographic rhythm                | All text rendering (see variants below)  |
+| `components/Button`        | Interactive button                | Actions (primary, link, ghost variants)  |
+| `components/AlertBox`      | Error/warning container           | Error states, warnings                   |
+| `components/PageContainer` | Max-width centered container      | Page content wrapper                     |
+| `components/ProseContent`  | Rendered markdown                 | Markdown HTML output                     |
+| `components/BackLink`      | Navigation back link              | Back navigation                          |
+
+#### Text Variants (`ds/Text`)
+
+The `Text` component accepts a `variant` prop and an optional `as` prop to override the HTML element. All text should use `Text` rather than raw elements with inline classes.
+
+| Variant        | Default element | Classes                                                       | Use for                                |
+| -------------- | --------------- | ------------------------------------------------------------- | -------------------------------------- |
+| `body`         | `p`             | `text-sm text-gray-700`                                       | Default body text                      |
+| `secondary`    | `p`             | `text-sm text-gray-500`                                       | Pagination, table values, support text |
+| `meta`         | `span`          | `text-xs text-gray-400 uppercase tracking-widest`             | Dates, categories, tertiary labels     |
+| `mono`         | `code`          | `font-mono text-sm text-gray-500`                             | Repo names, paths, config values       |
+| `label`        | `label`         | `block text-sm font-semibold text-gray-700`                   | Form labels                            |
+| `sectionLabel` | `h3`            | `text-xs font-semibold uppercase tracking-wide text-gray-500` | Section headings above groups          |
+| `error`        | `p`             | `text-red-700 font-medium`                                    | Error headings                         |
+| `errorDetail`  | `pre`           | `text-sm text-red-600 whitespace-pre-wrap`                    | Error details, stack traces            |
+| `title`        | `h1`            | `text-2xl font-semibold text-gray-800`                        | Page titles                            |
+| `heading`      | `h2`            | `text-lg font-medium tracking-tight text-gray-800`            | Section headings                       |
+
+#### Colour Palette
+
+Five grays, two reds — nothing else.
+
+**Surfaces:**
+
+- `bg-gray-100` — page background
+- `bg-white` — primary card surface
+- `bg-gray-50` — muted card surface
+- `bg-red-50` — error surface
+
+**Text** (four stops):
+
+- `text-gray-800` — headings, titles (darkest)
+- `text-gray-700` — body text, labels
+- `text-gray-500` — secondary text, section labels, mono values
+- `text-gray-400` — meta labels, tertiary (lightest)
+- `text-red-700` — error headings
+- `text-red-600` — error detail
+- `text-white` — on dark buttons only
+
+**Borders:**
+
+- `border-gray-200` — standard borders, dividers
+- `border-gray-300` — input borders (slightly stronger for affordance)
+- `border-red-200` — error borders
+
+**Accents:**
+
+- `border-l-gray-400` — card left accent (resting)
+- `border-l-gray-600` — card left accent (hover)
+
+**Interactive fills:**
+
+- `bg-gray-700` — primary button
+- `hover:bg-gray-600` — primary button hover
 
 ### File System
 

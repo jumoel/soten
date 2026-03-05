@@ -5,6 +5,8 @@ import { noteCardAtom } from "../atoms/globals";
 import { prettyDateTime } from "../atoms/store";
 import type { NoteListEntry } from "../atoms/store";
 import { ProseContent } from "./ProseContent";
+import { Card } from "./ds/Card";
+import { Text } from "./ds/Text";
 import { t } from "../i18n";
 
 function NoteCardContent({ path }: { path: string }) {
@@ -16,20 +18,25 @@ function NoteCardContent({ path }: { path: string }) {
 
 export function NoteCard({ note }: { note: NoteListEntry }) {
   return (
-    <Link
-      to={"/note/" + note.relativePath}
-      className="block no-underline rounded border border-gray-200 border-l-[3px] border-l-gray-500 bg-white px-4 py-3 hover:border-l-gray-700"
-    >
-      <article>
-        {note.date && (
-          <p className="mb-0.5 text-xs text-gray-400 uppercase tracking-widest font-normal">
-            {prettyDateTime.format(note.date)}
-          </p>
-        )}
-        <Suspense fallback={<p className="mt-1 text-sm text-gray-400">{t("note.loading")}</p>}>
-          <NoteCardContent path={note.path} />
-        </Suspense>
-      </article>
+    <Link to={"/note/" + note.relativePath} className="block no-underline">
+      <Card className="hover:border-l-gray-600">
+        <article>
+          {note.date && (
+            <Text variant="meta" className="mb-0.5">
+              {prettyDateTime.format(note.date)}
+            </Text>
+          )}
+          <Suspense
+            fallback={
+              <Text variant="secondary" as="p" className="mt-1">
+                {t("note.loading")}
+              </Text>
+            }
+          >
+            <NoteCardContent path={note.path} />
+          </Suspense>
+        </article>
+      </Card>
     </Link>
   );
 }

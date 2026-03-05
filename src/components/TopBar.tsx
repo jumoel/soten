@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "./Button";
+import { Toolbar } from "./ds/Toolbar";
 
 function Icon({ d }: { d: string }) {
   return (
@@ -24,13 +25,13 @@ export function TopBar({
   onMenuToggle: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
-      <Link to="/" className="text-lg font-medium tracking-tight no-underline text-gray-900">
+    <Toolbar>
+      <Link to="/" className="text-lg font-medium tracking-tight no-underline text-gray-800">
         soten
       </Link>
       <Button variant="ghost" onClick={onMenuToggle} aria-label="Menu">
         <Icon d={menuOpen ? "M5 5l10 10M15 5L5 15" : "M3 5h14M3 10h14M3 15h14"} />
       </Button>
-    </div>
+    </Toolbar>
   );
 }

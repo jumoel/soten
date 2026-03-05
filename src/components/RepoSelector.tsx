@@ -1,4 +1,7 @@
 import { send } from "../atoms/globals";
+import { Card } from "./ds/Card";
+import { Stack } from "./ds/Stack";
+import { Text } from "./ds/Text";
 import { t } from "../i18n";
 
 export function RepoSelector({
@@ -10,25 +13,30 @@ export function RepoSelector({
 }) {
   return (
     <div className="my-4">
-      <p className="mb-2 font-semibold">{t("repo.selectRepository")}</p>
-      <ul className="flex flex-col gap-1.5">
+      <Text variant="sectionLabel" className="mb-2">
+        {t("repo.selectRepository")}
+      </Text>
+      <Stack gap="1.5">
         {repos.map((fullName) => {
           const [owner, repo] = fullName.split("/");
           return (
-            <li key={fullName}>
-              <button
-                className="w-full text-left rounded border border-gray-200 border-l-[3px] border-l-gray-500 bg-gray-50 px-3 py-2 font-mono text-sm text-gray-800 hover:bg-gray-100"
-                onClick={() =>
-                  onSelect ? onSelect(owner, repo) : send({ type: "SELECT_REPO", owner, repo })
-                }
-              >
-                {fullName}
-              </button>
-            </li>
+            <button
+              key={fullName}
+              className="w-full text-left hover:bg-gray-100"
+              onClick={() =>
+                onSelect ? onSelect(owner, repo) : send({ type: "SELECT_REPO", owner, repo })
+              }
+            >
+              <Card muted>
+                <Text variant="mono" className="text-gray-800">
+                  {fullName}
+                </Text>
+              </Card>
+            </button>
           );
         })}
-      </ul>
-      <p className="mt-4 text-sm">
+      </Stack>
+      <Text variant="secondary" className="mt-4">
         <a
           href="https://github.com/apps/soten-notes/installations/select_target"
           target="_blank"
@@ -37,7 +45,7 @@ export function RepoSelector({
         >
           {t("repo.manageAccess")}
         </a>
-      </p>
+      </Text>
     </div>
   );
 }
