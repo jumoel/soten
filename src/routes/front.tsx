@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAtom } from "jotai";
 import { noteListAtom, pageSizeAtom } from "../atoms/globals";
 import { NoteCard } from "../components/NoteCard";
@@ -10,12 +10,9 @@ export function FrontPage() {
   const [pageSize] = useAtom(pageSizeAtom);
   const [page, setPage] = useState(0);
 
-  useEffect(() => {
-    setPage(0);
-  }, [notes]);
-
   const totalPages = Math.max(1, Math.ceil(notes.length / pageSize));
-  const pageNotes = notes.slice(page * pageSize, (page + 1) * pageSize);
+  const safePage = Math.min(page, totalPages - 1);
+  const pageNotes = notes.slice(safePage * pageSize, (safePage + 1) * pageSize);
 
   return (
     <div>
@@ -28,18 +25,18 @@ export function FrontPage() {
             variant="ghost"
             className="text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-default"
             onClick={() => setPage((p) => p - 1)}
-            disabled={page === 0}
+            disabled={safePage === 0}
           >
             {t("pagination.previous")}
           </Button>
           <span className="text-sm text-gray-500">
-            {t("pagination.pageOf", { page: page + 1, total: totalPages })}
+            {t("pagination.pageOf", { page: safePage + 1, total: totalPages })}
           </span>
           <Button
             variant="ghost"
             className="text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-default"
             onClick={() => setPage((p) => p + 1)}
-            disabled={page >= totalPages - 1}
+            disabled={safePage >= totalPages - 1}
           >
             {t("pagination.next")}
           </Button>
