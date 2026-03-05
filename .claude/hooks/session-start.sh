@@ -5,6 +5,8 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
+echo '{"async": true, "asyncTimeout": 300000}'
+
 # Install gh CLI if not present
 if ! command -v gh &>/dev/null; then
   GH_VERSION="2.67.0"
