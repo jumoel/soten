@@ -67,7 +67,7 @@ const prettyDate = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   timeZone: "UTC",
 });
-const prettyDateTime = new Intl.DateTimeFormat("en-US", {
+export const prettyDateTime = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   month: "long",
   day: "numeric",
