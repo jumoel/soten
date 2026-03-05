@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { noteCardAtom } from "../atoms/globals";
 import type { NoteListEntry } from "../atoms/store";
+import { ProseContent } from "./ProseContent";
 import { t } from "../i18n";
 
 const cardDateFormat = new Intl.DateTimeFormat("en-US", {
@@ -18,10 +19,7 @@ function NoteCardContent({ path, relativePath }: { path: string; relativePath: s
 
   return (
     <>
-      <div
-        className="prose prose-sm prose-gray mt-3"
-        dangerouslySetInnerHTML={{ __html: card.html }}
-      />
+      <ProseContent html={card.html} className="mt-3" />
       {!card.isShort && (
         <p className="mt-3">
           <Link
