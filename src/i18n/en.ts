@@ -12,6 +12,9 @@ const en = {
   "repo.selectRepository": "Select a repository:",
   "repo.manageAccess": "Manage repository access on GitHub",
 
+  "menu.settings": "Settings",
+  "nav.back": "Back",
+
   "note.frontpage": "Frontpage",
   "note.loading": "Loading\u2026",
   "note.dayPrefix": "Day: {date}",
