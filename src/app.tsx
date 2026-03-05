@@ -1,24 +1,21 @@
-import { useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAtom } from "jotai";
 import { Outlet, useNavigate } from "@tanstack/react-router";
 import { machineAtom, send } from "./atoms/globals";
 import { UnauthenticatedView } from "./components/UnauthenticatedView";
-import { AuthenticatedShell } from "./components/AuthenticatedShell";
 import { AuthError } from "./components/AuthError";
+import { TopBar } from "./components/TopBar";
+import { Menu } from "./components/Menu";
+import { PageContainer } from "./components/PageContainer";
 import { t } from "./i18n";
-import type { ReactNode } from "react";
-
-function Shell({ children }: { children: ReactNode }) {
-  return (
-    <div className="w-screen h-screen antialiased">
-      <div className="max-w-sm m-auto">{children}</div>
-    </div>
-  );
-}
 
 export function App() {
   const [machine] = useAtom(machineAtom);
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   useEffect(() => {
     if (machine.phase === "selectingRepo") {
@@ -26,27 +23,22 @@ export function App() {
     }
   }, [machine.phase, navigate]);
 
-  if (machine.phase === "initializing") {
-    return (
-      <Shell>
-        <div>{t("app.initializing")}</div>
-      </Shell>
-    );
-  }
-
-  if (machine.phase === "unauthenticated") {
-    return (
-      <Shell>
-        <UnauthenticatedView authError={machine.authError} />
-      </Shell>
-    );
-  }
-
   const selectedRepo = "selectedRepo" in machine ? machine.selectedRepo : undefined;
+  const showChrome = machine.phase !== "initializing" && machine.phase !== "unauthenticated";
 
   return (
-    <Shell>
-      <AuthenticatedShell user={machine.user} selectedRepo={selectedRepo}>
+    <div className="w-screen min-h-screen antialiased">
+      {showChrome && (
+        <>
+          <TopBar menuOpen={menuOpen} onMenuToggle={toggleMenu} />
+          <Menu open={menuOpen} onClose={closeMenu} selectedRepo={selectedRepo} />
+        </>
+      )}
+      <PageContainer>
+        {machine.phase === "initializing" && t("app.initializing")}
+        {machine.phase === "unauthenticated" && (
+          <UnauthenticatedView authError={machine.authError} />
+        )}
         {machine.phase === "error" && (
           <AuthError message={machine.message} onRetry={() => send({ type: "RETRY" })} />
         )}
@@ -54,7 +46,7 @@ export function App() {
           machine.phase === "cloningRepo" ||
           machine.phase === "loadingFiles") && <div>{t("app.initializing")}</div>}
         {(machine.phase === "ready" || machine.phase === "selectingRepo") && <Outlet />}
-      </AuthenticatedShell>
-    </Shell>
+      </PageContainer>
+    </div>
   );
 }
