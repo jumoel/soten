@@ -21,6 +21,14 @@ const en = {
   "note.unnamedWithDate": "Unnamed note \u00B7 {date}",
   "note.unnamedWithStem": "Unnamed note \u00B7 {stem}",
 
+  "settings.pageSize": "Notes per page",
+
+  "note.continueReading": "Continue reading \u2192",
+
+  "pagination.previous": "\u2190 Previous",
+  "pagination.next": "Next \u2192",
+  "pagination.pageOf": "Page {page} of {total}",
+
   "error.invalidAuth": "Invalid installationId or token",
   "error.fetchReposFailed": "Failed to fetch repos",
   "error.noRepos": "No repos found",

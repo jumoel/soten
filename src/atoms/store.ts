@@ -23,6 +23,8 @@ export const selectedRepoAtom = atomWithStorage<Repo | null>("selectedRepo", nul
   getOnInit: true,
 });
 
+export const pageSizeAtom = atomWithStorage<number>("pageSize", 10, undefined, { getOnInit: true });
+
 export type AppMachine =
   | { phase: "initializing" }
   | { phase: "unauthenticated"; authError: string | null }
@@ -55,6 +57,8 @@ export const filesAtom = atom<Record<string, TextFile | ImageFile>>((get) => {
   const m = get(machineAtom);
   return m.phase === "ready" ? m.files : emptyFiles;
 });
+
+const NOTE_CARD_THRESHOLD = 1500;
 
 const dateFileRe = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
 const prettyDate = new Intl.DateTimeFormat("en-US", {
@@ -93,6 +97,32 @@ function parseTimestampFilename(stem: string): Date | null {
   return null;
 }
 
+function extractFrontmatterDate(content: string): Date | null {
+  const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!frontmatterMatch) return null;
+  const dateMatch = frontmatterMatch[1].match(/^date:\s*(.+)$/m);
+  if (!dateMatch) return null;
+  const raw = dateMatch[1].trim().replace(/^['"]|['"]$/g, "");
+  const date = new Date(raw);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function noteDate(relativePath: string, content: string | null): Date | null {
+  if (content) {
+    const fm = extractFrontmatterDate(content);
+    if (fm) return fm;
+  }
+
+  const filename = relativePath.split("/").pop() ?? relativePath;
+  const dateMatch = filename.match(dateFileRe);
+  if (dateMatch) {
+    return new Date(Date.UTC(+dateMatch[1], +dateMatch[2] - 1, +dateMatch[3]));
+  }
+
+  const stem = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
+  return parseTimestampFilename(stem);
+}
+
 function noteTitle(relativePath: string, content: string | null): string {
   if (content) {
     const h1 = extractTitle(content);
@@ -125,7 +155,12 @@ export const renderedNoteAtom = atomFamily((path: string) =>
   }),
 );
 
-export type NoteListEntry = { path: string; relativePath: string; title: string };
+export type NoteListEntry = {
+  path: string;
+  relativePath: string;
+  title: string;
+  date: Date | null;
+};
 
 export const noteListAtom = atom<NoteListEntry[]>((get) => {
   const m = get(machineAtom);
@@ -142,9 +177,24 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
     const file = m.files[path];
     const content = file?.type === "text" ? file.content : null;
     const title = relativePath.endsWith(".md") ? noteTitle(relativePath, content) : relativePath;
+    const date = relativePath.endsWith(".md") ? noteDate(relativePath, content) : null;
 
-    entries.push({ path, relativePath, title });
+    entries.push({ path, relativePath, title, date });
   }
 
   return entries;
 });
+
+export const noteCardAtom = atomFamily((path: string) =>
+  atom(async (get) => {
+    const files = get(filesAtom);
+    const file = files[path];
+    if (!file || file.type !== "text") return null;
+
+    const content = file.content;
+    const isShort = content.length <= NOTE_CARD_THRESHOLD;
+    const displayContent = isShort ? content : content.slice(0, NOTE_CARD_THRESHOLD);
+    const { html } = await renderMarkdown(displayContent);
+    return { html, isShort };
+  }),
+);
