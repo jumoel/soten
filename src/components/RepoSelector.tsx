@@ -1,6 +1,5 @@
 import { send } from "../atoms/globals";
 import { t } from "../i18n";
-import { Button } from "./Button";
 
 export function RepoSelector({
   repos,
@@ -12,19 +11,19 @@ export function RepoSelector({
   return (
     <div className="my-4">
       <p className="mb-2 font-semibold">{t("repo.selectRepository")}</p>
-      <ul>
+      <ul className="flex flex-col gap-1.5">
         {repos.map((fullName) => {
           const [owner, repo] = fullName.split("/");
           return (
-            <li key={fullName} className="my-1">
-              <Button
-                className="px-3 py-1 font-mono text-sm"
+            <li key={fullName}>
+              <button
+                className="w-full text-left rounded border border-gray-200 border-l-[3px] border-l-gray-500 bg-gray-50 px-3 py-2 font-mono text-sm text-gray-800 hover:bg-gray-100"
                 onClick={() =>
                   onSelect ? onSelect(owner, repo) : send({ type: "SELECT_REPO", owner, repo })
                 }
               >
                 {fullName}
-              </Button>
+              </button>
             </li>
           );
         })}

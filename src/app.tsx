@@ -27,7 +27,7 @@ export function App() {
   const showChrome = machine.phase !== "initializing" && machine.phase !== "unauthenticated";
 
   return (
-    <div className="w-screen min-h-screen antialiased">
+    <div className="w-screen min-h-screen antialiased bg-gray-100">
       {showChrome && (
         <>
           <TopBar menuOpen={menuOpen} onMenuToggle={toggleMenu} />

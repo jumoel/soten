@@ -6,6 +6,7 @@ import { REPO_DIR } from "../lib/git";
 import { t } from "../i18n";
 import { BackLink } from "../components/BackLink";
 import { FrontmatterTable } from "../components/FrontmatterTable";
+import { ProseContent } from "../components/ProseContent";
 
 function Note({ path }: { path: string }) {
   const [rendered] = useAtom(renderedNoteAtom(path));
@@ -14,10 +15,7 @@ function Note({ path }: { path: string }) {
   return (
     <>
       <FrontmatterTable data={rendered.frontmatter} />
-      <div
-        className="prose prose-sm prose-gray"
-        dangerouslySetInnerHTML={{ __html: rendered.html }}
-      />
+      <ProseContent html={rendered.html} />
     </>
   );
 }

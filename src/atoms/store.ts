@@ -23,6 +23,8 @@ export const selectedRepoAtom = atomWithStorage<Repo | null>("selectedRepo", nul
   getOnInit: true,
 });
 
+export const pageSizeAtom = atomWithStorage<number>("pageSize", 10, undefined, { getOnInit: true });
+
 export type AppMachine =
   | { phase: "initializing" }
   | { phase: "unauthenticated"; authError: string | null }
@@ -56,6 +58,8 @@ export const filesAtom = atom<Record<string, TextFile | ImageFile>>((get) => {
   return m.phase === "ready" ? m.files : emptyFiles;
 });
 
+const NOTE_CARD_THRESHOLD = 375;
+
 const dateFileRe = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
 const prettyDate = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
@@ -63,7 +67,7 @@ const prettyDate = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   timeZone: "UTC",
 });
-const prettyDateTime = new Intl.DateTimeFormat("en-US", {
+export const prettyDateTime = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   month: "long",
   day: "numeric",
@@ -91,6 +95,52 @@ function parseTimestampFilename(stem: string): Date | null {
   }
 
   return null;
+}
+
+const frontmatterBlockRe = /^---\r?\n([\s\S]*?)\n---(?:\r?\n|$)/;
+const closingFmRe = /\n---(?:\r?\n|$)/;
+
+function extractFrontmatterDate(content: string): Date | null {
+  if (!content.startsWith("---")) return null;
+  const fmMatch = frontmatterBlockRe.exec(content);
+  if (!fmMatch) return null;
+  const dateMatch = fmMatch[1].match(/^date:\s*(.+)$/m);
+  if (!dateMatch) return null;
+  const raw = dateMatch[1].trim().replace(/^['"]|['"]$/g, "");
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function findBodyStart(content: string): number {
+  if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) return 0;
+  const closing = closingFmRe.exec(content);
+  return closing !== null ? closing.index + closing[0].length : 0;
+}
+
+function findCutPoint(body: string, threshold: number): number {
+  const headingCut = body.lastIndexOf("\n\n#", threshold);
+  if (headingCut > 0) return headingCut;
+  const paraCut = body.lastIndexOf("\n\n", threshold);
+  if (paraCut > 0) return paraCut;
+  const lineCut = body.lastIndexOf("\n", threshold);
+  if (lineCut > 0) return lineCut;
+  return threshold;
+}
+
+function noteDate(relativePath: string, content: string | null): Date | null {
+  if (content) {
+    const fm = extractFrontmatterDate(content);
+    if (fm) return fm;
+  }
+
+  const filename = relativePath.split("/").pop() ?? relativePath;
+  const dateMatch = filename.match(dateFileRe);
+  if (dateMatch) {
+    return new Date(Date.UTC(+dateMatch[1], +dateMatch[2] - 1, +dateMatch[3]));
+  }
+
+  const stem = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
+  return parseTimestampFilename(stem);
 }
 
 function noteTitle(relativePath: string, content: string | null): string {
@@ -125,7 +175,12 @@ export const renderedNoteAtom = atomFamily((path: string) =>
   }),
 );
 
-export type NoteListEntry = { path: string; relativePath: string; title: string };
+export type NoteListEntry = {
+  path: string;
+  relativePath: string;
+  title: string;
+  date: Date | null;
+};
 
 export const noteListAtom = atom<NoteListEntry[]>((get) => {
   const m = get(machineAtom);
@@ -142,9 +197,28 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
     const file = m.files[path];
     const content = file?.type === "text" ? file.content : null;
     const title = relativePath.endsWith(".md") ? noteTitle(relativePath, content) : relativePath;
+    const date = relativePath.endsWith(".md") ? noteDate(relativePath, content) : null;
 
-    entries.push({ path, relativePath, title });
+    entries.push({ path, relativePath, title, date });
   }
 
   return entries;
 });
+
+export const noteCardAtom = atomFamily((path: string) =>
+  atom(async (get) => {
+    const files = get(filesAtom);
+    const file = files[path];
+    if (!file || file.type !== "text") return null;
+
+    const content = file.content;
+    const bodyStart = findBodyStart(content);
+    const body = content.slice(bodyStart);
+    const isShort = body.length <= NOTE_CARD_THRESHOLD;
+    const displayContent = isShort
+      ? content
+      : content.slice(0, bodyStart + findCutPoint(body, NOTE_CARD_THRESHOLD));
+    const { html } = await renderMarkdown(displayContent);
+    return { html, isShort };
+  }),
+);
