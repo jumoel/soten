@@ -2,7 +2,13 @@ import { send } from "../atoms/globals";
 import { t } from "../i18n";
 import { Button } from "./Button";
 
-export function RepoSelector({ repos }: { repos: string[] }) {
+export function RepoSelector({
+  repos,
+  onSelect,
+}: {
+  repos: string[];
+  onSelect?: (owner: string, repo: string) => void;
+}) {
   return (
     <div className="my-4">
       <p className="mb-2 font-semibold">{t("repo.selectRepository")}</p>
@@ -13,7 +19,9 @@ export function RepoSelector({ repos }: { repos: string[] }) {
             <li key={fullName} className="my-1">
               <Button
                 className="px-3 py-1 font-mono text-sm"
-                onClick={() => send({ type: "SELECT_REPO", owner, repo })}
+                onClick={() =>
+                  onSelect ? onSelect(owner, repo) : send({ type: "SELECT_REPO", owner, repo })
+                }
               >
                 {fullName}
               </Button>

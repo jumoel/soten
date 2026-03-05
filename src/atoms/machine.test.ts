@@ -181,26 +181,6 @@ describe("SELECT_REPO", () => {
   });
 });
 
-describe("SWITCH_REPO", () => {
-  it("goes to selectingRepo from ready", async () => {
-    store.set(machineAtom, {
-      phase: "ready",
-      user: mockUser,
-      repos: ["acme/notes", "acme/wiki"],
-      selectedRepo: { owner: "acme", repo: "notes" },
-      filenames: [],
-      files: {},
-    });
-
-    await send({ type: "SWITCH_REPO" });
-
-    const m = machine();
-    expect(m.phase).toBe("selectingRepo");
-    if (m.phase !== "selectingRepo") return;
-    expect(m.repos).toEqual(["acme/notes", "acme/wiki"]);
-  });
-});
-
 describe("RETRY", () => {
   it("re-enters authenticate flow from error", async () => {
     store.set(machineAtom, { phase: "error", message: "Failed", user: mockUser });

@@ -1,7 +1,7 @@
+import { useEffect } from "react";
 import { useAtom } from "jotai";
-import { Outlet } from "@tanstack/react-router";
+import { Outlet, useNavigate } from "@tanstack/react-router";
 import { machineAtom, send } from "./atoms/globals";
-import { RepoSelector } from "./components/RepoSelector";
 import { UnauthenticatedView } from "./components/UnauthenticatedView";
 import { AuthenticatedShell } from "./components/AuthenticatedShell";
 import { AuthError } from "./components/AuthError";
@@ -18,6 +18,13 @@ function Shell({ children }: { children: ReactNode }) {
 
 export function App() {
   const [machine] = useAtom(machineAtom);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (machine.phase === "selectingRepo") {
+      navigate({ to: "/settings", replace: true });
+    }
+  }, [machine.phase, navigate]);
 
   if (machine.phase === "initializing") {
     return (
@@ -40,14 +47,13 @@ export function App() {
   return (
     <Shell>
       <AuthenticatedShell user={machine.user} selectedRepo={selectedRepo}>
-        {machine.phase === "selectingRepo" && <RepoSelector repos={machine.repos} />}
         {machine.phase === "error" && (
           <AuthError message={machine.message} onRetry={() => send({ type: "RETRY" })} />
         )}
         {(machine.phase === "fetchingRepos" ||
           machine.phase === "cloningRepo" ||
           machine.phase === "loadingFiles") && <div>{t("app.initializing")}</div>}
-        {machine.phase === "ready" && <Outlet />}
+        {(machine.phase === "ready" || machine.phase === "selectingRepo") && <Outlet />}
       </AuthenticatedShell>
     </Shell>
   );
