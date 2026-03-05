@@ -58,7 +58,7 @@ export const filesAtom = atom<Record<string, TextFile | ImageFile>>((get) => {
   return m.phase === "ready" ? m.files : emptyFiles;
 });
 
-const NOTE_CARD_THRESHOLD = 750;
+const NOTE_CARD_THRESHOLD = 375;
 
 const dateFileRe = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
 const prettyDate = new Intl.DateTimeFormat("en-US", {

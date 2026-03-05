@@ -19,9 +19,9 @@ function NoteCardContent({ path, relativePath }: { path: string; relativePath: s
 
   return (
     <>
-      <ProseContent html={card.html} className="mt-3" />
+      <ProseContent html={card.html} className="mt-1" />
       {!card.isShort && (
-        <p className="mt-3">
+        <p className="mt-1">
           <Link
             to={"/note/" + relativePath}
             className="text-sm text-gray-500 no-underline hover:text-gray-900"
@@ -36,9 +36,9 @@ function NoteCardContent({ path, relativePath }: { path: string; relativePath: s
 
 export function NoteCard({ note }: { note: NoteListEntry }) {
   return (
-    <article className="rounded-lg border border-gray-200 bg-white shadow-sm p-6 hover:shadow-md transition-shadow">
+    <article className="border-l-2 border-gray-300 bg-white px-3 py-2.5">
       <header>
-        <h2 className="text-lg font-semibold leading-snug m-0">
+        <h2 className="text-base font-semibold leading-tight m-0">
           <Link
             to={"/note/" + note.relativePath}
             className="no-underline text-gray-900 hover:text-gray-600"
@@ -47,12 +47,12 @@ export function NoteCard({ note }: { note: NoteListEntry }) {
           </Link>
         </h2>
         {note.date && (
-          <p className="mt-1 text-xs text-gray-400 uppercase tracking-widest font-normal">
+          <p className="mt-0.5 text-xs text-gray-400 uppercase tracking-widest font-normal">
             {cardDateFormat.format(note.date)}
           </p>
         )}
       </header>
-      <Suspense fallback={<p className="mt-3 text-sm text-gray-400">{t("note.loading")}</p>}>
+      <Suspense fallback={<p className="mt-1 text-sm text-gray-400">{t("note.loading")}</p>}>
         <NoteCardContent path={note.path} relativePath={note.relativePath} />
       </Suspense>
     </article>
