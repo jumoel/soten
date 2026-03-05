@@ -1,5 +1,7 @@
 import { createStore, atom } from "jotai";
 import { atomWithStorage, atomFamily } from "jotai/utils";
+import { VFile } from "vfile";
+import { matter } from "vfile-matter";
 import { extractTitle, renderMarkdown } from "../markdown";
 import { REPO_DIR } from "../lib/constants";
 import { t } from "../i18n";
@@ -97,19 +99,51 @@ function parseTimestampFilename(stem: string): Date | null {
   return null;
 }
 
-function extractFrontmatterDate(content: string): Date | null {
-  const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!frontmatterMatch) return null;
-  const dateMatch = frontmatterMatch[1].match(/^date:\s*(.+)$/m);
-  if (!dateMatch) return null;
-  const raw = dateMatch[1].trim().replace(/^['"]|['"]$/g, "");
-  const date = new Date(raw);
-  return isNaN(date.getTime()) ? null : date;
+const frontmatterRe = /\n---(?:\r?\n|$)/;
+
+function parseFrontmatter(content: string): {
+  data: Record<string, unknown>;
+  bodyStart: number;
+} {
+  const file = new VFile(content);
+  matter(file);
+  const data = (file.data.matter ?? {}) as Record<string, unknown>;
+
+  let bodyStart = 0;
+  if (content.startsWith("---\n") || content.startsWith("---\r\n")) {
+    const closing = frontmatterRe.exec(content);
+    if (closing !== null) bodyStart = closing.index + closing[0].length;
+  }
+
+  return { data, bodyStart };
+}
+
+function frontmatterDate(data: Record<string, unknown>): Date | null {
+  const raw = data["date"];
+  if (!raw) return null;
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
+  if (typeof raw === "string") {
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof raw === "number") return new Date(raw);
+  return null;
+}
+
+function findCutPoint(body: string, threshold: number): number {
+  const headingCut = body.lastIndexOf("\n\n#", threshold);
+  if (headingCut > 0) return headingCut;
+  const paraCut = body.lastIndexOf("\n\n", threshold);
+  if (paraCut > 0) return paraCut;
+  const lineCut = body.lastIndexOf("\n", threshold);
+  if (lineCut > 0) return lineCut;
+  return threshold;
 }
 
 function noteDate(relativePath: string, content: string | null): Date | null {
   if (content) {
-    const fm = extractFrontmatterDate(content);
+    const { data } = parseFrontmatter(content);
+    const fm = frontmatterDate(data);
     if (fm) return fm;
   }
 
@@ -192,12 +226,12 @@ export const noteCardAtom = atomFamily((path: string) =>
     if (!file || file.type !== "text") return null;
 
     const content = file.content;
-    const isShort = content.length <= NOTE_CARD_THRESHOLD;
-    let displayContent = content;
-    if (!isShort) {
-      const cut = content.lastIndexOf("\n", NOTE_CARD_THRESHOLD);
-      displayContent = content.slice(0, cut > 0 ? cut : NOTE_CARD_THRESHOLD);
-    }
+    const { bodyStart } = parseFrontmatter(content);
+    const body = content.slice(bodyStart);
+    const isShort = body.length <= NOTE_CARD_THRESHOLD;
+    const displayContent = isShort
+      ? content
+      : content.slice(0, bodyStart + findCutPoint(body, NOTE_CARD_THRESHOLD));
     const { html } = await renderMarkdown(displayContent);
     return { html, isShort };
   }),
