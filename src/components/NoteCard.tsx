@@ -38,7 +38,7 @@ function NoteCardContent({ path, relativePath }: { path: string; relativePath: s
 
 export function NoteCard({ note }: { note: NoteListEntry }) {
   return (
-    <article className="rounded border border-gray-200 border-l-[3px] border-l-gray-500 bg-stone-50 px-4 py-3">
+    <article className="rounded border border-gray-200 border-l-[3px] border-l-gray-500 bg-amber-50 px-4 py-3">
       <header>
         {note.date && (
           <p className="mb-0.5 text-xs text-gray-400 uppercase tracking-widest font-normal">
