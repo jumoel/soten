@@ -15,7 +15,7 @@ export function FrontPage() {
   const pageNotes = notes.slice(safePage * pageSize, (safePage + 1) * pageSize);
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       {pageNotes.map((note) => (
         <NoteCard key={note.path} note={note} />
       ))}

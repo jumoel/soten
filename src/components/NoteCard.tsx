@@ -36,12 +36,12 @@ function NoteCardContent({ path, relativePath }: { path: string; relativePath: s
 
 export function NoteCard({ note }: { note: NoteListEntry }) {
   return (
-    <article className="py-10 border-b border-gray-200 last:border-0">
+    <article className="rounded-lg border border-gray-200 bg-white shadow-sm p-6 hover:shadow-md transition-shadow">
       <header>
-        <h2 className="text-lg font-normal leading-snug m-0">
+        <h2 className="text-lg font-semibold leading-snug m-0">
           <Link
             to={"/note/" + note.relativePath}
-            className="no-underline text-gray-900 hover:underline"
+            className="no-underline text-gray-900 hover:text-gray-600"
           >
             {note.title}
           </Link>
