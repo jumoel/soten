@@ -10,6 +10,8 @@ const cardDateFormat = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   month: "long",
   day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
   timeZone: "UTC",
 });
 
@@ -38,6 +40,11 @@ export function NoteCard({ note }: { note: NoteListEntry }) {
   return (
     <article className="rounded border border-gray-200 border-l-[3px] border-l-gray-500 bg-stone-50 px-4 py-3">
       <header>
+        {note.date && (
+          <p className="mb-0.5 text-xs text-gray-400 uppercase tracking-widest font-normal">
+            {cardDateFormat.format(note.date)}
+          </p>
+        )}
         <h2 className="text-base font-semibold leading-tight m-0">
           <Link
             to={"/note/" + note.relativePath}
@@ -46,11 +53,6 @@ export function NoteCard({ note }: { note: NoteListEntry }) {
             {note.title}
           </Link>
         </h2>
-        {note.date && (
-          <p className="mt-0.5 text-xs text-gray-400 uppercase tracking-widest font-normal">
-            {cardDateFormat.format(note.date)}
-          </p>
-        )}
       </header>
       <Suspense fallback={<p className="mt-1 text-sm text-gray-400">{t("note.loading")}</p>}>
         <NoteCardContent path={note.path} relativePath={note.relativePath} />
