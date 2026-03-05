@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { send } from "../atoms/globals";
 import { t } from "../i18n";
 import type { User, Repo } from "../atoms/store";
@@ -26,9 +26,9 @@ export function AuthenticatedShell({
           {selectedRepo && (
             <p className="text-sm">
               {selectedRepo.owner}/{selectedRepo.repo}{" "}
-              <Button variant="link" onClick={() => send({ type: "SWITCH_REPO" })}>
+              <Link to="/settings" className="underline">
                 {t("auth.switchRepo")}
-              </Button>
+              </Link>
             </p>
           )}
           <p>

@@ -9,7 +9,6 @@ export type Transition =
   | { type: "AUTHENTICATE"; user: User }
   | { type: "LOGOUT" }
   | { type: "SELECT_REPO"; owner: string; repo: string }
-  | { type: "SWITCH_REPO" }
   | { type: "RETRY" };
 
 class AbortError extends Error {}
@@ -37,9 +36,6 @@ export async function send(transition: Transition): Promise<void> {
         break;
       case "SELECT_REPO":
         await selectRepo(transition.owner, transition.repo, checkAborted);
-        break;
-      case "SWITCH_REPO":
-        switchRepo();
         break;
       case "RETRY":
         await retry(checkAborted);
@@ -104,13 +100,6 @@ async function selectRepo(owner: string, repo: string, checkAborted: () => void)
   store.set(selectedRepoAtom, selectedRepo);
   wipeFs();
   await cloneAndLoad(machine.user, machine.repos, selectedRepo, checkAborted);
-}
-
-function switchRepo(): void {
-  const machine = store.get(machineAtom);
-  if (machine.phase !== "ready") return;
-
-  store.set(machineAtom, { phase: "selectingRepo", user: machine.user, repos: machine.repos });
 }
 
 async function retry(checkAborted: () => void): Promise<void> {

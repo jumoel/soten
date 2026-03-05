@@ -2,6 +2,7 @@ import { createRouter, createRoute, createRootRoute } from "@tanstack/react-rout
 import { App } from "./app.tsx";
 import { FrontPage } from "./routes/front.tsx";
 import { NotePage } from "./routes/note.tsx";
+import { SettingsPage } from "./routes/settings.tsx";
 
 const rootRoute = createRootRoute({
   component: App,
@@ -24,7 +25,17 @@ const noteViewRoute = createRoute({
   component: NotePage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, noteRoute.addChildren([noteViewRoute])]);
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "settings",
+  component: SettingsPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  noteRoute.addChildren([noteViewRoute]),
+  settingsRoute,
+]);
 
 export const router = createRouter({ routeTree });
 
