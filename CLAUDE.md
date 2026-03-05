@@ -102,12 +102,12 @@ A `hashchange` listener drives navigation.
 
 ### UI Design
 
-Follow a Tufte-inspired aesthetic: maximise information density, earn every decorative element.
+Follow a Tufte-inspired aesthetic: maximise information density, but allow restrained visual chrome — things should be nice to look at, not merely efficient.
 
 - **Density first** — prefer tight padding (`px-4 py-3`, `gap-3`) over generous spacing; content should be readable, not airy
-- **Chrome must earn its place** — use decoration only when it aids comprehension or visual hierarchy; avoid shadows, animations, and rounded corners that exist solely for ornament
+- **Restrained chrome is welcome** — subtle borders, gentle rounding (`rounded`), and off-white surfaces improve legibility and visual comfort; avoid heavy shadows, animations, and ornament that competes with content
 - **Typography over boxes** — establish hierarchy through font weight, size, and small-caps labels rather than heavy containers
-- **Hairline rules** — where borders are needed, use thin (`border` / 1px) perimeter lines in light gray (`border-gray-200`) combined with a single strong accent rule (e.g. `border-l-[3px] border-l-gray-500`) rather than filled backgrounds or drop shadows
+- **Hairline rules with a strong accent** — thin (`border` / 1px) perimeter in light gray (`border-gray-200`) combined with a single stronger left-edge accent (e.g. `border-l-[3px] border-l-gray-500`) gives cards definition without visual noise
 - **Off-white backgrounds** — `bg-gray-50` is the preferred card/surface background; it is distinct from the page without introducing colour
 - **Muted, purposeful colour** — grays are preferred; colour should carry meaning, not decoration
 
