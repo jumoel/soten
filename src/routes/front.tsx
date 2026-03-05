@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAtom } from "jotai";
 import { noteListAtom, pageSizeAtom } from "../atoms/globals";
 import { NoteCard } from "../components/NoteCard";
@@ -9,6 +9,10 @@ export function FrontPage() {
   const [notes] = useAtom(noteListAtom);
   const [pageSize] = useAtom(pageSizeAtom);
   const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    setPage(0);
+  }, [notes]);
 
   const totalPages = Math.max(1, Math.ceil(notes.length / pageSize));
   const pageNotes = notes.slice(page * pageSize, (page + 1) * pageSize);
@@ -22,7 +26,7 @@ export function FrontPage() {
         <div className="flex items-center justify-between pt-6 pb-2">
           <Button
             variant="ghost"
-            className="text-sm px-3 py-1.5"
+            className="text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-default"
             onClick={() => setPage((p) => p - 1)}
             disabled={page === 0}
           >
@@ -33,7 +37,7 @@ export function FrontPage() {
           </span>
           <Button
             variant="ghost"
-            className="text-sm px-3 py-1.5"
+            className="text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-default"
             onClick={() => setPage((p) => p + 1)}
             disabled={page >= totalPages - 1}
           >

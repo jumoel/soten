@@ -193,7 +193,11 @@ export const noteCardAtom = atomFamily((path: string) =>
 
     const content = file.content;
     const isShort = content.length <= NOTE_CARD_THRESHOLD;
-    const displayContent = isShort ? content : content.slice(0, NOTE_CARD_THRESHOLD);
+    let displayContent = content;
+    if (!isShort) {
+      const cut = content.lastIndexOf("\n", NOTE_CARD_THRESHOLD);
+      displayContent = content.slice(0, cut > 0 ? cut : NOTE_CARD_THRESHOLD);
+    }
     const { html } = await renderMarkdown(displayContent);
     return { html, isShort };
   }),

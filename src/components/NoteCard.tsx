@@ -54,7 +54,7 @@ export function NoteCard({ note }: { note: NoteListEntry }) {
           </p>
         )}
       </header>
-      <Suspense>
+      <Suspense fallback={<p className="mt-3 text-sm text-gray-400">{t("note.loading")}</p>}>
         <NoteCardContent path={note.path} relativePath={note.relativePath} />
       </Suspense>
     </article>
