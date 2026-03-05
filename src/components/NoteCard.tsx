@@ -29,14 +29,11 @@ export function NoteCard({ note }: { note: NoteListEntry }) {
       className="block no-underline rounded border border-gray-200 border-l-[3px] border-l-gray-500 bg-white px-4 py-3 hover:border-l-gray-700"
     >
       <article>
-        <header>
-          {note.date && (
-            <p className="mb-0.5 text-xs text-gray-400 uppercase tracking-widest font-normal">
-              {cardDateFormat.format(note.date)}
-            </p>
-          )}
-          <h2 className="text-base font-semibold leading-tight m-0 text-gray-900">{note.title}</h2>
-        </header>
+        {note.date && (
+          <p className="mb-0.5 text-xs text-gray-400 uppercase tracking-widest font-normal">
+            {cardDateFormat.format(note.date)}
+          </p>
+        )}
         <Suspense fallback={<p className="mt-1 text-sm text-gray-400">{t("note.loading")}</p>}>
           <NoteCardContent path={note.path} />
         </Suspense>
