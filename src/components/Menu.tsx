@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "./Button";
+import { Text } from "./ds/Text";
 import { send } from "../atoms/globals";
 import { t } from "../i18n";
 import type { Repo } from "../atoms/store";
@@ -32,9 +33,9 @@ export function Menu({
       <div className="fixed inset-0 z-10" onClick={onClose} />
       <div className="relative z-20 border-b border-gray-200 px-4 py-3 space-y-2 bg-white">
         {selectedRepo && (
-          <p className="text-sm font-mono text-gray-500">
+          <Text variant="mono" as="p">
             {selectedRepo.owner}/{selectedRepo.repo}
-          </p>
+          </Text>
         )}
         <p>
           <Link to="/settings" className="text-sm no-underline hover:underline" onClick={onClose}>
