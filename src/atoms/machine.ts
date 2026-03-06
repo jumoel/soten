@@ -1,8 +1,8 @@
 import { fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
-import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
+import { readRepoFiles, wipeFs } from "../lib/fs";
 import { t } from "../i18n";
-import type { User, TextFile, ImageFile, Repo } from "./store";
+import type { User, Repo } from "./store";
 import { store, machineAtom, userAtom, selectedRepoAtom } from "./store";
 
 export type Transition =
@@ -14,8 +14,6 @@ export type Transition =
 class AbortError extends Error {}
 
 let activeController: AbortController | null = null;
-
-const BATCH_SIZE = 20;
 
 export async function send(transition: Transition): Promise<void> {
   activeController?.abort();
@@ -145,33 +143,5 @@ async function cloneAndLoad(
   const filenames = await readRepoFiles();
   checkAborted();
 
-  store.set(machineAtom, {
-    phase: "loadingFiles",
-    user,
-    repos,
-    selectedRepo,
-    filenames,
-    loaded: 0,
-  });
-
-  const files: Record<string, TextFile | ImageFile> = {};
-
-  for (let i = 0; i < filenames.length; i += BATCH_SIZE) {
-    checkAborted();
-    const batch = filenames.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(
-      batch.map(async (filename) => {
-        const content = await readFile(filename);
-        return content ? ({ filename, content } as const) : null;
-      }),
-    );
-
-    for (const result of results) {
-      if (result) files[result.filename] = result.content;
-    }
-  }
-
-  checkAborted();
-
-  store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames, files });
+  store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames });
 }

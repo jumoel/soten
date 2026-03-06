@@ -42,9 +42,9 @@ export function App() {
         {machine.phase === "error" && (
           <AuthError message={machine.message} onRetry={() => send({ type: "RETRY" })} />
         )}
-        {(machine.phase === "fetchingRepos" ||
-          machine.phase === "cloningRepo" ||
-          machine.phase === "loadingFiles") && <div>{t("app.initializing")}</div>}
+        {(machine.phase === "fetchingRepos" || machine.phase === "cloningRepo") && (
+          <div>{t("app.initializing")}</div>
+        )}
         {(machine.phase === "ready" || machine.phase === "selectingRepo") && <Outlet />}
       </PageContainer>
     </div>

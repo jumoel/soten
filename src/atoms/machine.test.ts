@@ -18,7 +18,7 @@ vi.mock("../lib/fs", () => ({
 
 import { fetchUserRepos } from "../lib/github";
 import * as git from "../lib/git";
-import { readFile, readRepoFiles, wipeFs } from "../lib/fs";
+import { readRepoFiles, wipeFs } from "../lib/fs";
 import { send } from "./machine";
 import { store, machineAtom, userAtom, selectedRepoAtom } from "./store";
 import type { AppMachine } from "./store";
@@ -47,7 +47,6 @@ describe("AUTHENTICATE", () => {
     vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
     vi.mocked(git.isInitialized).mockResolvedValue(false);
     vi.mocked(readRepoFiles).mockResolvedValue(["/soten/a.md"]);
-    vi.mocked(readFile).mockResolvedValue({ type: "text", content: "# Hello" });
 
     await send({ type: "AUTHENTICATE", user: mockUser });
 
@@ -57,7 +56,7 @@ describe("AUTHENTICATE", () => {
     expect(m.user).toEqual(mockUser);
     expect(m.repos).toEqual(["acme/notes"]);
     expect(m.selectedRepo).toEqual({ owner: "acme", repo: "notes" });
-    expect(m.files).toEqual({ "/soten/a.md": { type: "text", content: "# Hello" } });
+    expect(m.filenames).toEqual(["/soten/a.md"]);
     expect(git.clone).toHaveBeenCalledWith("https://github.com/acme/notes.git", mockUser);
   });
 
@@ -100,22 +99,6 @@ describe("AUTHENTICATE", () => {
     expect(machine().phase).toBe("ready");
     expect(git.clone).toHaveBeenCalledWith("https://github.com/acme/notes.git", mockUser);
   });
-
-  it("filters out files that fail to read", async () => {
-    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
-    vi.mocked(git.isInitialized).mockResolvedValue(false);
-    vi.mocked(readRepoFiles).mockResolvedValue(["/soten/a.md", "/soten/bad.md"]);
-    vi.mocked(readFile).mockImplementation(async (path: string) => {
-      if (path === "/soten/a.md") return { type: "text", content: "# A" };
-      return null;
-    });
-
-    await send({ type: "AUTHENTICATE", user: mockUser });
-
-    const m = machine();
-    if (m.phase !== "ready") throw new Error("expected ready");
-    expect(m.files).toEqual({ "/soten/a.md": { type: "text", content: "# A" } });
-  });
 });
 
 describe("LOGOUT", () => {
@@ -126,7 +109,6 @@ describe("LOGOUT", () => {
       repos: ["acme/notes"],
       selectedRepo: { owner: "acme", repo: "notes" },
       filenames: [],
-      files: {},
     });
 
     await send({ type: "LOGOUT" });
@@ -147,7 +129,6 @@ describe("SELECT_REPO", () => {
     });
     vi.mocked(git.isInitialized).mockResolvedValue(false);
     vi.mocked(readRepoFiles).mockResolvedValue(["/soten/readme.md"]);
-    vi.mocked(readFile).mockResolvedValue({ type: "text", content: "# Readme" });
 
     await send({ type: "SELECT_REPO", owner: "acme", repo: "notes" });
 
@@ -155,7 +136,7 @@ describe("SELECT_REPO", () => {
     expect(m.phase).toBe("ready");
     if (m.phase !== "ready") return;
     expect(m.selectedRepo).toEqual({ owner: "acme", repo: "notes" });
-    expect(m.files).toEqual({ "/soten/readme.md": { type: "text", content: "# Readme" } });
+    expect(m.filenames).toEqual(["/soten/readme.md"]);
   });
 
   it("wipes fs before cloning", async () => {

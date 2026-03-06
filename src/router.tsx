@@ -1,8 +1,10 @@
-import { createRouter, createRoute, createRootRoute } from "@tanstack/react-router";
+import {
+  createRouter,
+  createRoute,
+  createRootRoute,
+  lazyRouteComponent,
+} from "@tanstack/react-router";
 import { App } from "./app.tsx";
-import { FrontPage } from "./routes/front.tsx";
-import { NotePage } from "./routes/note.tsx";
-import { SettingsPage } from "./routes/settings.tsx";
 
 const rootRoute = createRootRoute({
   component: App,
@@ -11,7 +13,7 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: FrontPage,
+  component: lazyRouteComponent(() => import("./routes/front.tsx"), "FrontPage"),
 });
 
 const noteRoute = createRoute({
@@ -22,13 +24,13 @@ const noteRoute = createRoute({
 const noteViewRoute = createRoute({
   getParentRoute: () => noteRoute,
   path: "$",
-  component: NotePage,
+  component: lazyRouteComponent(() => import("./routes/note.tsx"), "NotePage"),
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "settings",
-  component: SettingsPage,
+  component: lazyRouteComponent(() => import("./routes/settings.tsx"), "SettingsPage"),
 });
 
 const routeTree = rootRoute.addChildren([

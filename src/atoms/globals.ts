@@ -1,7 +1,7 @@
 export {
   store,
   machineAtom,
-  filesAtom,
+  fileAtom,
   noteListAtom,
   renderedNoteAtom,
   noteCardAtom,
