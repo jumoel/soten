@@ -5,9 +5,9 @@ import { noteCardAtom } from "../atoms/globals";
 import { prettyDateTime } from "../atoms/store";
 import type { NoteListEntry } from "../atoms/store";
 import { ProseContent } from "./ProseContent";
+import { NoteCardSkeleton } from "./NoteCardSkeleton";
 import { Card } from "./ds/Card";
 import { Text } from "./ds/Text";
-import { t } from "../i18n";
 
 function NoteCardContent({ path }: { path: string }) {
   const [card] = useAtom(noteCardAtom(path));
@@ -26,13 +26,7 @@ export function NoteCard({ note }: { note: NoteListEntry }) {
               {prettyDateTime.format(note.date)}
             </Text>
           )}
-          <Suspense
-            fallback={
-              <Text variant="secondary" as="p" className="mt-1">
-                {t("note.loading")}
-              </Text>
-            }
-          >
+          <Suspense fallback={<NoteCardSkeleton />}>
             <NoteCardContent path={note.path} />
           </Suspense>
         </article>
