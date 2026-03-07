@@ -5,12 +5,13 @@ import { store, noteListAtom, findBodyStart, selectedRepoAtom } from "./store";
 import type { NoteListEntry } from "./store";
 
 const STORAGE_KEY = "searchIndex";
-const FIELDS = ["title", "body"] as const;
-const STORE_FIELDS = ["title"] as const;
+const FIELDS = ["title", "body"];
+const STORE_FIELDS = ["title"];
 
 type IndexDoc = { id: string; title: string; body: string };
 
 let searchIndex: MiniSearch | null = null;
+let buildGeneration = 0;
 
 export const searchQueryAtom = atom("");
 export const searchIndexReadyAtom = atom(false);
@@ -55,8 +56,8 @@ function loadCachedIndex(): boolean {
     const raw = localStorage.getItem(key);
     if (!raw) return false;
     searchIndex = MiniSearch.loadJSON<IndexDoc>(raw, {
-      fields: [...FIELDS],
-      storeFields: [...STORE_FIELDS],
+      fields: FIELDS,
+      storeFields: STORE_FIELDS,
     });
     return true;
   } catch {
@@ -69,40 +70,35 @@ function clearCachedIndex(): void {
   if (key) localStorage.removeItem(key);
 }
 
+async function buildDoc(entry: NoteListEntry): Promise<IndexDoc | null> {
+  const file = await readFile(entry.path);
+  if (!file || file.type !== "text") return null;
+  const bodyStart = findBodyStart(file.content);
+  return { id: entry.path, title: entry.title, body: file.content.slice(bodyStart) };
+}
+
 export async function buildSearchIndex(entries: NoteListEntry[]): Promise<void> {
+  const gen = ++buildGeneration;
+
   if (loadCachedIndex()) {
     store.set(searchIndexReadyAtom, true);
-    rebuildInBackground(entries);
+    fullBuild(entries, gen).then(persistIndex);
     return;
   }
 
-  await fullBuild(entries);
+  await fullBuild(entries, gen);
   persistIndex();
 }
 
-async function fullBuild(entries: NoteListEntry[]): Promise<void> {
-  const index = new MiniSearch<IndexDoc>({
-    fields: [...FIELDS],
-    storeFields: [...STORE_FIELDS],
-  });
+async function fullBuild(entries: NoteListEntry[], gen: number): Promise<void> {
+  const docs = (await Promise.all(entries.map(buildDoc))).filter((d): d is IndexDoc => d != null);
 
-  const docs: IndexDoc[] = [];
+  if (gen !== buildGeneration) return;
 
-  for (const entry of entries) {
-    const file = await readFile(entry.path);
-    if (!file || file.type !== "text") continue;
-    const bodyStart = findBodyStart(file.content);
-    docs.push({ id: entry.path, title: entry.title, body: file.content.slice(bodyStart) });
-  }
-
+  const index = new MiniSearch<IndexDoc>({ fields: FIELDS, storeFields: STORE_FIELDS });
   index.addAll(docs);
   searchIndex = index;
   store.set(searchIndexReadyAtom, true);
-}
-
-async function rebuildInBackground(entries: NoteListEntry[]): Promise<void> {
-  await fullBuild(entries);
-  persistIndex();
 }
 
 export async function updateSearchIndex(
@@ -116,26 +112,19 @@ export async function updateSearchIndex(
 
   for (const path of oldFilenames) {
     if (!newSet.has(path)) {
-      try {
-        searchIndex.discard(path);
-      } catch {
-        // document may not be in index
-      }
+      searchIndex.discard(path);
     }
   }
 
   const noteList = store.get(noteListAtom);
   const noteMap = new Map(noteList.map((e) => [e.path, e]));
 
-  for (const path of newFilenames) {
-    if (!oldSet.has(path)) {
-      const entry = noteMap.get(path);
-      if (!entry) continue;
-      const file = await readFile(path);
-      if (!file || file.type !== "text") continue;
-      const bodyStart = findBodyStart(file.content);
-      searchIndex.add({ id: path, title: entry.title, body: file.content.slice(bodyStart) });
-    }
+  const added = newFilenames.filter((p) => !oldSet.has(p));
+  const entries = added.map((p) => noteMap.get(p)).filter((e): e is NoteListEntry => e != null);
+  const docs = (await Promise.all(entries.map(buildDoc))).filter((d): d is IndexDoc => d != null);
+
+  for (const doc of docs) {
+    searchIndex.add(doc);
   }
 
   store.set(searchIndexReadyAtom, true);
@@ -143,6 +132,7 @@ export async function updateSearchIndex(
 }
 
 export function clearSearchIndex(): void {
+  buildGeneration++;
   clearCachedIndex();
   searchIndex = null;
   store.set(searchIndexReadyAtom, false);

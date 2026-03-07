@@ -10,8 +10,13 @@ import { machineAtom, searchQueryAtom } from "../atoms/globals";
 import { t } from "../i18n";
 
 function SearchBar() {
+  const query = useAtomValue(searchQueryAtom);
   const setQuery = useSetAtom(searchQueryAtom);
   const [local, setLocal] = useState("");
+
+  useEffect(() => {
+    if (query === "" && local !== "") setLocal("");
+  }, [query, local]);
 
   useEffect(() => {
     const id = setTimeout(() => setQuery(local), 150);

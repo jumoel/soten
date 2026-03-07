@@ -14,6 +14,12 @@ import {
 } from "./store";
 import { buildSearchIndex, clearSearchIndex } from "./search";
 
+function resetLocalState(): void {
+  wipeFs();
+  clearCardCache();
+  clearSearchIndex();
+}
+
 export type Transition =
   | { type: "AUTHENTICATE"; user: User }
   | { type: "LOGOUT" }
@@ -98,9 +104,7 @@ function logout(): void {
   store.set(userAtom, null);
   store.set(selectedRepoAtom, null);
   store.set(cachedReposAtom, null);
-  wipeFs();
-  clearCardCache();
-  clearSearchIndex();
+  resetLocalState();
   store.set(machineAtom, { phase: "unauthenticated", authError: null });
 }
 
@@ -110,9 +114,7 @@ async function selectRepo(owner: string, repo: string, checkAborted: () => void)
 
   const selectedRepo = { owner, repo };
   store.set(selectedRepoAtom, selectedRepo);
-  wipeFs();
-  clearCardCache();
-  clearSearchIndex();
+  resetLocalState();
   await cloneAndLoad(machine.user, machine.repos, selectedRepo, checkAborted);
 }
 
@@ -120,9 +122,7 @@ async function retry(checkAborted: () => void): Promise<void> {
   const machine = store.get(machineAtom);
   if (machine.phase !== "error") return;
 
-  wipeFs();
-  clearCardCache();
-  clearSearchIndex();
+  resetLocalState();
   await authenticate(machine.user, checkAborted);
 }
 
@@ -141,9 +141,7 @@ async function cloneAndLoad(
       try {
         await git.pull(user);
       } catch {
-        wipeFs();
-        clearCardCache();
-        clearSearchIndex();
+        resetLocalState();
         await git.clone(url, user);
       }
     } else {

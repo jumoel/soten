@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue } from "jotai";
 import { pageSizeAtom, searchQueryAtom, searchResultsAtom } from "../atoms/globals";
 import { NoteCard } from "../components/NoteCard";
 import { Button } from "../components/Button";
@@ -12,7 +12,7 @@ import { t } from "../i18n";
 export function FrontPage() {
   const notes = useAtomValue(searchResultsAtom);
   const query = useAtomValue(searchQueryAtom);
-  const [pageSize] = useAtom(pageSizeAtom);
+  const pageSize = useAtomValue(pageSizeAtom);
   const [page, setPage] = useState(0);
   const isSearching = query.trim().length > 0;
 
