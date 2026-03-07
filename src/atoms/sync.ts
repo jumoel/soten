@@ -1,8 +1,15 @@
 import { fetchCurrentUser, fetchUserRepos } from "../lib/github";
-import * as git from "../lib/git";
-import { readRepoFiles } from "../lib/fs";
+import { refreshFs } from "../lib/fs";
+import { getRepoWorker } from "../worker/client";
 import type { User } from "./store";
-import { store, machineAtom, userAtom, selectedRepoAtom, cachedReposAtom } from "./store";
+import {
+  store,
+  machineAtom,
+  noteListAtom,
+  userAtom,
+  selectedRepoAtom,
+  cachedReposAtom,
+} from "./store";
 import { updateSearchIndex } from "./search";
 
 let syncing = false;
@@ -36,18 +43,21 @@ export async function backgroundSync(user: User): Promise<void> {
       }
     }
 
+    const worker = getRepoWorker();
+
     try {
-      await git.pull(user);
+      await worker.pull(user);
     } catch {
       return;
     }
 
-    const filenames = await readRepoFiles();
+    const filenames = await worker.readRepoFiles();
+    refreshFs();
     const machine = store.get(machineAtom);
     if (machine.phase === "ready") {
       const oldFilenames = machine.filenames;
       store.set(machineAtom, { ...machine, filenames });
-      updateSearchIndex(oldFilenames, filenames);
+      updateSearchIndex(oldFilenames, filenames, store.get(noteListAtom));
     }
   } catch {
     // Network errors during background sync are silently ignored

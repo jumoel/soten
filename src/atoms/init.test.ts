@@ -10,7 +10,22 @@ vi.mock("./machine", () => ({
 
 vi.mock("../lib/fs", () => ({
   readFile: vi.fn(),
+  refreshFs: vi.fn(),
 }));
+
+vi.mock("../worker/client", () => {
+  const mockWorker = {
+    clone: vi.fn(),
+    pull: vi.fn(),
+    isInitialized: vi.fn(),
+    readRepoFiles: vi.fn(),
+    buildSearchIndex: vi.fn(),
+    updateSearchIndex: vi.fn(),
+    search: vi.fn(),
+    clearSearchIndex: vi.fn(),
+  };
+  return { getRepoWorker: () => mockWorker };
+});
 
 import { fetchCurrentUser } from "../lib/github";
 import { send } from "./machine";
