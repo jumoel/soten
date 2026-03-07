@@ -7,5 +7,5 @@ const widthMap = {
 } as const;
 
 export function Skeleton({ width = "full" }: { width?: keyof typeof widthMap }) {
-  return <div className={`h-3 rounded bg-gray-200 animate-pulse ${widthMap[width]}`} />;
+  return <div className={`h-3 rounded bg-surface-2 animate-pulse ${widthMap[width]}`} />;
 }

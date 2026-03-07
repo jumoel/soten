@@ -1,6 +1,7 @@
 import type { InputHTMLAttributes } from "react";
 
-const base = "border border-gray-300 rounded px-2 py-1 text-sm";
+const base =
+  "border border-edge-2 rounded px-2 py-1 text-sm bg-surface-2 text-paper placeholder:text-muted focus:outline-none focus:border-accent";
 
 const widthMap = {
   full: "w-full",

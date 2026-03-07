@@ -1,17 +1,17 @@
 import type { ElementType, ComponentPropsWithoutRef, ReactNode } from "react";
 
 const variantConfig = {
-  body: { tag: "p", style: "text-sm text-gray-700" },
-  secondary: { tag: "p", style: "text-sm text-gray-500" },
-  meta: { tag: "span", style: "text-xs text-gray-400 uppercase tracking-widest" },
-  mono: { tag: "code", style: "font-mono text-sm text-gray-500" },
-  monoStrong: { tag: "code", style: "font-mono text-sm text-gray-800" },
-  label: { tag: "label", style: "block text-sm font-semibold text-gray-700" },
-  sectionLabel: { tag: "h3", style: "text-xs font-semibold uppercase tracking-wide text-gray-500" },
-  error: { tag: "p", style: "text-red-700 font-medium" },
-  errorDetail: { tag: "pre", style: "text-sm text-red-600 whitespace-pre-wrap" },
-  title: { tag: "h1", style: "text-2xl font-semibold text-gray-800" },
-  heading: { tag: "h2", style: "text-lg font-medium tracking-tight text-gray-800" },
+  body: { tag: "p", style: "text-sm text-paper-dim" },
+  secondary: { tag: "p", style: "text-sm text-muted" },
+  meta: { tag: "span", style: "text-xs text-muted uppercase tracking-widest" },
+  mono: { tag: "code", style: "font-mono text-sm text-muted" },
+  monoStrong: { tag: "code", style: "font-mono text-sm text-paper" },
+  label: { tag: "label", style: "block text-sm font-semibold text-paper-dim" },
+  sectionLabel: { tag: "h3", style: "text-xs font-semibold uppercase tracking-wide text-muted" },
+  error: { tag: "p", style: "text-error-text font-medium" },
+  errorDetail: { tag: "pre", style: "text-sm text-error-detail whitespace-pre-wrap" },
+  title: { tag: "h1", style: "text-2xl font-semibold text-paper" },
+  heading: { tag: "h2", style: "text-lg font-medium tracking-tight text-paper" },
 } as const;
 
 type Variant = keyof typeof variantConfig;

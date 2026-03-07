@@ -3,10 +3,10 @@ import type { ReactNode } from "react";
 
 const variantStyles = {
   default: "text-sm no-underline hover:underline",
-  brand: "text-lg font-medium tracking-tight no-underline text-gray-800",
-  listItem: "block py-2.5 no-underline text-gray-800 hover:underline",
+  brand: "flex items-center gap-2 text-lg font-medium tracking-tight no-underline text-paper",
+  listItem: "block py-2.5 no-underline text-paper hover:underline",
   card: "block no-underline",
-  back: "block mb-4 text-sm text-gray-500 no-underline hover:underline",
+  back: "block mb-4 text-sm text-muted no-underline hover:underline",
 } as const;
 
 export function NavLink({

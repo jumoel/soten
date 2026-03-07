@@ -26,6 +26,9 @@ export const selectedRepoAtom = atomWithStorage<Repo | null>("selectedRepo", nul
 
 export const pageSizeAtom = atomWithStorage<number>("pageSize", 10, undefined, { getOnInit: true });
 
+export type Theme = "light" | "dark" | "system";
+export const themeAtom = atomWithStorage<Theme>("theme", "light", undefined, { getOnInit: true });
+
 export type AppMachine =
   | { phase: "initializing" }
   | { phase: "unauthenticated"; authError: string | null }

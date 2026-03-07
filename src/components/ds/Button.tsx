@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from "react";
 
 const variantStyles = {
-  primary: "px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600",
+  primary: "px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover",
   link: "underline",
   ghost: "p-1",
   pagination: "p-1 text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-default",

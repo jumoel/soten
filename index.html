@@ -9,16 +9,7 @@
   </head>
   <body>
     <div id="root">
-      <div
-        id="initial-loader"
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 100vh;
-          background: #f3f4f6;
-        "
-      >
+      <div id="initial-loader">
         <svg
           width="24"
           height="24"
@@ -26,15 +17,33 @@
           fill="none"
           style="animation: soten-spin 0.8s linear infinite"
         >
-          <circle cx="12" cy="12" r="10" stroke="#d1d5db" stroke-width="3" />
+          <circle cx="12" cy="12" r="10" class="loader-track" stroke-width="3" />
           <path
             d="M12 2a10 10 0 0 1 10 10"
-            stroke="#6b7280"
+            stroke="#e07040"
             stroke-width="3"
             stroke-linecap="round"
           />
         </svg>
         <style>
+          #initial-loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f0ece4;
+          }
+          .loader-track {
+            stroke: #d8d4cc;
+          }
+          @media (prefers-color-scheme: dark) {
+            #initial-loader {
+              background: #1a1a1e;
+            }
+            .loader-track {
+              stroke: #2a2a2e;
+            }
+          }
           @keyframes soten-spin {
             to {
               transform: rotate(360deg);
