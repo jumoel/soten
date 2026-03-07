@@ -1,0 +1,246 @@
+import LightningFS from "@isomorphic-git/lightning-fs";
+import MiniSearch from "minisearch";
+import type { WorkerRequest, WorkerResponse, GitUser, SearchEntry } from "./protocol";
+
+const FILE_SYSTEM_NAME = "fs";
+const REPO_DIR = "/soten";
+
+const fs = new LightningFS(FILE_SYSTEM_NAME);
+const pfs = fs.promises;
+
+// ---------------------------------------------------------------------------
+// Git (lazy-loaded)
+// ---------------------------------------------------------------------------
+
+type GitDeps = {
+  git: typeof import("isomorphic-git").default;
+  http: typeof import("isomorphic-git/http/web").default;
+};
+
+let gitDeps: Promise<GitDeps> | null = null;
+
+function getGit(): Promise<GitDeps> {
+  if (!gitDeps) {
+    gitDeps = Promise.all([
+      import("isomorphic-git"),
+      import("isomorphic-git/http/web"),
+      import("buffer"),
+    ]).then(
+      ([gitMod, httpMod, bufferMod]) => {
+        globalThis.Buffer = bufferMod.Buffer;
+        return { git: gitMod.default, http: httpMod.default };
+      },
+      (err) => {
+        gitDeps = null;
+        throw err;
+      },
+    );
+  }
+  return gitDeps;
+}
+
+const corsProxy = "/api/cors-proxy";
+
+async function clone(url: string, user: GitUser): Promise<void> {
+  const { git, http } = await getGit();
+  fs.init(FILE_SYSTEM_NAME, { wipe: true });
+
+  await git.clone({
+    fs,
+    http,
+    dir: REPO_DIR,
+    url,
+    corsProxy,
+    singleBranch: true,
+    depth: 1,
+    onMessage: (msg) => console.debug("clone onMessage", msg),
+    onProgress: (prog) => console.debug("clone onProgress", prog),
+    onAuth: () => ({ username: user.username, password: user.token }),
+  });
+
+  await Promise.all([
+    git.setConfig({ fs, dir: REPO_DIR, path: "user.name", value: user.username }),
+    git.setConfig({ fs, dir: REPO_DIR, path: "user.email", value: user.email }),
+  ]);
+}
+
+async function pull(user: { username: string; token: string }): Promise<void> {
+  const { git, http } = await getGit();
+  await git.pull({
+    fs,
+    http,
+    dir: REPO_DIR,
+    fastForwardOnly: true,
+    corsProxy,
+    onMessage: (msg) => console.debug("pull onMessage", msg),
+    onProgress: (prog) => console.debug("pull onProgress", prog),
+    onAuth: () => ({ username: user.username, password: user.token }),
+  });
+}
+
+async function isInitialized(): Promise<boolean> {
+  try {
+    const files = await pfs.readdir(REPO_DIR);
+    return files.includes(".git");
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Filesystem
+// ---------------------------------------------------------------------------
+
+async function readRepoFiles(): Promise<string[]> {
+  const foldersToRead = [REPO_DIR];
+  const repoFiles: string[] = [];
+
+  while (foldersToRead.length > 0) {
+    const folder = foldersToRead.pop();
+    if (!folder) continue;
+
+    const paths = await pfs.readdir(folder);
+
+    for (const path of paths) {
+      if (path.startsWith(".")) continue;
+
+      const fullpath = `${folder}/${path}`;
+      const stat = await pfs.lstat(fullpath);
+
+      if (stat.isDirectory()) {
+        foldersToRead.push(fullpath);
+        continue;
+      }
+
+      repoFiles.push(fullpath);
+    }
+  }
+
+  return repoFiles;
+}
+
+async function readTextFile(path: string): Promise<string | null> {
+  try {
+    return await pfs.readFile(path, { encoding: "utf8" });
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Search index
+// ---------------------------------------------------------------------------
+
+type IndexDoc = { id: string; title: string; body: string };
+const FIELDS = ["title", "body"] as const;
+const STORE_FIELDS = ["title"] as const;
+
+let searchIndex: MiniSearch<IndexDoc> | null = null;
+
+const closingFmRe = /\n---(?:\r?\n|$)/;
+
+function findBodyStart(content: string): number {
+  if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) return 0;
+  const closing = closingFmRe.exec(content);
+  return closing !== null ? closing.index + closing[0].length : 0;
+}
+
+async function buildDoc(entry: SearchEntry): Promise<IndexDoc | null> {
+  const content = await readTextFile(entry.path);
+  if (!content) return null;
+  const bodyStart = findBodyStart(content);
+  return { id: entry.path, title: entry.title, body: content.slice(bodyStart) };
+}
+
+async function buildSearchIndex(entries: SearchEntry[]): Promise<void> {
+  const docs = (await Promise.all(entries.map(buildDoc))).filter((d): d is IndexDoc => d != null);
+  const index = new MiniSearch<IndexDoc>({
+    fields: [...FIELDS],
+    storeFields: [...STORE_FIELDS],
+  });
+  index.addAll(docs);
+  searchIndex = index;
+}
+
+async function updateSearchIndex(
+  oldFilenames: string[],
+  newFilenames: string[],
+  entries: SearchEntry[],
+): Promise<void> {
+  if (!searchIndex) return;
+
+  const oldSet = new Set(oldFilenames);
+  const newSet = new Set(newFilenames);
+
+  for (const path of oldFilenames) {
+    if (!newSet.has(path)) searchIndex.discard(path);
+  }
+
+  const added = newFilenames.filter((p) => !oldSet.has(p));
+  const entryMap = new Map(entries.map((e) => [e.path, e]));
+  const addedEntries = added.map((p) => entryMap.get(p)).filter((e): e is SearchEntry => e != null);
+  const docs = (await Promise.all(addedEntries.map(buildDoc))).filter(
+    (d): d is IndexDoc => d != null,
+  );
+
+  for (const doc of docs) {
+    searchIndex.add(doc);
+  }
+}
+
+function search(query: string): string[] {
+  if (!searchIndex) return [];
+  return searchIndex
+    .search(query, { prefix: true, fuzzy: 0.2, boost: { title: 2 } })
+    .map((r) => r.id);
+}
+
+function clearSearchIndex(): void {
+  searchIndex = null;
+}
+
+// ---------------------------------------------------------------------------
+// Message handler
+// ---------------------------------------------------------------------------
+
+self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
+  const msg = e.data;
+  let result: unknown;
+
+  try {
+    switch (msg.type) {
+      case "clone":
+        await clone(msg.url, msg.user);
+        break;
+      case "pull":
+        await pull(msg.user);
+        break;
+      case "isInitialized":
+        result = await isInitialized();
+        break;
+      case "readRepoFiles":
+        result = await readRepoFiles();
+        break;
+      case "buildSearchIndex":
+        await buildSearchIndex(msg.entries);
+        break;
+      case "updateSearchIndex":
+        await updateSearchIndex(msg.oldFilenames, msg.newFilenames, msg.entries);
+        break;
+      case "search":
+        result = search(msg.query);
+        break;
+      case "clearSearchIndex":
+        clearSearchIndex();
+        break;
+    }
+
+    self.postMessage({ id: msg.id, ok: true, result } satisfies WorkerResponse);
+  } catch (err) {
+    self.postMessage({
+      id: msg.id,
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    } satisfies WorkerResponse);
+  }
+};

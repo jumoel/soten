@@ -51,7 +51,9 @@ const allowedOrigins = [
 const allowedTargetHosts = ["github.com", "api.github.com"];
 
 function isAllowedOrigin(origin) {
-  if (!origin) return false;
+  // Allow requests without an Origin header — these are same-origin requests
+  // (e.g. from a web worker on the same domain) and are not a CORS abuse vector.
+  if (!origin) return true;
   return allowedOrigins.some((allowed) =>
     typeof allowed === "string" ? origin === allowed : allowed.test(origin),
   );
