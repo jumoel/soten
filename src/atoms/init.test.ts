@@ -8,6 +8,10 @@ vi.mock("./machine", () => ({
   send: vi.fn(),
 }));
 
+vi.mock("../lib/fs", () => ({
+  readFile: vi.fn(),
+}));
+
 import { fetchCurrentUser } from "../lib/github";
 import { send } from "./machine";
 import { store, machineAtom, userAtom } from "./store";

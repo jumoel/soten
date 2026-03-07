@@ -7,7 +7,7 @@ import { AuthError } from "./components/AuthError";
 import { TopBar } from "./components/TopBar";
 import { Menu } from "./components/Menu";
 import { PageContainer } from "./components/PageContainer";
-import { t } from "./i18n";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 
 export function App() {
   const [machine] = useAtom(machineAtom);
@@ -35,16 +35,16 @@ export function App() {
         </>
       )}
       <PageContainer>
-        {machine.phase === "initializing" && t("app.initializing")}
+        {machine.phase === "initializing" && <LoadingSpinner />}
         {machine.phase === "unauthenticated" && (
           <UnauthenticatedView authError={machine.authError} />
         )}
         {machine.phase === "error" && (
           <AuthError message={machine.message} onRetry={() => send({ type: "RETRY" })} />
         )}
-        {(machine.phase === "fetchingRepos" ||
-          machine.phase === "cloningRepo" ||
-          machine.phase === "loadingFiles") && <div>{t("app.initializing")}</div>}
+        {(machine.phase === "fetchingRepos" || machine.phase === "cloningRepo") && (
+          <LoadingSpinner />
+        )}
         {(machine.phase === "ready" || machine.phase === "selectingRepo") && <Outlet />}
       </PageContainer>
     </div>

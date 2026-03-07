@@ -2,7 +2,7 @@ import { useAtom } from "jotai";
 import { useParams } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { renderedNoteAtom } from "../atoms/globals";
-import { REPO_DIR } from "../lib/git";
+import { REPO_DIR } from "../lib/constants";
 import { t } from "../i18n";
 import { BackLink } from "../components/BackLink";
 import { FrontmatterTable } from "../components/FrontmatterTable";

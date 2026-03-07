@@ -1,6 +1,7 @@
 import { createStore, atom } from "jotai";
 import { atomWithStorage, atomFamily } from "jotai/utils";
-import { extractTitle, renderMarkdown } from "../markdown";
+import { renderMarkdown } from "../markdown";
+import { readFile } from "../lib/fs";
 import { REPO_DIR } from "../lib/constants";
 import { t } from "../i18n";
 
@@ -32,31 +33,17 @@ export type AppMachine =
   | { phase: "selectingRepo"; user: User; repos: string[] }
   | { phase: "cloningRepo"; user: User; repos: string[]; selectedRepo: Repo }
   | {
-      phase: "loadingFiles";
-      user: User;
-      repos: string[];
-      selectedRepo: Repo;
-      filenames: string[];
-      loaded: number;
-    }
-  | {
       phase: "ready";
       user: User;
       repos: string[];
       selectedRepo: Repo;
       filenames: string[];
-      files: Record<string, TextFile | ImageFile>;
     }
   | { phase: "error"; message: string; user: User };
 
 export const machineAtom = atom<AppMachine>({ phase: "initializing" });
 
-const emptyFiles: Record<string, TextFile | ImageFile> = {};
-
-export const filesAtom = atom<Record<string, TextFile | ImageFile>>((get) => {
-  const m = get(machineAtom);
-  return m.phase === "ready" ? m.files : emptyFiles;
-});
+export const fileAtom = atomFamily((path: string) => atom(async () => readFile(path)));
 
 const NOTE_CARD_THRESHOLD = 375;
 
@@ -97,19 +84,7 @@ function parseTimestampFilename(stem: string): Date | null {
   return null;
 }
 
-const frontmatterBlockRe = /^---\r?\n([\s\S]*?)\n---(?:\r?\n|$)/;
 const closingFmRe = /\n---(?:\r?\n|$)/;
-
-function extractFrontmatterDate(content: string): Date | null {
-  if (!content.startsWith("---")) return null;
-  const fmMatch = frontmatterBlockRe.exec(content);
-  if (!fmMatch) return null;
-  const dateMatch = fmMatch[1].match(/^date:\s*(.+)$/m);
-  if (!dateMatch) return null;
-  const raw = dateMatch[1].trim().replace(/^['"]|['"]$/g, "");
-  const d = new Date(raw);
-  return isNaN(d.getTime()) ? null : d;
-}
 
 function findBodyStart(content: string): number {
   if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) return 0;
@@ -127,12 +102,7 @@ function findCutPoint(body: string, threshold: number): number {
   return threshold;
 }
 
-function noteDate(relativePath: string, content: string | null): Date | null {
-  if (content) {
-    const fm = extractFrontmatterDate(content);
-    if (fm) return fm;
-  }
-
+function noteDate(relativePath: string): Date | null {
   const filename = relativePath.split("/").pop() ?? relativePath;
   const dateMatch = filename.match(dateFileRe);
   if (dateMatch) {
@@ -143,12 +113,7 @@ function noteDate(relativePath: string, content: string | null): Date | null {
   return parseTimestampFilename(stem);
 }
 
-function noteTitle(relativePath: string, content: string | null): string {
-  if (content) {
-    const h1 = extractTitle(content);
-    if (h1) return h1;
-  }
-
+function noteTitle(relativePath: string): string {
   const filename = relativePath.split("/").pop() ?? relativePath;
 
   const dateMatch = filename.match(dateFileRe);
@@ -168,8 +133,7 @@ export type RenderedNote = { frontmatter: Record<string, unknown> | null; html: 
 
 export const renderedNoteAtom = atomFamily((path: string) =>
   atom(async (get) => {
-    const files = get(filesAtom);
-    const file = files[path];
+    const file = await get(fileAtom(path));
     if (!file || file.type !== "text") return null;
     return renderMarkdown(file.content);
   }),
@@ -194,10 +158,8 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
 
     if (relativePath.startsWith("uploads/")) continue;
 
-    const file = m.files[path];
-    const content = file?.type === "text" ? file.content : null;
-    const title = relativePath.endsWith(".md") ? noteTitle(relativePath, content) : relativePath;
-    const date = relativePath.endsWith(".md") ? noteDate(relativePath, content) : null;
+    const title = relativePath.endsWith(".md") ? noteTitle(relativePath) : relativePath;
+    const date = relativePath.endsWith(".md") ? noteDate(relativePath) : null;
 
     entries.push({ path, relativePath, title, date });
   }
@@ -207,8 +169,7 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
 
 export const noteCardAtom = atomFamily((path: string) =>
   atom(async (get) => {
-    const files = get(filesAtom);
-    const file = files[path];
+    const file = await get(fileAtom(path));
     if (!file || file.type !== "text") return null;
 
     const content = file.content;

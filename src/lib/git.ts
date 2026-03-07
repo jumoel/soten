@@ -1,18 +1,39 @@
 "use client";
 
-import http from "isomorphic-git/http/web";
-import git from "isomorphic-git";
 import { fs, wipeFs, readRepoDir } from "./fs";
 import { REPO_DIR } from "./constants";
-import { Buffer } from "buffer";
 
-export { REPO_DIR };
+type GitDeps = {
+  git: typeof import("isomorphic-git").default;
+  http: typeof import("isomorphic-git/http/web").default;
+};
 
-globalThis.Buffer = Buffer;
+let cached: Promise<GitDeps> | null = null;
+
+function getGit(): Promise<GitDeps> {
+  if (!cached) {
+    cached = Promise.all([
+      import("isomorphic-git"),
+      import("isomorphic-git/http/web"),
+      import("buffer"),
+    ]).then(
+      ([gitMod, httpMod, bufferMod]) => {
+        globalThis.Buffer = bufferMod.Buffer;
+        return { git: gitMod.default, http: httpMod.default };
+      },
+      (err) => {
+        cached = null;
+        throw err;
+      },
+    );
+  }
+  return cached;
+}
 
 const corsProxy = "/api/cors-proxy";
 
 export async function clone(url: string, user: { username: string; token: string; email: string }) {
+  const { git, http } = await getGit();
   await wipeFs();
 
   await git.clone({
@@ -45,6 +66,7 @@ export async function isInitialized() {
 }
 
 export async function pull(user: { username: string; token: string }) {
+  const { git, http } = await getGit();
   await git.pull({
     fs,
     http,
@@ -60,6 +82,9 @@ export async function pull(user: { username: string; token: string }) {
 }
 
 export async function setUser(user: { username: string; email: string }) {
-  await git.setConfig({ fs, dir: REPO_DIR, path: "user.name", value: user.username });
-  await git.setConfig({ fs, dir: REPO_DIR, path: "user.email", value: user.email });
+  const { git } = await getGit();
+  await Promise.all([
+    git.setConfig({ fs, dir: REPO_DIR, path: "user.name", value: user.username }),
+    git.setConfig({ fs, dir: REPO_DIR, path: "user.email", value: user.email }),
+  ]);
 }
