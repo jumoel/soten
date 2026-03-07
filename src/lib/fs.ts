@@ -4,43 +4,8 @@ export const FILE_SYSTEM_NAME = "fs";
 export const fs = new LightningFS(FILE_SYSTEM_NAME);
 export const pfs = fs.promises;
 
-import { REPO_DIR } from "./constants";
-
-export async function readRepoDir() {
-  return pfs.readdir(REPO_DIR);
-}
-
-export async function readRepoFiles() {
-  const foldersToRead = [REPO_DIR];
-  const repoFiles: string[] = [];
-
-  while (foldersToRead.length > 0) {
-    const folder = foldersToRead.pop();
-
-    if (!folder) {
-      continue;
-    }
-
-    const paths = await pfs.readdir(folder);
-
-    for (const path of paths) {
-      if (path.startsWith(".")) {
-        continue;
-      }
-
-      const fullpath = `${folder}/${path}`;
-      const stat = await pfs.lstat(fullpath);
-
-      if (stat.isDirectory()) {
-        foldersToRead.push(fullpath);
-        continue;
-      }
-
-      repoFiles.push(fullpath);
-    }
-  }
-
-  return repoFiles;
+export function refreshFs() {
+  fs.init(FILE_SYSTEM_NAME);
 }
 
 function isImage(path: string) {
@@ -100,8 +65,4 @@ export async function readFile(path: string) {
   } catch {
     return null;
   }
-}
-
-export function wipeFs() {
-  fs.init(FILE_SYSTEM_NAME, { wipe: true });
 }

@@ -31,11 +31,14 @@ export default defineConfig({
     }),
   ],
 
+  worker: {
+    format: "es",
+  },
+
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
-          git: ["isomorphic-git", "isomorphic-git/http/web", "buffer"],
           "markdown-render": [
             "remark-parse",
             "remark-frontmatter",

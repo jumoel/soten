@@ -1,11 +1,19 @@
 import { fetchCurrentUser } from "../lib/github";
-import * as git from "../lib/git";
-import { readRepoFiles } from "../lib/fs";
+import { refreshFs } from "../lib/fs";
+import { getRepoWorker } from "../worker/client";
 import { initOnlineListener } from "../lib/online";
 import type { AppMachine } from "./store";
-import { store, machineAtom, userAtom, selectedRepoAtom, cachedReposAtom } from "./store";
+import {
+  store,
+  machineAtom,
+  noteListAtom,
+  userAtom,
+  selectedRepoAtom,
+  cachedReposAtom,
+} from "./store";
 import { send } from "./machine";
 import { backgroundSync } from "./sync";
+import { buildSearchIndex, initSearchSubscription } from "./search";
 import { warmProcessor } from "../markdown";
 
 const unauthenticated: AppMachine = { phase: "unauthenticated", authError: null };
@@ -44,6 +52,7 @@ export function parseAuthError(): string | null {
 
 export async function init() {
   initOnlineListener();
+  initSearchSubscription();
 
   const authError = parseAuthError();
 
@@ -74,8 +83,11 @@ export async function init() {
 
   warmProcessor();
 
-  if (selectedRepo && cachedRepos && (await git.isInitialized())) {
-    const filenames = await readRepoFiles();
+  const worker = getRepoWorker();
+
+  if (selectedRepo && cachedRepos && (await worker.isInitialized())) {
+    const filenames = await worker.readRepoFiles();
+    refreshFs();
     store.set(machineAtom, {
       phase: "ready",
       user,
@@ -83,6 +95,7 @@ export async function init() {
       selectedRepo,
       filenames,
     });
+    buildSearchIndex(store.get(noteListAtom));
     backgroundSync(user);
     return;
   }

@@ -22,6 +22,7 @@
     "buffer": "^6.0.3",
     "isomorphic-git": "^1.32.2",
     "jotai": "^2.12.5",
+    "minisearch": "^7.2.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "rehype-raw": "^7.0.0",

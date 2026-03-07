@@ -1,16 +1,24 @@
 import { fetchUserRepos } from "../lib/github";
-import * as git from "../lib/git";
-import { readRepoFiles, wipeFs } from "../lib/fs";
+import { refreshFs } from "../lib/fs";
+import { getRepoWorker } from "../worker/client";
 import { t } from "../i18n";
 import type { User, Repo } from "./store";
 import {
   store,
   machineAtom,
+  noteListAtom,
   userAtom,
   selectedRepoAtom,
   cachedReposAtom,
   clearCardCache,
 } from "./store";
+import { buildSearchIndex, clearSearchIndex } from "./search";
+
+function resetLocalState(): void {
+  clearSearchIndex();
+  clearCardCache();
+  refreshFs();
+}
 
 export type Transition =
   | { type: "AUTHENTICATE"; user: User }
@@ -96,8 +104,7 @@ function logout(): void {
   store.set(userAtom, null);
   store.set(selectedRepoAtom, null);
   store.set(cachedReposAtom, null);
-  wipeFs();
-  clearCardCache();
+  resetLocalState();
   store.set(machineAtom, { phase: "unauthenticated", authError: null });
 }
 
@@ -107,8 +114,7 @@ async function selectRepo(owner: string, repo: string, checkAborted: () => void)
 
   const selectedRepo = { owner, repo };
   store.set(selectedRepoAtom, selectedRepo);
-  wipeFs();
-  clearCardCache();
+  resetLocalState();
   await cloneAndLoad(machine.user, machine.repos, selectedRepo, checkAborted);
 }
 
@@ -116,8 +122,7 @@ async function retry(checkAborted: () => void): Promise<void> {
   const machine = store.get(machineAtom);
   if (machine.phase !== "error") return;
 
-  wipeFs();
-  clearCardCache();
+  resetLocalState();
   await authenticate(machine.user, checkAborted);
 }
 
@@ -130,18 +135,18 @@ async function cloneAndLoad(
   store.set(machineAtom, { phase: "cloningRepo", user, repos, selectedRepo });
 
   const url = `https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`;
+  const worker = getRepoWorker();
 
   try {
-    if (await git.isInitialized()) {
+    if (await worker.isInitialized()) {
       try {
-        await git.pull(user);
+        await worker.pull(user);
       } catch {
-        wipeFs();
-        clearCardCache();
-        await git.clone(url, user);
+        resetLocalState();
+        await worker.clone(url, user);
       }
     } else {
-      await git.clone(url, user);
+      await worker.clone(url, user);
     }
   } catch (e) {
     store.set(machineAtom, {
@@ -154,8 +159,10 @@ async function cloneAndLoad(
 
   checkAborted();
 
-  const filenames = await readRepoFiles();
+  const filenames = await worker.readRepoFiles();
   checkAborted();
 
+  refreshFs();
   store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames });
+  buildSearchIndex(store.get(noteListAtom));
 }

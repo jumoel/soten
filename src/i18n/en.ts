@@ -23,6 +23,11 @@ const en = {
   "settings.theme.dark": "Dark",
   "settings.theme.system": "System",
 
+  "search.placeholder": "Search\u2026",
+  "search.resultCount": "{count} results",
+  "search.resultCount_one": "{count} result",
+  "search.resultCount_other": "{count} results",
+
   "pagination.previous": "\u2190 Previous",
   "pagination.next": "Next \u2192",
   "pagination.pageOf": "Page {page} of {total}",
