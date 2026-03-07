@@ -24,6 +24,10 @@ export const selectedRepoAtom = atomWithStorage<Repo | null>("selectedRepo", nul
   getOnInit: true,
 });
 
+export const cachedReposAtom = atomWithStorage<string[] | null>("cachedRepos", null, undefined, {
+  getOnInit: true,
+});
+
 export const pageSizeAtom = atomWithStorage<number>("pageSize", 10, undefined, { getOnInit: true });
 
 export type Theme = "light" | "dark" | "system";

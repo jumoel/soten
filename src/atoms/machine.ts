@@ -3,7 +3,7 @@ import * as git from "../lib/git";
 import { readRepoFiles, wipeFs } from "../lib/fs";
 import { t } from "../i18n";
 import type { User, Repo } from "./store";
-import { store, machineAtom, userAtom, selectedRepoAtom } from "./store";
+import { store, machineAtom, userAtom, selectedRepoAtom, cachedReposAtom } from "./store";
 
 export type Transition =
   | { type: "AUTHENTICATE"; user: User }
@@ -60,6 +60,8 @@ async function authenticate(user: User, checkAborted: () => void): Promise<void>
     return;
   }
 
+  store.set(cachedReposAtom, repos);
+
   if (repos.length === 0) {
     store.set(machineAtom, { phase: "error", message: t("error.noRepos"), user });
     return;
@@ -86,6 +88,7 @@ async function authenticate(user: User, checkAborted: () => void): Promise<void>
 function logout(): void {
   store.set(userAtom, null);
   store.set(selectedRepoAtom, null);
+  store.set(cachedReposAtom, null);
   wipeFs();
   store.set(machineAtom, { phase: "unauthenticated", authError: null });
 }
