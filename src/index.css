@@ -3,6 +3,30 @@
 
 @theme {
   --animate-fade-in: fade-in 0.3s ease-out backwards;
+
+  /* Surfaces */
+  --color-base: #1a1a1e;
+  --color-surface: #1e1e22;
+  --color-surface-2: #28282c;
+
+  /* Borders */
+  --color-edge: #2a2a2e;
+  --color-edge-2: #3a3a3e;
+
+  /* Accent */
+  --color-accent: #e07040;
+  --color-accent-hover: #c85e30;
+
+  /* Text */
+  --color-paper: #faf8f4;
+  --color-paper-dim: #ece8e0;
+  --color-muted: #888888;
+
+  /* Errors */
+  --color-error-surface: #2e1515;
+  --color-error-edge: #5a2020;
+  --color-error-text: #f87171;
+  --color-error-detail: #fca5a5;
 }
 
 @keyframes fade-in {

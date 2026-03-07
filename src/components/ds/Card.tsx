@@ -1,9 +1,9 @@
 import type { ElementType, ComponentPropsWithoutRef, ReactNode } from "react";
 
-const base = "rounded border border-gray-200 border-l-[3px]";
+const base = "rounded border border-edge border-l-[3px]";
 const variants = {
-  default: `${base} border-l-gray-400 bg-white px-4 py-3`,
-  muted: `${base} border-l-gray-400 bg-gray-50 px-3 py-2`,
+  default: `${base} border-l-accent/60 bg-surface px-4 py-3`,
+  muted: `${base} border-l-accent/60 bg-surface-2 px-3 py-2`,
 };
 
 type CardProps<T extends ElementType> = {
@@ -26,8 +26,8 @@ export function Card<T extends ElementType = "div">({
   const style = muted ? variants.muted : variants.default;
   const classes = [
     style,
-    hoverable && "hover:border-l-gray-600",
-    interactive && "w-full text-left hover:bg-gray-100",
+    hoverable && "hover:border-l-accent",
+    interactive && "w-full text-left hover:bg-surface-2",
   ]
     .filter(Boolean)
     .join(" ");
