@@ -5,6 +5,7 @@ import { renderedNoteAtom } from "../atoms/globals";
 import { REPO_DIR } from "../lib/constants";
 import { t } from "../i18n";
 import { BackLink } from "../components/BackLink";
+import { DelayedFallback } from "../components/ds/DelayedFallback";
 import { FrontmatterTable } from "../components/FrontmatterTable";
 import { ProseContent } from "../components/ProseContent";
 
@@ -27,7 +28,7 @@ export function NotePage() {
   return (
     <>
       <BackLink to="/">{t("nav.back")}</BackLink>
-      <Suspense fallback={t("note.loading")}>
+      <Suspense fallback={<DelayedFallback>{t("note.loading")}</DelayedFallback>}>
         <Note path={path} />
       </Suspense>
     </>

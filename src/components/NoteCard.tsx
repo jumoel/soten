@@ -5,6 +5,7 @@ import { prettyDateTime } from "../atoms/store";
 import type { NoteListEntry } from "../atoms/store";
 import { ProseContent } from "./ProseContent";
 import { NoteCardSkeleton } from "./NoteCardSkeleton";
+import { DelayedFallback } from "./ds/DelayedFallback";
 import { Card } from "./ds/Card";
 import { Text } from "./ds/Text";
 import { Box } from "./ds/Box";
@@ -31,7 +32,13 @@ export function NoteCard({ note }: { note: NoteListEntry }) {
               <Text variant="meta">{prettyDateTime.format(note.date)}</Text>
             </Box>
           )}
-          <Suspense fallback={<NoteCardSkeleton />}>
+          <Suspense
+            fallback={
+              <DelayedFallback>
+                <NoteCardSkeleton />
+              </DelayedFallback>
+            }
+          >
             <NoteCardContent path={note.path} />
           </Suspense>
         </article>
