@@ -6,6 +6,7 @@ export {
   renderedNoteAtom,
   noteCardAtom,
   pageSizeAtom,
+  themeAtom,
 } from "./store";
 export { send } from "./machine";
 

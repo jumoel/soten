@@ -18,6 +18,10 @@ const en = {
   "note.unnamedWithStem": "Unnamed note \u00B7 {stem}",
 
   "settings.pageSize": "Notes per page",
+  "settings.theme": "Theme",
+  "settings.theme.light": "Light",
+  "settings.theme.dark": "Dark",
+  "settings.theme.system": "System",
 
   "pagination.previous": "\u2190 Previous",
   "pagination.next": "Next \u2192",

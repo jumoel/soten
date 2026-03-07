@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAtom } from "jotai";
 import { Outlet, useNavigate } from "@tanstack/react-router";
-import { machineAtom, send } from "./atoms/globals";
+import { machineAtom, send, themeAtom } from "./atoms/globals";
 import { UnauthenticatedView } from "./components/UnauthenticatedView";
 import { AuthError } from "./components/AuthError";
 import { TopBar } from "./components/TopBar";
@@ -12,8 +12,23 @@ import { AppShell } from "./components/ds/AppShell";
 
 export function App() {
   const [machine] = useAtom(machineAtom);
+  const [theme] = useAtom(themeAtom);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    function apply() {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const isDark = theme === "dark" || (theme === "system" && prefersDark);
+      document.documentElement.classList.toggle("dark", isDark);
+    }
+    apply();
+    if (theme === "system") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
+    }
+  }, [theme]);
 
   const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);

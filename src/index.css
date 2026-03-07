@@ -1,28 +1,48 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Class-based dark mode: dark: utilities apply inside html.dark */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --animate-fade-in: fade-in 0.3s ease-out backwards;
 
+  /* Light theme defaults */
+
   /* Surfaces */
-  --color-base: #1a1a1e;
-  --color-surface: #1e1e22;
-  --color-surface-2: #28282c;
+  --color-base: #f0ece4;
+  --color-surface: #faf8f4;
+  --color-surface-2: #ece8e0;
 
   /* Borders */
-  --color-edge: #2a2a2e;
-  --color-edge-2: #3a3a3e;
+  --color-edge: #d8d4cc;
+  --color-edge-2: #c8c4bc;
 
   /* Accent */
   --color-accent: #e07040;
   --color-accent-hover: #c85e30;
 
   /* Text */
-  --color-paper: #faf8f4;
-  --color-paper-dim: #ece8e0;
+  --color-paper: #1a1a1e;
+  --color-paper-dim: #3d3a38;
   --color-muted: #888888;
 
   /* Errors */
+  --color-error-surface: #fff5f2;
+  --color-error-edge: #f4c9be;
+  --color-error-text: #b84020;
+  --color-error-detail: #d45030;
+}
+
+/* Dark theme overrides — applied when html.dark is set */
+html.dark {
+  --color-base: #1a1a1e;
+  --color-surface: #1e1e22;
+  --color-surface-2: #28282c;
+  --color-edge: #2a2a2e;
+  --color-edge-2: #3a3a3e;
+  --color-paper: #faf8f4;
+  --color-paper-dim: #ece8e0;
   --color-error-surface: #2e1515;
   --color-error-edge: #5a2020;
   --color-error-text: #f87171;
