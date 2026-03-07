@@ -16,10 +16,16 @@ function getGit(): Promise<GitDeps> {
       import("isomorphic-git"),
       import("isomorphic-git/http/web"),
       import("buffer"),
-    ]).then(([gitMod, httpMod, bufferMod]) => {
-      globalThis.Buffer = bufferMod.Buffer;
-      return { git: gitMod.default, http: httpMod.default };
-    });
+    ]).then(
+      ([gitMod, httpMod, bufferMod]) => {
+        globalThis.Buffer = bufferMod.Buffer;
+        return { git: gitMod.default, http: httpMod.default };
+      },
+      (err) => {
+        cached = null;
+        throw err;
+      },
+    );
   }
   return cached;
 }
@@ -77,6 +83,8 @@ export async function pull(user: { username: string; token: string }) {
 
 export async function setUser(user: { username: string; email: string }) {
   const { git } = await getGit();
-  await git.setConfig({ fs, dir: REPO_DIR, path: "user.name", value: user.username });
-  await git.setConfig({ fs, dir: REPO_DIR, path: "user.email", value: user.email });
+  await Promise.all([
+    git.setConfig({ fs, dir: REPO_DIR, path: "user.name", value: user.username }),
+    git.setConfig({ fs, dir: REPO_DIR, path: "user.email", value: user.email }),
+  ]);
 }

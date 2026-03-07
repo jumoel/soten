@@ -11,7 +11,14 @@ export default defineConfig({
       output: {
         manualChunks: {
           git: ["isomorphic-git", "isomorphic-git/http/web", "buffer"],
-          "markdown-render": ["remark-gfm", "remark-rehype", "rehype-raw", "rehype-stringify"],
+          "markdown-render": [
+            "remark-parse",
+            "remark-frontmatter",
+            "remark-gfm",
+            "remark-rehype",
+            "rehype-raw",
+            "rehype-stringify",
+          ],
         },
       },
     },
