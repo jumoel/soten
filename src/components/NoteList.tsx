@@ -1,18 +1,15 @@
-import { Link } from "@tanstack/react-router";
 import type { NoteListEntry } from "../atoms/store";
 import { DividedList } from "./ds/DividedList";
+import { NavLink } from "./ds/NavLink";
 
 export function NoteList({ notes }: { notes: NoteListEntry[] }) {
   return (
     <DividedList>
       {notes.map((note) => (
         <li key={note.path}>
-          <Link
-            to={"/note/" + note.relativePath}
-            className="block py-2.5 no-underline text-gray-800 hover:underline"
-          >
+          <NavLink to={"/note/" + note.relativePath} variant="listItem">
             {note.title}
-          </Link>
+          </NavLink>
         </li>
       ))}
     </DividedList>

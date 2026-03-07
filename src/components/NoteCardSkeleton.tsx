@@ -1,13 +1,15 @@
-function Bar({ className }: { className?: string }) {
-  return <div className={`h-3 rounded bg-gray-200 animate-pulse ${className ?? ""}`} />;
-}
+import { Box } from "./ds/Box";
+import { Stack } from "./ds/Stack";
+import { Skeleton } from "./ds/Skeleton";
 
 export function NoteCardSkeleton() {
   return (
-    <div className="mt-1 space-y-2">
-      <Bar className="w-3/4" />
-      <Bar className="w-full" />
-      <Bar className="w-5/6" />
-    </div>
+    <Box mt="1">
+      <Stack gap="2">
+        <Skeleton width="3/4" />
+        <Skeleton />
+        <Skeleton width="5/6" />
+      </Stack>
+    </Box>
   );
 }

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ElementType, ComponentPropsWithoutRef, ReactNode } from "react";
 
 const base = "rounded border border-gray-200 border-l-[3px]";
 const variants = {
@@ -6,15 +6,35 @@ const variants = {
   muted: `${base} border-l-gray-400 bg-gray-50 px-3 py-2`,
 };
 
-export function Card({
-  muted,
-  className,
-  children,
-}: {
+type CardProps<T extends ElementType> = {
   muted?: boolean;
-  className?: string;
+  hoverable?: boolean;
+  interactive?: boolean;
+  as?: T;
   children: ReactNode;
-}) {
+} & Omit<ComponentPropsWithoutRef<T>, "muted" | "hoverable" | "interactive" | "as" | "children">;
+
+export function Card<T extends ElementType = "div">({
+  muted,
+  hoverable,
+  interactive,
+  as,
+  children,
+  ...rest
+}: CardProps<T>) {
+  const Tag = (as ?? "div") as ElementType;
   const style = muted ? variants.muted : variants.default;
-  return <div className={[style, className].filter(Boolean).join(" ")}>{children}</div>;
+  const classes = [
+    style,
+    hoverable && "hover:border-l-gray-600",
+    interactive && "w-full text-left hover:bg-gray-100",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <Tag className={classes} {...rest}>
+      {children}
+    </Tag>
+  );
 }

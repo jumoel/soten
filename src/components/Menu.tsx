@@ -1,7 +1,9 @@
 import { useEffect } from "react";
-import { Link } from "@tanstack/react-router";
 import { Button } from "./Button";
 import { Text } from "./ds/Text";
+import { Overlay } from "./ds/Overlay";
+import { MenuPanel } from "./ds/MenuPanel";
+import { NavLink } from "./ds/NavLink";
 import { send } from "../atoms/globals";
 import { t } from "../i18n";
 import type { Repo } from "../atoms/store";
@@ -30,22 +32,22 @@ export function Menu({
 
   return (
     <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="relative z-20 border-b border-gray-200 px-4 py-3 space-y-2 bg-white">
+      <Overlay onClick={onClose} />
+      <MenuPanel>
         {selectedRepo && (
           <Text variant="mono" as="p">
             {selectedRepo.owner}/{selectedRepo.repo}
           </Text>
         )}
         <p>
-          <Link to="/settings" className="text-sm no-underline hover:underline" onClick={onClose}>
+          <NavLink to="/settings" onClick={onClose}>
             {t("menu.settings")}
-          </Link>
+          </NavLink>
         </p>
         <p>
           <Button
             variant="link"
-            className="text-sm"
+            size="sm"
             onClick={async () => {
               onClose();
               await send({ type: "LOGOUT" });
@@ -54,7 +56,7 @@ export function Menu({
             {t("auth.logout")}
           </Button>
         </p>
-      </div>
+      </MenuPanel>
     </>
   );
 }

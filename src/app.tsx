@@ -8,6 +8,7 @@ import { TopBar } from "./components/TopBar";
 import { Menu } from "./components/Menu";
 import { PageContainer } from "./components/PageContainer";
 import { LoadingSpinner } from "./components/LoadingSpinner";
+import { AppShell } from "./components/ds/AppShell";
 
 export function App() {
   const [machine] = useAtom(machineAtom);
@@ -27,7 +28,7 @@ export function App() {
   const showChrome = machine.phase !== "initializing" && machine.phase !== "unauthenticated";
 
   return (
-    <div className="w-screen min-h-screen antialiased bg-gray-100">
+    <AppShell>
       {showChrome && (
         <>
           <TopBar menuOpen={menuOpen} onMenuToggle={toggleMenu} />
@@ -47,6 +48,6 @@ export function App() {
         )}
         {(machine.phase === "ready" || machine.phase === "selectingRepo") && <Outlet />}
       </PageContainer>
-    </div>
+    </AppShell>
   );
 }
