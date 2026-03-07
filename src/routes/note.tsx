@@ -1,22 +1,23 @@
+import { useMemo } from "react";
 import { useAtom } from "jotai";
+import { loadable } from "jotai/utils";
 import { useParams } from "@tanstack/react-router";
-import { Suspense } from "react";
 import { renderedNoteAtom } from "../atoms/globals";
 import { REPO_DIR } from "../lib/constants";
 import { t } from "../i18n";
 import { BackLink } from "../components/BackLink";
-import { DelayedFallback } from "../components/ds/DelayedFallback";
 import { FrontmatterTable } from "../components/FrontmatterTable";
 import { ProseContent } from "../components/ProseContent";
 
 function Note({ path }: { path: string }) {
-  const [rendered] = useAtom(renderedNoteAtom(path));
-  if (!rendered) return null;
+  const loadableAtom = useMemo(() => loadable(renderedNoteAtom(path)), [path]);
+  const [result] = useAtom(loadableAtom);
+  if (result.state !== "hasData" || !result.data) return null;
 
   return (
     <>
-      <FrontmatterTable data={rendered.frontmatter} />
-      <ProseContent html={rendered.html} />
+      <FrontmatterTable data={result.data.frontmatter} />
+      <ProseContent html={result.data.html} />
     </>
   );
 }
@@ -28,9 +29,7 @@ export function NotePage() {
   return (
     <>
       <BackLink to="/">{t("nav.back")}</BackLink>
-      <Suspense fallback={<DelayedFallback>{t("note.loading")}</DelayedFallback>}>
-        <Note path={path} />
-      </Suspense>
+      <Note path={path} />
     </>
   );
 }
