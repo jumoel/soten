@@ -13,7 +13,7 @@ function NoteCardContent({ path }: { path: string }) {
   const [card] = useAtom(noteCardAtom(path));
   if (!card) return null;
 
-  return <ProseContent html={card.html} className="mt-1" />;
+  return <ProseContent html={card.html} className="mt-1 animate-fade-in" />;
 }
 
 export function NoteCard({ note }: { note: NoteListEntry }) {
