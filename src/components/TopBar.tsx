@@ -12,11 +12,11 @@ import { t } from "../i18n";
 function SearchBar() {
   const query = useAtomValue(searchQueryAtom);
   const setQuery = useSetAtom(searchQueryAtom);
-  const [local, setLocal] = useState("");
+  const [local, setLocal] = useState(query);
 
   useEffect(() => {
-    if (query === "" && local !== "") setLocal("");
-  }, [query, local]);
+    if (query === "") setLocal("");
+  }, [query]);
 
   useEffect(() => {
     const id = setTimeout(() => setQuery(local), 150);
