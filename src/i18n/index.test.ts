@@ -11,11 +11,11 @@ describe("t()", () => {
   });
 
   it("interpolates parameters", () => {
-    expect(t("auth.welcome", { username: "Jo" })).toBe("Welcome, Jo!");
+    expect(t("pagination.pageOf", { page: 2, total: 5 })).toBe("Page 2 of 5");
   });
 
   it("leaves template intact when no params are given", () => {
-    expect(t("auth.welcome")).toBe("Welcome, {username}!");
+    expect(t("pagination.pageOf")).toBe("Page {page} of {total}");
   });
 });
 
