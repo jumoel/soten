@@ -2,6 +2,8 @@ import { send } from "../atoms/globals";
 import { Card } from "./ds/Card";
 import { Stack } from "./ds/Stack";
 import { Text } from "./ds/Text";
+import { Box } from "./ds/Box";
+import { ExternalLink } from "./ds/ExternalLink";
 import { t } from "../i18n";
 
 export function RepoSelector({
@@ -12,40 +14,35 @@ export function RepoSelector({
   onSelect?: (owner: string, repo: string) => void;
 }) {
   return (
-    <div className="my-4">
-      <Text variant="sectionLabel" className="mb-2">
-        {t("repo.selectRepository")}
-      </Text>
+    <Box my="4">
+      <Box mb="2">
+        <Text variant="sectionLabel">{t("repo.selectRepository")}</Text>
+      </Box>
       <Stack gap="1.5">
         {repos.map((fullName) => {
           const [owner, repo] = fullName.split("/");
           return (
-            <button
+            <Card
               key={fullName}
-              className="w-full text-left hover:bg-gray-100"
+              muted
+              interactive
+              as="button"
               onClick={() =>
                 onSelect ? onSelect(owner, repo) : send({ type: "SELECT_REPO", owner, repo })
               }
             >
-              <Card muted>
-                <Text variant="mono" className="text-gray-800">
-                  {fullName}
-                </Text>
-              </Card>
-            </button>
+              <Text variant="monoStrong">{fullName}</Text>
+            </Card>
           );
         })}
       </Stack>
-      <Text variant="secondary" className="mt-4">
-        <a
-          href="https://github.com/apps/soten-notes/installations/select_target"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-        >
-          {t("repo.manageAccess")}
-        </a>
-      </Text>
-    </div>
+      <Box mt="4">
+        <Text variant="secondary">
+          <ExternalLink href="https://github.com/apps/soten-notes/installations/select_target">
+            {t("repo.manageAccess")}
+          </ExternalLink>
+        </Text>
+      </Box>
+    </Box>
   );
 }

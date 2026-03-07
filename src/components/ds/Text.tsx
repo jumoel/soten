@@ -5,6 +5,7 @@ const variantConfig = {
   secondary: { tag: "p", style: "text-sm text-gray-500" },
   meta: { tag: "span", style: "text-xs text-gray-400 uppercase tracking-widest" },
   mono: { tag: "code", style: "font-mono text-sm text-gray-500" },
+  monoStrong: { tag: "code", style: "font-mono text-sm text-gray-800" },
   label: { tag: "label", style: "block text-sm font-semibold text-gray-700" },
   sectionLabel: { tag: "h3", style: "text-xs font-semibold uppercase tracking-wide text-gray-500" },
   error: { tag: "p", style: "text-red-700 font-medium" },
@@ -18,21 +19,19 @@ type Variant = keyof typeof variantConfig;
 type TextProps<T extends ElementType> = {
   variant?: Variant;
   as?: T;
-  className?: string;
   children?: ReactNode;
-} & Omit<ComponentPropsWithoutRef<T>, "variant" | "as" | "className" | "children">;
+} & Omit<ComponentPropsWithoutRef<T>, "variant" | "as" | "children">;
 
 export function Text<T extends ElementType = "span">({
   variant = "body",
   as,
-  className,
   children,
   ...rest
 }: TextProps<T>) {
   const config = variantConfig[variant];
   const Tag = (as ?? config.tag) as ElementType;
   return (
-    <Tag className={[config.style, className].filter(Boolean).join(" ")} {...rest}>
+    <Tag className={config.style} {...rest}>
       {children}
     </Tag>
   );

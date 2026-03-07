@@ -1,10 +1,10 @@
-import { Link } from "@tanstack/react-router";
+import { NavLink } from "./ds/NavLink";
 import type { ReactNode } from "react";
 
 export function BackLink({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link to={to} className="block mb-4 text-sm text-gray-500 no-underline hover:underline">
+    <NavLink to={to} variant="back">
       &larr; {children}
-    </Link>
+    </NavLink>
   );
 }

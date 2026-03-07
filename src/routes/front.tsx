@@ -5,6 +5,8 @@ import { NoteCard } from "../components/NoteCard";
 import { Button } from "../components/Button";
 import { Stack } from "../components/ds/Stack";
 import { Text } from "../components/ds/Text";
+import { Inline } from "../components/ds/Inline";
+import { Box } from "../components/ds/Box";
 import { t } from "../i18n";
 
 export function FrontPage() {
@@ -22,27 +24,27 @@ export function FrontPage() {
         <NoteCard key={note.path} note={note} />
       ))}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-6 pb-2">
-          <Button
-            variant="ghost"
-            className="text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-default"
-            onClick={() => setPage((p) => p - 1)}
-            disabled={safePage === 0}
-          >
-            {t("pagination.previous")}
-          </Button>
-          <Text variant="secondary" as="span">
-            {t("pagination.pageOf", { page: safePage + 1, total: totalPages })}
-          </Text>
-          <Button
-            variant="ghost"
-            className="text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-default"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={safePage >= totalPages - 1}
-          >
-            {t("pagination.next")}
-          </Button>
-        </div>
+        <Box pt="6" pb="2">
+          <Inline justify="between">
+            <Button
+              variant="pagination"
+              onClick={() => setPage((p) => p - 1)}
+              disabled={safePage === 0}
+            >
+              {t("pagination.previous")}
+            </Button>
+            <Text variant="secondary" as="span">
+              {t("pagination.pageOf", { page: safePage + 1, total: totalPages })}
+            </Text>
+            <Button
+              variant="pagination"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={safePage >= totalPages - 1}
+            >
+              {t("pagination.next")}
+            </Button>
+          </Inline>
+        </Box>
       )}
     </Stack>
   );
