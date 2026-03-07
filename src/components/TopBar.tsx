@@ -13,15 +13,20 @@ export function TopBar({
     <Toolbar>
       <NavLink to="/" variant="brand">
         <svg
-          width="20"
-          height="20"
-          viewBox="0 0 200 200"
+          width="26"
+          height="30"
+          viewBox="36 24 130 150"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden="true"
         >
-          <rect x="10" y="10" width="180" height="180" rx="36" fill="#1e1e22" />
-          <path d="M42 30 H140 L162 52 V170 H42 V30Z" fill="#faf8f4" />
+          <path
+            d="M42 30 H140 L162 52 V170 H42 V30Z"
+            fill="#faf8f4"
+            stroke="currentColor"
+            strokeOpacity="0.15"
+            strokeWidth="3"
+          />
           <path d="M140 30 L140 52 H162" fill="#ece8e0" />
           <rect x="42" y="30" width="12" height="140" fill="#e07040" />
           <path
