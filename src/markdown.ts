@@ -55,6 +55,10 @@ async function buildProcessor() {
     .use(rehypeStringify);
 }
 
+export function warmProcessor() {
+  getProcessor();
+}
+
 export async function renderMarkdown(markdown: string): Promise<{
   frontmatter: Record<string, unknown> | null;
   html: string;

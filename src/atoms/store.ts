@@ -174,6 +174,8 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
   return entries;
 });
 
+const cardCache = new Map<string, { html: string; isShort: boolean }>();
+
 export const noteCardAtom = atomFamily((path: string) =>
   atom(async (get) => {
     const file = await get(fileAtom(path));
@@ -186,7 +188,13 @@ export const noteCardAtom = atomFamily((path: string) =>
     const displayContent = isShort
       ? content
       : content.slice(0, bodyStart + findCutPoint(body, NOTE_CARD_THRESHOLD));
+
+    const cached = cardCache.get(displayContent);
+    if (cached) return cached;
+
     const { html } = await renderMarkdown(displayContent);
-    return { html, isShort };
+    const result = { html, isShort };
+    cardCache.set(displayContent, result);
+    return result;
   }),
 );

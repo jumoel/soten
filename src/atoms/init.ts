@@ -6,6 +6,7 @@ import type { AppMachine } from "./store";
 import { store, machineAtom, userAtom, selectedRepoAtom, cachedReposAtom } from "./store";
 import { send } from "./machine";
 import { backgroundSync } from "./sync";
+import { warmProcessor } from "../markdown";
 
 const unauthenticated: AppMachine = { phase: "unauthenticated", authError: null };
 
@@ -70,6 +71,8 @@ export async function init() {
 
   const selectedRepo = store.get(selectedRepoAtom);
   const cachedRepos = store.get(cachedReposAtom);
+
+  warmProcessor();
 
   if (selectedRepo && cachedRepos && (await git.isInitialized())) {
     const filenames = await readRepoFiles();
