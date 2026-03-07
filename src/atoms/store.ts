@@ -176,6 +176,10 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
 
 const cardCache = new Map<string, { html: string; isShort: boolean }>();
 
+export function clearCardCache() {
+  cardCache.clear();
+}
+
 export const noteCardAtom = atomFamily((path: string) =>
   atom(async (get) => {
     const file = await get(fileAtom(path));
