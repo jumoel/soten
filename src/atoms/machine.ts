@@ -3,7 +3,14 @@ import * as git from "../lib/git";
 import { readRepoFiles, wipeFs } from "../lib/fs";
 import { t } from "../i18n";
 import type { User, Repo } from "./store";
-import { store, machineAtom, userAtom, selectedRepoAtom } from "./store";
+import {
+  store,
+  machineAtom,
+  userAtom,
+  selectedRepoAtom,
+  cachedReposAtom,
+  clearCardCache,
+} from "./store";
 
 export type Transition =
   | { type: "AUTHENTICATE"; user: User }
@@ -60,6 +67,8 @@ async function authenticate(user: User, checkAborted: () => void): Promise<void>
     return;
   }
 
+  store.set(cachedReposAtom, repos);
+
   if (repos.length === 0) {
     store.set(machineAtom, { phase: "error", message: t("error.noRepos"), user });
     return;
@@ -86,7 +95,9 @@ async function authenticate(user: User, checkAborted: () => void): Promise<void>
 function logout(): void {
   store.set(userAtom, null);
   store.set(selectedRepoAtom, null);
+  store.set(cachedReposAtom, null);
   wipeFs();
+  clearCardCache();
   store.set(machineAtom, { phase: "unauthenticated", authError: null });
 }
 
@@ -97,6 +108,7 @@ async function selectRepo(owner: string, repo: string, checkAborted: () => void)
   const selectedRepo = { owner, repo };
   store.set(selectedRepoAtom, selectedRepo);
   wipeFs();
+  clearCardCache();
   await cloneAndLoad(machine.user, machine.repos, selectedRepo, checkAborted);
 }
 
@@ -105,6 +117,7 @@ async function retry(checkAborted: () => void): Promise<void> {
   if (machine.phase !== "error") return;
 
   wipeFs();
+  clearCardCache();
   await authenticate(machine.user, checkAborted);
 }
 
@@ -124,6 +137,7 @@ async function cloneAndLoad(
         await git.pull(user);
       } catch {
         wipeFs();
+        clearCardCache();
         await git.clone(url, user);
       }
     } else {

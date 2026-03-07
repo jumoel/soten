@@ -24,6 +24,10 @@ export const selectedRepoAtom = atomWithStorage<Repo | null>("selectedRepo", nul
   getOnInit: true,
 });
 
+export const cachedReposAtom = atomWithStorage<string[] | null>("cachedRepos", null, undefined, {
+  getOnInit: true,
+});
+
 export const pageSizeAtom = atomWithStorage<number>("pageSize", 10, undefined, { getOnInit: true });
 
 export type Theme = "light" | "dark" | "system";
@@ -170,6 +174,12 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
   return entries;
 });
 
+const cardCache = new Map<string, { html: string; isShort: boolean }>();
+
+export function clearCardCache() {
+  cardCache.clear();
+}
+
 export const noteCardAtom = atomFamily((path: string) =>
   atom(async (get) => {
     const file = await get(fileAtom(path));
@@ -182,7 +192,13 @@ export const noteCardAtom = atomFamily((path: string) =>
     const displayContent = isShort
       ? content
       : content.slice(0, bodyStart + findCutPoint(body, NOTE_CARD_THRESHOLD));
+
+    const cached = cardCache.get(displayContent);
+    if (cached) return cached;
+
     const { html } = await renderMarkdown(displayContent);
-    return { html, isShort };
+    const result = { html, isShort };
+    cardCache.set(displayContent, result);
+    return result;
   }),
 );

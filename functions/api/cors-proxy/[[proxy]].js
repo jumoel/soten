@@ -41,6 +41,32 @@ const exposeHeaders = [
 ];
 const allowMethods = ["POST", "GET", "OPTIONS"];
 
+const allowedOrigins = [
+  "https://soten.app",
+  /^https:\/\/[a-z0-9-]+\.soten\.pages\.dev$/,
+  "http://localhost:5173",
+  "http://localhost:8788",
+];
+
+const allowedTargetHosts = ["github.com", "api.github.com"];
+
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  return allowedOrigins.some((allowed) =>
+    typeof allowed === "string" ? origin === allowed : allowed.test(origin),
+  );
+}
+
+function corsHeaders(origin) {
+  return {
+    "access-control-allow-origin": origin,
+    "access-control-allow-methods": allowMethods.join(", "),
+    "access-control-allow-headers": allowHeaders.join(", "),
+    "access-control-expose-headers": exposeHeaders.join(", "),
+    "access-control-max-age": "86400",
+  };
+}
+
 export async function onRequest(context) {
   const { request } = context;
 
@@ -50,25 +76,32 @@ export async function onRequest(context) {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
+  const origin = request.headers.get("origin");
+  if (!isAllowedOrigin(origin)) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   const url = new URL(request.url);
 
-  // Check if the request is at the proper path
   if (!url.pathname.startsWith("/api/cors-proxy/")) {
     return new Response("Not Found", { status: 404 });
   }
 
-  let proxyUrl = url.toString().replace(/^.+\/cors-proxy\//, "https://");
+  const proxyUrl = url.toString().replace(/^.+\/cors-proxy\//, "https://");
 
+  let parsed;
   try {
-    new URL(proxyUrl);
+    parsed = new URL(proxyUrl);
   } catch {
     return new Response("Invalid URL", { status: 400 });
   }
 
+  if (!allowedTargetHosts.includes(parsed.hostname)) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-    });
+    return new Response(null, { status: 200, headers: corsHeaders(origin) });
   }
 
   const requestHeaders = new Headers();
@@ -89,6 +122,9 @@ export async function onRequest(context) {
     if (exposeHeaders.includes(name)) {
       responseHeaders.set(name, value);
     }
+  }
+  for (const [name, value] of Object.entries(corsHeaders(origin))) {
+    responseHeaders.set(name, value);
   }
 
   return new Response(response.body, {

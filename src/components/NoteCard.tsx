@@ -1,5 +1,6 @@
-import { Suspense } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAtom } from "jotai";
+import { loadable } from "jotai/utils";
 import { noteCardAtom } from "../atoms/globals";
 import { prettyDateTime } from "../atoms/store";
 import type { NoteListEntry } from "../atoms/store";
@@ -11,12 +12,22 @@ import { Box } from "./ds/Box";
 import { NavLink } from "./ds/NavLink";
 
 function NoteCardContent({ path }: { path: string }) {
-  const [card] = useAtom(noteCardAtom(path));
-  if (!card) return null;
+  const loadableAtom = useMemo(() => loadable(noteCardAtom(path)), [path]);
+  const [result] = useAtom(loadableAtom);
+  const [showSkeleton, setShowSkeleton] = useState(false);
+
+  useEffect(() => {
+    if (result.state !== "loading") return;
+    const id = setTimeout(() => setShowSkeleton(true), 150);
+    return () => clearTimeout(id);
+  }, [result.state]);
+
+  if (result.state === "loading") return showSkeleton ? <NoteCardSkeleton /> : null;
+  if (result.state !== "hasData" || !result.data) return null;
 
   return (
     <Box mt="1">
-      <ProseContent html={card.html} animate />
+      <ProseContent html={result.data.html} animate />
     </Box>
   );
 }
@@ -31,9 +42,7 @@ export function NoteCard({ note }: { note: NoteListEntry }) {
               <Text variant="meta">{prettyDateTime.format(note.date)}</Text>
             </Box>
           )}
-          <Suspense fallback={<NoteCardSkeleton />}>
-            <NoteCardContent path={note.path} />
-          </Suspense>
+          <NoteCardContent path={note.path} />
         </article>
       </Card>
     </NavLink>
