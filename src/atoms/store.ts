@@ -93,7 +93,7 @@ function parseTimestampFilename(stem: string): Date | null {
 
 const closingFmRe = /\n---(?:\r?\n|$)/;
 
-function findBodyStart(content: string): number {
+export function findBodyStart(content: string): number {
   if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) return 0;
   const closing = closingFmRe.exec(content);
   return closing !== null ? closing.index + closing[0].length : 0;

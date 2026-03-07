@@ -6,11 +6,13 @@ import type { User, Repo } from "./store";
 import {
   store,
   machineAtom,
+  noteListAtom,
   userAtom,
   selectedRepoAtom,
   cachedReposAtom,
   clearCardCache,
 } from "./store";
+import { buildSearchIndex, clearSearchIndex } from "./search";
 
 export type Transition =
   | { type: "AUTHENTICATE"; user: User }
@@ -98,6 +100,7 @@ function logout(): void {
   store.set(cachedReposAtom, null);
   wipeFs();
   clearCardCache();
+  clearSearchIndex();
   store.set(machineAtom, { phase: "unauthenticated", authError: null });
 }
 
@@ -109,6 +112,7 @@ async function selectRepo(owner: string, repo: string, checkAborted: () => void)
   store.set(selectedRepoAtom, selectedRepo);
   wipeFs();
   clearCardCache();
+  clearSearchIndex();
   await cloneAndLoad(machine.user, machine.repos, selectedRepo, checkAborted);
 }
 
@@ -118,6 +122,7 @@ async function retry(checkAborted: () => void): Promise<void> {
 
   wipeFs();
   clearCardCache();
+  clearSearchIndex();
   await authenticate(machine.user, checkAborted);
 }
 
@@ -138,6 +143,7 @@ async function cloneAndLoad(
       } catch {
         wipeFs();
         clearCardCache();
+        clearSearchIndex();
         await git.clone(url, user);
       }
     } else {
@@ -158,4 +164,5 @@ async function cloneAndLoad(
   checkAborted();
 
   store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames });
+  buildSearchIndex(store.get(noteListAtom));
 }

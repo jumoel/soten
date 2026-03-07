@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useAtom } from "jotai";
-import { noteListAtom, pageSizeAtom } from "../atoms/globals";
+import { useState, useEffect } from "react";
+import { useAtom, useAtomValue } from "jotai";
+import { pageSizeAtom, searchQueryAtom, searchResultsAtom } from "../atoms/globals";
 import { NoteCard } from "../components/NoteCard";
 import { Button } from "../components/Button";
 import { Stack } from "../components/ds/Stack";
@@ -10,9 +10,15 @@ import { Box } from "../components/ds/Box";
 import { t } from "../i18n";
 
 export function FrontPage() {
-  const [notes] = useAtom(noteListAtom);
+  const notes = useAtomValue(searchResultsAtom);
+  const query = useAtomValue(searchQueryAtom);
   const [pageSize] = useAtom(pageSizeAtom);
   const [page, setPage] = useState(0);
+  const isSearching = query.trim().length > 0;
+
+  useEffect(() => {
+    setPage(0);
+  }, [query]);
 
   const totalPages = Math.max(1, Math.ceil(notes.length / pageSize));
   const safePage = Math.min(page, totalPages - 1);
@@ -20,6 +26,9 @@ export function FrontPage() {
 
   return (
     <Stack>
+      {isSearching && (
+        <Text variant="secondary">{t("search.resultCount", { count: notes.length })}</Text>
+      )}
       {pageNotes.map((note) => (
         <NoteCard key={note.path} note={note} />
       ))}

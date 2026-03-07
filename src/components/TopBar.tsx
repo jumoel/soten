@@ -1,9 +1,33 @@
-import { useAtomValue } from "jotai";
+import { useState, useEffect } from "react";
+import { useAtomValue, useSetAtom } from "jotai";
 import { Button } from "./Button";
 import { Toolbar } from "./ds/Toolbar";
 import { NavLink } from "./ds/NavLink";
+import { TextInput } from "./ds/TextInput";
 import { Text } from "./ds/Text";
 import { onlineAtom } from "../lib/online";
+import { machineAtom, searchQueryAtom } from "../atoms/globals";
+import { t } from "../i18n";
+
+function SearchBar() {
+  const setQuery = useSetAtom(searchQueryAtom);
+  const [local, setLocal] = useState("");
+
+  useEffect(() => {
+    const id = setTimeout(() => setQuery(local), 150);
+    return () => clearTimeout(id);
+  }, [local, setQuery]);
+
+  return (
+    <TextInput
+      type="search"
+      placeholder={t("search.placeholder")}
+      aria-label={t("search.placeholder")}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+    />
+  );
+}
 
 export function TopBar({
   menuOpen,
@@ -13,6 +37,7 @@ export function TopBar({
   onMenuToggle: () => void;
 }) {
   const online = useAtomValue(onlineAtom);
+  const machine = useAtomValue(machineAtom);
 
   return (
     <Toolbar>
@@ -48,6 +73,7 @@ export function TopBar({
         </NavLink>
         {!online && <Text variant="meta">offline</Text>}
       </div>
+      {machine.phase === "ready" && <SearchBar />}
       <Button variant="ghost" onClick={onMenuToggle} aria-label="Menu">
         <svg
           width="20"

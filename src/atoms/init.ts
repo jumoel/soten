@@ -3,9 +3,17 @@ import * as git from "../lib/git";
 import { readRepoFiles } from "../lib/fs";
 import { initOnlineListener } from "../lib/online";
 import type { AppMachine } from "./store";
-import { store, machineAtom, userAtom, selectedRepoAtom, cachedReposAtom } from "./store";
+import {
+  store,
+  machineAtom,
+  noteListAtom,
+  userAtom,
+  selectedRepoAtom,
+  cachedReposAtom,
+} from "./store";
 import { send } from "./machine";
 import { backgroundSync } from "./sync";
+import { buildSearchIndex } from "./search";
 import { warmProcessor } from "../markdown";
 
 const unauthenticated: AppMachine = { phase: "unauthenticated", authError: null };
@@ -83,6 +91,7 @@ export async function init() {
       selectedRepo,
       filenames,
     });
+    buildSearchIndex(store.get(noteListAtom));
     backgroundSync(user);
     return;
   }
