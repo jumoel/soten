@@ -1,8 +1,14 @@
 import MiniSearch from "minisearch";
 import { atom } from "jotai";
 import { readFile } from "../lib/fs";
-import { store, noteListAtom, findBodyStart } from "./store";
+import { store, noteListAtom, findBodyStart, selectedRepoAtom } from "./store";
 import type { NoteListEntry } from "./store";
+
+const STORAGE_KEY = "searchIndex";
+const FIELDS = ["title", "body"] as const;
+const STORE_FIELDS = ["title"] as const;
+
+type IndexDoc = { id: string; title: string; body: string };
 
 let searchIndex: MiniSearch | null = null;
 
@@ -26,13 +32,61 @@ export const searchResultsAtom = atom<NoteListEntry[]>((get) => {
   return results.map((r) => entryMap.get(r.id)).filter((e): e is NoteListEntry => e != null);
 });
 
+function cacheKey(): string | null {
+  const repo = store.get(selectedRepoAtom);
+  if (!repo) return null;
+  return `${STORAGE_KEY}:${repo.owner}/${repo.repo}`;
+}
+
+function persistIndex(): void {
+  const key = cacheKey();
+  if (!key || !searchIndex) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(searchIndex));
+  } catch {
+    // quota exceeded — cache is best-effort
+  }
+}
+
+function loadCachedIndex(): boolean {
+  const key = cacheKey();
+  if (!key) return false;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return false;
+    searchIndex = MiniSearch.loadJSON<IndexDoc>(raw, {
+      fields: [...FIELDS],
+      storeFields: [...STORE_FIELDS],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearCachedIndex(): void {
+  const key = cacheKey();
+  if (key) localStorage.removeItem(key);
+}
+
 export async function buildSearchIndex(entries: NoteListEntry[]): Promise<void> {
-  const index = new MiniSearch<{ id: string; title: string; body: string }>({
-    fields: ["title", "body"],
-    storeFields: ["title"],
+  if (loadCachedIndex()) {
+    store.set(searchIndexReadyAtom, true);
+    rebuildInBackground(entries);
+    return;
+  }
+
+  await fullBuild(entries);
+  persistIndex();
+}
+
+async function fullBuild(entries: NoteListEntry[]): Promise<void> {
+  const index = new MiniSearch<IndexDoc>({
+    fields: [...FIELDS],
+    storeFields: [...STORE_FIELDS],
   });
 
-  const docs: { id: string; title: string; body: string }[] = [];
+  const docs: IndexDoc[] = [];
 
   for (const entry of entries) {
     const file = await readFile(entry.path);
@@ -44,6 +98,11 @@ export async function buildSearchIndex(entries: NoteListEntry[]): Promise<void> 
   index.addAll(docs);
   searchIndex = index;
   store.set(searchIndexReadyAtom, true);
+}
+
+async function rebuildInBackground(entries: NoteListEntry[]): Promise<void> {
+  await fullBuild(entries);
+  persistIndex();
 }
 
 export async function updateSearchIndex(
@@ -80,9 +139,11 @@ export async function updateSearchIndex(
   }
 
   store.set(searchIndexReadyAtom, true);
+  persistIndex();
 }
 
 export function clearSearchIndex(): void {
+  clearCachedIndex();
   searchIndex = null;
   store.set(searchIndexReadyAtom, false);
   store.set(searchQueryAtom, "");
