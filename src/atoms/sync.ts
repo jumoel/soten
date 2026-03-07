@@ -11,10 +11,14 @@ export async function backgroundSync(user: User): Promise<void> {
   syncing = true;
 
   try {
+    if (store.get(machineAtom).phase !== "ready") return;
+
     const currentUser = await fetchCurrentUser(user.token);
     if (!currentUser?.login) {
-      store.set(userAtom, null);
-      store.set(machineAtom, { phase: "unauthenticated", authError: null });
+      if (store.get(machineAtom).phase === "ready") {
+        store.set(userAtom, null);
+        store.set(machineAtom, { phase: "unauthenticated", authError: null });
+      }
       return;
     }
 
@@ -24,7 +28,9 @@ export async function backgroundSync(user: User): Promise<void> {
 
       const selectedRepo = store.get(selectedRepoAtom);
       if (selectedRepo && !repos.includes(`${selectedRepo.owner}/${selectedRepo.repo}`)) {
-        store.set(machineAtom, { phase: "selectingRepo", user, repos });
+        if (store.get(machineAtom).phase === "ready") {
+          store.set(machineAtom, { phase: "selectingRepo", user, repos });
+        }
         return;
       }
     }

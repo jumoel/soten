@@ -22,6 +22,7 @@ async function buildProcessor() {
     { default: remarkGfm },
     { default: remarkRehype },
     { default: rehypeRaw },
+    { default: rehypeSanitize },
     { default: rehypeStringify },
   ] = await Promise.all([
     import("unified"),
@@ -31,6 +32,7 @@ async function buildProcessor() {
     import("remark-gfm"),
     import("remark-rehype"),
     import("rehype-raw"),
+    import("rehype-sanitize"),
     import("rehype-stringify"),
   ]);
 
@@ -52,6 +54,7 @@ async function buildProcessor() {
     .use(remarkFrontmatterMatter)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeSanitize)
     .use(rehypeStringify);
 }
 
