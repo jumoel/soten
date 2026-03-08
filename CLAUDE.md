@@ -242,6 +242,7 @@ Examples:
 
 Additional rules:
 
+- **One commit per distinct change.** Do not batch unrelated changes into one commit. Each logical unit of work — a bug fix, a new component, a refactor of a single module — gets its own commit. All quality checks must pass before each commit.
 - Keep the subject line under 72 characters
 - Use the imperative mood ("add", "fix", "remove" — not "added", "fixes")
 - Do not include links to claude.ai in commit messages or PR descriptions
@@ -271,6 +272,27 @@ tooling, and architecture, leading to inconsistent contributions.
 The dispatch chain parameter was also removed as it was unused and
 caused lint/type failures.
 ```
+
+## Build Log
+
+A chronological record of all significant changes is kept in `BUILD_LOG.md` at the repo root.
+
+**After every commit that changes behaviour or appearance**, append an entry to `BUILD_LOG.md`:
+
+```markdown
+### YYYY-MM-DD HH:MM — Short description
+
+Prose description of what changed and why. One to three sentences.
+
+![Description](docs/build-log/YYYY-MM-DD-slug.png)  ← include for any visual change
+```
+
+Rules:
+- Entries are appended in chronological order — never insert or reorder
+- Timestamp is local time (no timezone needed)
+- For visual changes, take a screenshot with the Chrome DevTools MCP and save it to `docs/build-log/` before writing the entry
+- Non-visual changes (refactors, config, deps) do not need a screenshot
+- The build log entry and any screenshot are committed together with the code change in the same commit
 
 ## CI/CD
 
