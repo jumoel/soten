@@ -78,6 +78,20 @@ async function pull(user: { username: string; token: string }): Promise<void> {
   });
 }
 
+async function push(user: { username: string; token: string }, ref?: string): Promise<void> {
+  const { git, http } = await getGit();
+  await git.push({
+    fs,
+    http,
+    dir: REPO_DIR,
+    corsProxy,
+    ref,
+    onAuth: () => ({ username: user.username, password: user.token }),
+    onMessage: (msg) => console.debug("push onMessage", msg),
+    onProgress: (prog) => console.debug("push onProgress", prog),
+  });
+}
+
 async function isInitialized(): Promise<boolean> {
   try {
     const files = await pfs.readdir(REPO_DIR);
@@ -150,6 +164,103 @@ async function populateFiles(files: Array<{ path: string; content: string }>): P
     if (dir) await mkdirp(dir);
     await pfs.writeFile(file.path, enc.encode(file.content));
   }
+}
+
+// ---------------------------------------------------------------------------
+// Branch and commit operations
+// ---------------------------------------------------------------------------
+
+async function createBranch(name: string): Promise<void> {
+  const { git } = await getGit();
+  await git.branch({ fs, dir: REPO_DIR, ref: name });
+}
+
+async function checkoutBranch(name: string): Promise<void> {
+  const { git } = await getGit();
+  await git.checkout({ fs, dir: REPO_DIR, ref: name });
+}
+
+async function commitFile(filepath: string, content: string, message: string): Promise<void> {
+  const { git } = await getGit();
+  const enc = new TextEncoder();
+  const fullpath = `${REPO_DIR}/${filepath}`;
+
+  const dir = fullpath.slice(0, fullpath.lastIndexOf("/"));
+  if (dir && dir !== REPO_DIR) await mkdirp(dir);
+
+  await pfs.writeFile(fullpath, enc.encode(content));
+  await git.add({ fs, dir: REPO_DIR, filepath });
+  await git.commit({
+    fs,
+    dir: REPO_DIR,
+    message,
+    author: { name: "soten", email: "soten@local" },
+  });
+}
+
+async function squashMergeToMain(branch: string, message: string): Promise<void> {
+  const { git } = await getGit();
+
+  const branchCommit = await git.resolveRef({ fs, dir: REPO_DIR, ref: branch });
+  const { commit } = await git.readCommit({ fs, dir: REPO_DIR, oid: branchCommit });
+  const tree = commit.tree;
+
+  await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
+
+  const mainHead = await git.resolveRef({ fs, dir: REPO_DIR, ref: "HEAD" });
+  const oid = await git.commit({
+    fs,
+    dir: REPO_DIR,
+    message,
+    tree,
+    parent: [mainHead],
+    author: { name: "soten", email: "soten@local" },
+  });
+
+  await git.writeRef({ fs, dir: REPO_DIR, ref: "refs/heads/main", value: oid, force: true });
+  await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
+  await git.deleteBranch({ fs, dir: REPO_DIR, ref: branch });
+}
+
+async function deleteBranch(name: string): Promise<void> {
+  const { git } = await getGit();
+  await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
+  await git.deleteBranch({ fs, dir: REPO_DIR, ref: name });
+}
+
+async function readFileFromBranch(branch: string, filepath: string): Promise<string | null> {
+  const { git } = await getGit();
+  try {
+    const commitOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: branch });
+    const { blob } = await git.readBlob({
+      fs,
+      dir: REPO_DIR,
+      oid: commitOid,
+      filepath,
+    });
+    return new TextDecoder().decode(blob);
+  } catch {
+    return null;
+  }
+}
+
+async function listDraftBranches(): Promise<Array<{ timestamp: string; content: string }>> {
+  const { git } = await getGit();
+  const branches = await git.listBranches({ fs, dir: REPO_DIR });
+  const drafts: Array<{ timestamp: string; content: string }> = [];
+
+  for (const branch of branches) {
+    if (!branch.startsWith("draft/")) continue;
+    const timestamp = branch.slice("draft/".length);
+    try {
+      const content = await readFileFromBranch(branch, `${timestamp}.md`);
+      drafts.push({ timestamp, content: content ?? "" });
+    } catch {
+      drafts.push({ timestamp, content: "" });
+    }
+  }
+
+  return drafts;
 }
 
 // ---------------------------------------------------------------------------
@@ -240,6 +351,9 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       case "pull":
         await pull(msg.user);
         break;
+      case "push":
+        await push(msg.user, msg.ref);
+        break;
       case "isInitialized":
         result = await isInitialized();
         break;
@@ -260,6 +374,27 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         break;
       case "populateFiles":
         await populateFiles(msg.files);
+        break;
+      case "createBranch":
+        await createBranch(msg.name);
+        break;
+      case "checkoutBranch":
+        await checkoutBranch(msg.name);
+        break;
+      case "commitFile":
+        await commitFile(msg.filepath, msg.content, msg.message);
+        break;
+      case "squashMergeToMain":
+        await squashMergeToMain(msg.branch, msg.message);
+        break;
+      case "deleteBranch":
+        await deleteBranch(msg.name);
+        break;
+      case "listDraftBranches":
+        result = await listDraftBranches();
+        break;
+      case "readFileFromBranch":
+        result = await readFileFromBranch(msg.branch, msg.filepath);
         break;
     }
 

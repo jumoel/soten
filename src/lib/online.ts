@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 import { store, machineAtom } from "../atoms/store";
-import { backgroundSync } from "../atoms/sync";
+import { fullSync } from "../atoms/sync";
 
 export const onlineAtom = atom(navigator.onLine);
 
@@ -9,7 +9,7 @@ export function initOnlineListener() {
     store.set(onlineAtom, true);
     const machine = store.get(machineAtom);
     if (machine.phase === "ready") {
-      backgroundSync(machine.user);
+      void fullSync(machine.user);
     }
   });
 

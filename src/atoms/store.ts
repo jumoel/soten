@@ -28,8 +28,6 @@ export const cachedReposAtom = atomWithStorage<string[] | null>("cachedRepos", n
   getOnInit: true,
 });
 
-export const pageSizeAtom = atomWithStorage<number>("pageSize", 10, undefined, { getOnInit: true });
-
 export type Theme = "light" | "dark" | "system";
 export const themeAtom = atomWithStorage<Theme>("theme", "light", undefined, { getOnInit: true });
 
@@ -51,8 +49,6 @@ export type AppMachine =
 export const machineAtom = atom<AppMachine>({ phase: "initializing" });
 
 export const fileAtom = atomFamily((path: string) => atom(async () => readFile(path)));
-
-const NOTE_CARD_THRESHOLD = 375;
 
 const dateFileRe = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
 const prettyDate = new Intl.DateTimeFormat("en-US", {
@@ -89,24 +85,6 @@ function parseTimestampFilename(stem: string): Date | null {
   }
 
   return null;
-}
-
-const closingFmRe = /\n---(?:\r?\n|$)/;
-
-function findBodyStart(content: string): number {
-  if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) return 0;
-  const closing = closingFmRe.exec(content);
-  return closing !== null ? closing.index + closing[0].length : 0;
-}
-
-function findCutPoint(body: string, threshold: number): number {
-  const headingCut = body.lastIndexOf("\n\n#", threshold);
-  if (headingCut > 0) return headingCut;
-  const paraCut = body.lastIndexOf("\n\n", threshold);
-  if (paraCut > 0) return paraCut;
-  const lineCut = body.lastIndexOf("\n", threshold);
-  if (lineCut > 0) return lineCut;
-  return threshold;
 }
 
 function noteDate(relativePath: string): Date | null {
@@ -174,6 +152,28 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
   return entries;
 });
 
+export const pinnedNotesAtom = atom<string[]>([]);
+export const expandedNoteAtom = atom<string | null>(null);
+
+const NOTE_CARD_THRESHOLD = 375;
+const closingFmRe = /\n---\r?\n/;
+
+function findBodyStart(content: string): number {
+  if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) return 0;
+  const closing = closingFmRe.exec(content);
+  return closing !== null ? closing.index + closing[0].length : 0;
+}
+
+function findCutPoint(body: string, threshold: number): number {
+  const headingCut = body.lastIndexOf("\n\n#", threshold);
+  if (headingCut > 0) return headingCut;
+  const paraCut = body.lastIndexOf("\n\n", threshold);
+  if (paraCut > 0) return paraCut;
+  const lineCut = body.lastIndexOf("\n", threshold);
+  if (lineCut > 0) return lineCut;
+  return threshold;
+}
+
 const cardCache = new Map<string, { html: string; isShort: boolean }>();
 
 export function clearCardCache() {
@@ -202,3 +202,5 @@ export const noteCardAtom = atomFamily((path: string) =>
     return result;
   }),
 );
+
+export const gitWorkingAtom = atom(false);

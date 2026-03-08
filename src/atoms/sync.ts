@@ -1,6 +1,7 @@
 import { fetchCurrentUser, fetchUserRepos } from "../lib/github";
 import { refreshFs } from "../lib/fs";
 import { getRepoWorker } from "../worker/client";
+import { withGitWorking } from "../lib/git-status";
 import type { User } from "./store";
 import {
   store,
@@ -10,11 +11,12 @@ import {
   selectedRepoAtom,
   cachedReposAtom,
 } from "./store";
+import { draftsAtom } from "./drafts";
 import { updateSearchIndex } from "./search";
 
 let syncing = false;
 
-export async function backgroundSync(user: User): Promise<void> {
+export async function fullSync(user: User): Promise<void> {
   if (syncing) return;
   syncing = true;
 
@@ -45,23 +47,45 @@ export async function backgroundSync(user: User): Promise<void> {
 
     const worker = getRepoWorker();
 
-    try {
-      await worker.pull(user);
-    } catch {
-      return;
-    }
+    await withGitWorking(async () => {
+      // Push all draft branches non-fatally
+      const drafts = store.get(draftsAtom);
+      for (const draft of drafts) {
+        try {
+          await worker.push(user, `draft/${draft.timestamp}`);
+        } catch {
+          // Draft push failure is non-fatal
+        }
+      }
 
-    const filenames = await worker.readRepoFiles();
-    refreshFs();
-    const machine = store.get(machineAtom);
-    if (machine.phase === "ready") {
-      const oldFilenames = machine.filenames;
-      store.set(machineAtom, { ...machine, filenames });
-      updateSearchIndex(oldFilenames, filenames, store.get(noteListAtom));
-    }
+      // Push main non-fatally
+      try {
+        await worker.push(user);
+      } catch {
+        // Main push failure is non-fatal
+      }
+
+      // Pull
+      try {
+        await worker.pull(user);
+      } catch {
+        return;
+      }
+
+      const filenames = await worker.readRepoFiles();
+      refreshFs();
+      const machine = store.get(machineAtom);
+      if (machine.phase === "ready") {
+        const oldFilenames = machine.filenames;
+        store.set(machineAtom, { ...machine, filenames });
+        updateSearchIndex(oldFilenames, filenames, store.get(noteListAtom));
+      }
+    });
   } catch {
-    // Network errors during background sync are silently ignored
+    // Network errors during sync are silently ignored
   } finally {
     syncing = false;
   }
 }
+
+export const backgroundSync = fullSync;

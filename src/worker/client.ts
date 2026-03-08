@@ -37,6 +37,10 @@ class RepoWorkerClient {
     return this.call({ type: "pull", user }) as Promise<void>;
   }
 
+  push(user: { username: string; token: string }, ref?: string): Promise<void> {
+    return this.call({ type: "push", user, ref }) as Promise<void>;
+  }
+
   isInitialized(): Promise<boolean> {
     return this.call({ type: "isInitialized" }) as Promise<boolean>;
   }
@@ -72,6 +76,36 @@ class RepoWorkerClient {
 
   populateFiles(files: Array<{ path: string; content: string }>): Promise<void> {
     return this.call({ type: "populateFiles", files }) as Promise<void>;
+  }
+
+  createBranch(name: string): Promise<void> {
+    return this.call({ type: "createBranch", name }) as Promise<void>;
+  }
+
+  checkoutBranch(name: string): Promise<void> {
+    return this.call({ type: "checkoutBranch", name }) as Promise<void>;
+  }
+
+  commitFile(filepath: string, content: string, message: string): Promise<void> {
+    return this.call({ type: "commitFile", filepath, content, message }) as Promise<void>;
+  }
+
+  squashMergeToMain(branch: string, message: string): Promise<void> {
+    return this.call({ type: "squashMergeToMain", branch, message }) as Promise<void>;
+  }
+
+  deleteBranch(name: string): Promise<void> {
+    return this.call({ type: "deleteBranch", name }) as Promise<void>;
+  }
+
+  listDraftBranches(): Promise<Array<{ timestamp: string; content: string }>> {
+    return this.call({ type: "listDraftBranches" }) as Promise<
+      Array<{ timestamp: string; content: string }>
+    >;
+  }
+
+  readFileFromBranch(branch: string, filepath: string): Promise<string | null> {
+    return this.call({ type: "readFileFromBranch", branch, filepath }) as Promise<string | null>;
   }
 }
 

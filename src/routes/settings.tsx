@@ -1,16 +1,14 @@
 import { useAtom } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
-import { machineAtom, send, pageSizeAtom, themeAtom } from "../atoms/globals";
+import { machineAtom, send, themeAtom } from "../atoms/globals";
 import type { Theme } from "../atoms/store";
 import { RepoSelector } from "../components/RepoSelector";
 import { Text } from "../components/ds/Text";
-import { TextInput } from "../components/ds/TextInput";
 import { Box } from "../components/ds/Box";
 import { t } from "../i18n";
 
 export function SettingsPage() {
   const [machine] = useAtom(machineAtom);
-  const [pageSize, setPageSize] = useAtom(pageSizeAtom);
   const [theme, setTheme] = useAtom(themeAtom);
   const navigate = useNavigate();
 
@@ -39,25 +37,6 @@ export function SettingsPage() {
             </button>
           ))}
         </div>
-      </Box>
-      <Box mb="6">
-        <Box mb="1">
-          <Text variant="label" as="label" htmlFor="page-size">
-            {t("settings.pageSize")}
-          </Text>
-        </Box>
-        <TextInput
-          id="page-size"
-          type="number"
-          min={1}
-          max={100}
-          value={pageSize}
-          onChange={(e) => {
-            const val = parseInt(e.target.value, 10);
-            if (!isNaN(val) && val >= 1) setPageSize(val);
-          }}
-          width="20"
-        />
       </Box>
       <RepoSelector
         repos={repos}

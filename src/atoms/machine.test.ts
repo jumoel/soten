@@ -14,6 +14,7 @@ vi.mock("../worker/client", () => {
     updateSearchIndex: vi.fn(),
     search: vi.fn(),
     clearSearchIndex: vi.fn(),
+    listDraftBranches: vi.fn().mockResolvedValue([]),
   };
   return { getRepoWorker: () => mockWorker };
 });

@@ -2,6 +2,7 @@ import { getRepoWorker } from "../worker/client";
 import { REPO_DIR } from "../lib/constants";
 import { store, machineAtom, noteListAtom } from "./store";
 import { buildSearchIndex } from "./search";
+import { recoverDrafts } from "./draft-recovery";
 
 export async function initFromLocalRepo(dir: string): Promise<void> {
   const filesRes = await fetch(`/api/test-repo/files?dir=${encodeURIComponent(dir)}`);
@@ -34,4 +35,5 @@ export async function initFromLocalRepo(dir: string): Promise<void> {
   });
 
   buildSearchIndex(store.get(noteListAtom));
+  await recoverDrafts(filenames);
 }

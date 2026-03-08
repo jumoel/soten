@@ -11,11 +11,11 @@ describe("t()", () => {
   });
 
   it("interpolates parameters", () => {
-    expect(t("pagination.pageOf", { page: 2, total: 5 })).toBe("Page 2 of 5");
+    expect(t("note.dayPrefix", { date: "January 1, 2024" })).toBe("Day: January 1, 2024");
   });
 
   it("leaves template intact when no params are given", () => {
-    expect(t("pagination.pageOf")).toBe("Page {page} of {total}");
+    expect(t("note.dayPrefix")).toBe("Day: {date}");
   });
 });
 

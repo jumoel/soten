@@ -6,6 +6,12 @@ import {
 } from "@tanstack/react-router";
 import { App } from "./app.tsx";
 
+type RootSearchParams = {
+  q?: string;
+  note?: string;
+  draft?: string;
+};
+
 const rootRoute = createRootRoute({
   component: App,
 });
@@ -13,18 +19,12 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
+  validateSearch: (search: Record<string, unknown>): RootSearchParams => ({
+    q: typeof search.q === "string" ? search.q : undefined,
+    note: typeof search.note === "string" ? search.note : undefined,
+    draft: typeof search.draft === "string" ? search.draft : undefined,
+  }),
   component: lazyRouteComponent(() => import("./routes/front.tsx"), "FrontPage"),
-});
-
-const noteRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "note",
-});
-
-const noteViewRoute = createRoute({
-  getParentRoute: () => noteRoute,
-  path: "$",
-  component: lazyRouteComponent(() => import("./routes/note.tsx"), "NotePage"),
 });
 
 const settingsRoute = createRoute({
@@ -33,11 +33,7 @@ const settingsRoute = createRoute({
   component: lazyRouteComponent(() => import("./routes/settings.tsx"), "SettingsPage"),
 });
 
-const routeTree = rootRoute.addChildren([
-  indexRoute,
-  noteRoute.addChildren([noteViewRoute]),
-  settingsRoute,
-]);
+const routeTree = rootRoute.addChildren([indexRoute, settingsRoute]);
 
 export const router = createRouter({
   routeTree,

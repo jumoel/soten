@@ -13,6 +13,7 @@ import {
   clearCardCache,
 } from "./store";
 import { buildSearchIndex, clearSearchIndex } from "./search";
+import { recoverDrafts } from "./draft-recovery";
 
 function resetLocalState(): void {
   clearSearchIndex();
@@ -165,4 +166,5 @@ async function cloneAndLoad(
   refreshFs();
   store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames });
   buildSearchIndex(store.get(noteListAtom));
+  await recoverDrafts(filenames);
 }

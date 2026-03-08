@@ -14,6 +14,7 @@ import {
 import { send } from "./machine";
 import { backgroundSync } from "./sync";
 import { buildSearchIndex, initSearchSubscription } from "./search";
+import { recoverDrafts } from "./draft-recovery";
 import { warmProcessor } from "../markdown";
 
 const unauthenticated: AppMachine = { phase: "unauthenticated", authError: null };
@@ -105,6 +106,7 @@ export async function init() {
       filenames,
     });
     buildSearchIndex(store.get(noteListAtom));
+    await recoverDrafts(filenames);
     backgroundSync(user);
     return;
   }

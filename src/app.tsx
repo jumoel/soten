@@ -1,20 +1,77 @@
-import { useState, useEffect, useCallback } from "react";
-import { useAtom } from "jotai";
+import { useEffect } from "react";
+import { useAtom, useAtomValue } from "jotai";
 import { Outlet, useNavigate } from "@tanstack/react-router";
-import { machineAtom, send, themeAtom } from "./atoms/globals";
+import { machineAtom, send, themeAtom, activeDraftAtom } from "./atoms/globals";
 import { UnauthenticatedView } from "./components/UnauthenticatedView";
 import { AuthError } from "./components/AuthError";
 import { TopBar } from "./components/TopBar";
-import { Menu } from "./components/Menu";
-import { PageContainer } from "./components/PageContainer";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { AppShell } from "./components/ds/AppShell";
+import { EditorPane } from "./components/EditorPane";
+import { DraftTray } from "./components/DraftTray";
+import { ResizeHandle } from "./components/ResizeHandle";
+import { useMediaQuery } from "./lib/use-media-query";
+import { useLocalStorage } from "./lib/use-local-storage";
+
+function ReadyLayout() {
+  const activeDraft = useAtomValue(activeDraftAtom);
+  const isWide = useMediaQuery("(min-width: 1200px)");
+  const [splitRatio, setSplitRatio] = useLocalStorage("editorSplit", 0.5);
+
+  if (!activeDraft) {
+    return (
+      <>
+        <div className="flex-1 overflow-hidden">
+          <Outlet />
+        </div>
+        <DraftTray />
+      </>
+    );
+  }
+
+  if (!isWide) {
+    return (
+      <>
+        <div className="flex-1 overflow-hidden">
+          <EditorPane draft={activeDraft} />
+        </div>
+        <DraftTray />
+      </>
+    );
+  }
+
+  const totalWidth = typeof window !== "undefined" ? window.innerWidth : 1200;
+
+  return (
+    <>
+      <div
+        className="flex-1 overflow-hidden grid"
+        style={{
+          gridTemplateColumns: `${splitRatio}fr 4px ${1 - splitRatio}fr`,
+        }}
+      >
+        <div className="overflow-hidden">
+          <EditorPane draft={activeDraft} />
+        </div>
+        <ResizeHandle
+          onDrag={(delta) => {
+            const ratio = Math.max(0.2, Math.min(0.8, splitRatio + delta / totalWidth));
+            setSplitRatio(ratio);
+          }}
+        />
+        <div className="overflow-hidden">
+          <Outlet />
+        </div>
+      </div>
+      <DraftTray />
+    </>
+  );
+}
 
 export function App() {
   const [machine] = useAtom(machineAtom);
   const [theme] = useAtom(themeAtom);
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     function apply() {
@@ -30,39 +87,24 @@ export function App() {
     }
   }, [theme]);
 
-  const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
-
   useEffect(() => {
     if (machine.phase === "selectingRepo") {
       navigate({ to: "/settings", replace: true });
     }
   }, [machine.phase, navigate]);
 
-  const selectedRepo = "selectedRepo" in machine ? machine.selectedRepo : undefined;
   const showChrome = machine.phase !== "initializing" && machine.phase !== "unauthenticated";
 
   return (
     <AppShell>
-      {showChrome && (
-        <>
-          <TopBar menuOpen={menuOpen} onMenuToggle={toggleMenu} />
-          <Menu open={menuOpen} onClose={closeMenu} selectedRepo={selectedRepo} />
-        </>
+      {showChrome && <TopBar />}
+      {machine.phase === "initializing" && <LoadingSpinner />}
+      {machine.phase === "unauthenticated" && <UnauthenticatedView authError={machine.authError} />}
+      {machine.phase === "error" && (
+        <AuthError message={machine.message} onRetry={() => void send({ type: "RETRY" })} />
       )}
-      <PageContainer>
-        {machine.phase === "initializing" && <LoadingSpinner />}
-        {machine.phase === "unauthenticated" && (
-          <UnauthenticatedView authError={machine.authError} />
-        )}
-        {machine.phase === "error" && (
-          <AuthError message={machine.message} onRetry={() => send({ type: "RETRY" })} />
-        )}
-        {(machine.phase === "fetchingRepos" || machine.phase === "cloningRepo") && (
-          <LoadingSpinner />
-        )}
-        {(machine.phase === "ready" || machine.phase === "selectingRepo") && <Outlet />}
-      </PageContainer>
+      {(machine.phase === "fetchingRepos" || machine.phase === "cloningRepo") && <LoadingSpinner />}
+      {(machine.phase === "ready" || machine.phase === "selectingRepo") && <ReadyLayout />}
     </AppShell>
   );
 }
