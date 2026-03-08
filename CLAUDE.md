@@ -242,7 +242,7 @@ Examples:
 
 Additional rules:
 
-- **One commit per distinct change.** Do not batch unrelated changes into one commit. Each logical unit of work — a bug fix, a new component, a refactor of a single module — gets its own commit. All quality checks must pass before each commit.
+- **One commit per feature or fix.** Group all changes that together deliver a single feature or fix a single bug into one commit. Do not split a feature across multiple commits, and do not bundle unrelated features or fixes into one. All quality checks must pass before each commit.
 - Keep the subject line under 72 characters
 - Use the imperative mood ("add", "fix", "remove" — not "added", "fixes")
 - Do not include links to claude.ai in commit messages or PR descriptions
