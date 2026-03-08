@@ -5,27 +5,12 @@ import { Card } from "./ds/Card";
 import { Text } from "./ds/Text";
 import { NoteExpanded } from "./NoteExpanded";
 import { noteCardAtom } from "../atoms/globals";
+import { prettyDate, prettyDateTime } from "../atoms/store";
 import type { NoteListEntry } from "../atoms/store";
 
-const compactDate = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-});
-
-const compactDateWithYear = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
-function formatDate(date: Date | null): string {
-  if (!date) return "";
-  const now = new Date();
-  return date.getUTCFullYear() === now.getUTCFullYear()
-    ? compactDate.format(date)
-    : compactDateWithYear.format(date);
+function formatCardDate(date: Date): string {
+  const isDateOnly = date.getUTCHours() === 0 && date.getUTCMinutes() === 0;
+  return isDateOnly ? prettyDate.format(date) : prettyDateTime.format(date);
 }
 
 type NoteRowProps = {
@@ -59,17 +44,21 @@ export function NoteRow({ note, expanded, onExpand, onPin, onEdit }: NoteRowProp
   const [cardTitle, setCardTitle] = useState<string | null>(null);
   const handleTitle = useCallback((t: string | null) => setCardTitle(t), []);
 
+  const displayTitle = cardTitle ?? (note.date ? null : note.title);
+
   return (
     <li className="flex flex-col gap-1">
       <Card as="button" interactive hoverable onClick={onExpand} className="w-full text-left">
-        <div className="flex items-baseline gap-3">
-          <Text variant="meta" as="span" className="shrink-0 whitespace-nowrap">
-            {note.date ? formatDate(note.date) : ""}
+        {note.date && (
+          <Text variant="meta" as="span">
+            {formatCardDate(note.date)}
           </Text>
-          <Text variant="body" as="span" className="truncate font-medium">
-            {cardTitle ?? note.title}
+        )}
+        {displayTitle && (
+          <Text variant="heading" as="span" className="block mt-0.5">
+            {displayTitle}
           </Text>
-        </div>
+        )}
         <NoteCardPreview path={note.path} onTitle={handleTitle} />
       </Card>
 

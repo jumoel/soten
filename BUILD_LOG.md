@@ -48,3 +48,11 @@ Oldest / Best match) in the panel header. The search input gains `id` and `name`
 accessibility.
 
 ![Note cards showing H1 titles, time-only timestamps, stripped frontmatter, and sort control](docs/build-log/2026-03-08-ux-polish.png)
+
+### 2026-03-08 — Restore vertical card layout
+
+Reverted the note card layout to a vertical stack: full date/datetime at top in meta style,
+H1 heading below (when present), preview text after. Date-only files show just the date;
+timestamp files show the full datetime including time.
+
+![Cards with vertical layout: meta date, heading, preview](docs/build-log/2026-03-08-card-layout-restored.png)

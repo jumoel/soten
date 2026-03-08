@@ -52,7 +52,7 @@ export const machineAtom = atom<AppMachine>({ phase: "initializing" });
 export const fileAtom = atomFamily((path: string) => atom(async () => readFile(path)));
 
 const dateFileRe = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
-const prettyDate = new Intl.DateTimeFormat("en-US", {
+export const prettyDate = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   month: "long",
   day: "numeric",
