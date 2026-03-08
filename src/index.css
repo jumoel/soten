@@ -49,6 +49,11 @@ html.dark {
   --color-error-detail: #fca5a5;
 }
 
+[data-wikilink] {
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

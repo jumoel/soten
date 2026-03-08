@@ -1,5 +1,6 @@
 import type { Plugin } from "unified";
 import type { Root } from "mdast";
+import type { Options as SanitizeOptions } from "rehype-sanitize";
 
 let processorPromise: ReturnType<typeof buildProcessor> | null = null;
 
@@ -22,8 +23,9 @@ async function buildProcessor() {
     { default: remarkGfm },
     { default: remarkRehype },
     { default: rehypeRaw },
-    { default: rehypeSanitize },
+    { default: rehypeSanitize, defaultSchema },
     { default: rehypeStringify },
+    { visit },
   ] = await Promise.all([
     import("unified"),
     import("vfile-matter"),
@@ -34,6 +36,7 @@ async function buildProcessor() {
     import("rehype-raw"),
     import("rehype-sanitize"),
     import("rehype-stringify"),
+    import("unist-util-visit"),
   ]);
 
   const remarkFrontmatterMatter: Plugin<[], Root> = function () {
@@ -47,14 +50,58 @@ async function buildProcessor() {
     };
   };
 
+  const remarkWikilinks: Plugin<[], Root> = function () {
+    return function transformer(tree) {
+      visit(tree, "text", (node, index, parent) => {
+        if (!parent || index == null) return;
+        const n = node as { value: string };
+        const re = /\[\[([^\]]+?)(?:\|([^\]]+?))?\]\]/g;
+        const parts: unknown[] = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = re.exec(n.value)) !== null) {
+          if (match.index > lastIndex) {
+            parts.push({ type: "text", value: n.value.slice(lastIndex, match.index) });
+          }
+          const label = match[2] ?? match[1];
+          parts.push({ type: "html", value: `<span data-wikilink>${label}</span>` });
+          lastIndex = re.lastIndex;
+        }
+
+        if (parts.length === 0) return;
+        if (lastIndex < n.value.length) {
+          parts.push({ type: "text", value: n.value.slice(lastIndex) });
+        }
+        (parent as { children: unknown[] }).children.splice(index, 1, ...parts);
+      });
+    };
+  };
+
+  const remarkRemoveFrontmatter: Plugin<[], Root> = function () {
+    return function transformer(tree) {
+      tree.children = tree.children.filter((node) => node.type !== "yaml");
+    };
+  };
+
+  const sanitizeSchema: SanitizeOptions = {
+    ...defaultSchema,
+    attributes: {
+      ...defaultSchema.attributes,
+      span: [...(defaultSchema.attributes?.span ?? []), "data-wikilink"],
+    },
+  };
+
   return unified()
     .use(remarkParse)
     .use(remarkFrontmatter)
     .use(remarkGfm)
+    .use(remarkWikilinks)
     .use(remarkFrontmatterMatter)
+    .use(remarkRemoveFrontmatter)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
-    .use(rehypeSanitize)
+    .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeStringify);
 }
 

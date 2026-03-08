@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { useAtom } from "jotai";
 import { loadable } from "jotai/utils";
 import { Card } from "./ds/Card";
@@ -36,19 +36,29 @@ type NoteRowProps = {
   onEdit?: () => void;
 };
 
-function NoteCardPreview({ path }: { path: string }) {
+function NoteCardPreview({ path, onTitle }: { path: string; onTitle: (t: string | null) => void }) {
   const cardAtom = useMemo(() => loadable(noteCardAtom(path)), [path]);
   const [result] = useAtom(cardAtom);
+
+  useEffect(() => {
+    if (result.state === "hasData" && result.data) {
+      onTitle(result.data.derivedTitle);
+    }
+  }, [result, onTitle]);
+
   if (result.state !== "hasData" || !result.data) return null;
   return (
     <div
-      className="prose prose-sm dark:prose-invert mt-1 line-clamp-5 [&_*]:!m-0 [&_*]:!p-0"
+      className="prose prose-sm dark:prose-invert mt-1 line-clamp-5 [&_*]:!m-0 [&_*]:!p-0 [&_h1]:!text-sm [&_h1]:!font-semibold [&_h2]:!text-sm [&_h2]:!font-medium [&_h3]:!text-sm [&_h3]:!font-medium"
       dangerouslySetInnerHTML={{ __html: result.data.html }}
     />
   );
 }
 
 export function NoteRow({ note, expanded, onExpand, onPin, onEdit }: NoteRowProps) {
+  const [cardTitle, setCardTitle] = useState<string | null>(null);
+  const handleTitle = useCallback((t: string | null) => setCardTitle(t), []);
+
   return (
     <li className="flex flex-col gap-1">
       <Card as="button" interactive hoverable onClick={onExpand} className="w-full text-left">
@@ -57,10 +67,10 @@ export function NoteRow({ note, expanded, onExpand, onPin, onEdit }: NoteRowProp
             {note.date ? formatDate(note.date) : ""}
           </Text>
           <Text variant="body" as="span" className="truncate font-medium">
-            {note.title}
+            {cardTitle ?? note.title}
           </Text>
         </div>
-        <NoteCardPreview path={note.path} />
+        <NoteCardPreview path={note.path} onTitle={handleTitle} />
       </Card>
 
       {expanded && <NoteExpanded path={note.path} onPin={onPin} onEdit={onEdit} />}

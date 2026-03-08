@@ -14,7 +14,6 @@ const en = {
 
   "note.loading": "Loading\u2026",
   "note.dayPrefix": "Day: {date}",
-  "note.unnamedWithDate": "Unnamed note \u00B7 {date}",
   "note.unnamedWithStem": "Unnamed note \u00B7 {stem}",
   "note.new": "New note",
   "note.pin": "Pin",
@@ -31,8 +30,18 @@ const en = {
   "draft.save": "Save",
   "draft.discard": "Discard",
   "draft.minimize": "Minimize",
+  "draft.discardAreYouSure": "Are you sure?",
+  "draft.discardConfirmAction": "Confirm",
+  "draft.discardCancel": "Cancel",
   "draft.discardConfirm": "Discard this draft? This cannot be undone.",
   "draft.placeholder": "Start writing\u2026",
+
+  "notes.empty": "No notes yet. Click + New note to get started.",
+  "notes.noResults": "No notes matching \u2018{query}\u2019.",
+
+  "sort.newest": "Newest",
+  "sort.oldest": "Oldest",
+  "sort.bestMatch": "Best match",
 
   "error.fetchReposFailed": "Failed to fetch repos",
   "error.noRepos": "No repos found",

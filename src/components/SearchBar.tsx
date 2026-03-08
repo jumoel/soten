@@ -20,6 +20,8 @@ export function SearchBar() {
 
   return (
     <TextInput
+      id="note-search"
+      name="q"
       type="search"
       placeholder={t("search.placeholder")}
       aria-label={t("search.placeholder")}

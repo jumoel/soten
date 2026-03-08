@@ -12,7 +12,8 @@ export {
   gitWorkingAtom,
 } from "./store";
 export { send } from "./machine";
-export { searchQueryAtom, searchResultsAtom, searchIndexReadyAtom } from "./search";
+export { searchQueryAtom, searchResultsAtom, searchIndexReadyAtom, sortAtom } from "./search";
+export type { SortOrder } from "./search";
 export {
   draftsAtom,
   activeDraftAtom,

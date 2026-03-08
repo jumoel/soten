@@ -6,9 +6,12 @@ import type { NoteListEntry } from "./store";
 export const searchQueryAtom = atom("");
 export const searchIndexReadyAtom = atom(false);
 
+export type SortOrder = "newest" | "oldest" | "best-match";
+export const sortAtom = atom<SortOrder>("newest");
+
 const searchMatchPathsAtom = atom<string[] | null>(null);
 
-export const searchResultsAtom = atom<NoteListEntry[]>((get) => {
+const rawSearchResultsAtom = atom<NoteListEntry[]>((get) => {
   const query = get(searchQueryAtom);
   const notes = get(noteListAtom);
 
@@ -19,6 +22,26 @@ export const searchResultsAtom = atom<NoteListEntry[]>((get) => {
 
   const entryMap = new Map(notes.map((e) => [e.path, e]));
   return paths.map((p) => entryMap.get(p)).filter((e): e is NoteListEntry => e != null);
+});
+
+export const searchResultsAtom = atom<NoteListEntry[]>((get) => {
+  const entries = get(rawSearchResultsAtom);
+  const sort = get(sortAtom);
+  const query = get(searchQueryAtom);
+
+  if (sort === "best-match" && query.trim()) return entries;
+
+  const sorted = [...entries];
+  const direction = sort === "oldest" ? 1 : -1;
+
+  sorted.sort((a, b) => {
+    if (a.date && b.date) return direction * (a.date.getTime() - b.date.getTime());
+    if (a.date && !b.date) return -1;
+    if (!a.date && b.date) return 1;
+    return direction * a.relativePath.localeCompare(b.relativePath);
+  });
+
+  return sorted;
 });
 
 let searchSubscribed = false;

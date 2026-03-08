@@ -53,25 +53,25 @@ describe("noteListAtom titles", () => {
     it("parses unix timestamp in seconds (10 digits)", () => {
       setNote("1704067200.md");
 
-      expect(getTitle()).toBe("Unnamed note \u00B7 January 1, 2024 at 12:00 AM");
+      expect(getTitle()).toBe("12:00 AM");
     });
 
     it("parses unix timestamp in milliseconds (13 digits)", () => {
       setNote("1704067200000.md");
 
-      expect(getTitle()).toBe("Unnamed note \u00B7 January 1, 2024 at 12:00 AM");
+      expect(getTitle()).toBe("12:00 AM");
     });
 
     it("parses compact datetime YYYYMMDDHHmmss (14 digits)", () => {
       setNote("20240115143000.md");
 
-      expect(getTitle()).toBe("Unnamed note \u00B7 January 15, 2024 at 2:30 PM");
+      expect(getTitle()).toBe("2:30 PM");
     });
 
     it("parses compact datetime YYYYMMDDHHmm (12 digits)", () => {
       setNote("202401151430.md");
 
-      expect(getTitle()).toBe("Unnamed note \u00B7 January 15, 2024 at 2:30 PM");
+      expect(getTitle()).toBe("2:30 PM");
     });
 
     it("rejects timestamps outside 2000-2100 range", () => {

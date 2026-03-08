@@ -26,3 +26,25 @@ draft branches and squash-merged to main on save. Drafts survive page reloads vi
 A git working spinner and auto-push on save complete the sync story.
 
 ![Multi-column card grid with rendered HTML previews](docs/build-log/2026-03-08-card-preview.png)
+
+### 2026-03-08 — Fix: save works without a git remote
+
+Added `hasRemote()` to the worker protocol so the app can detect whether the cloned repository
+has a configured remote. The ready-phase machine state now carries this flag, and `pushIfOnline()`
+returns early when it is false. The local-repo dev path hard-codes `hasRemote: false`. Saves to
+`?localRepo=` repos now commit locally and never attempt a push that would error.
+
+### 2026-03-08 — UX polish: titles, wikilinks, frontmatter, editor buttons, sort, empty states
+
+Several UX improvements landing together. Timestamp-named notes now show just the time in the
+card header (the date column already provides context). Notes with an H1 use that heading as
+the card title and strip it from the preview body. Wikilinks (`[[target|label]]`) render as styled
+spans rather than raw bracket text. YAML frontmatter no longer leaks into the rendered note view.
+The editor toolbar gains visual hierarchy: Save is `secondary`, Discard is red, and confirming a
+discard is now inline rather than a browser `confirm()` dialog. The gear menu is refactored to
+use `DividedList` for consistent item styling. Empty note lists and empty search results now show
+informative placeholder text. Notes sort newest-first by default with a sort control (Newest /
+Oldest / Best match) in the panel header. The search input gains `id` and `name` attributes for
+accessibility.
+
+![Note cards showing H1 titles, time-only timestamps, stripped frontmatter, and sort control](docs/build-log/2026-03-08-ux-polish.png)

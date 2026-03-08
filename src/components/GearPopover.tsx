@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "./Button";
 import { NavLink } from "./ds/NavLink";
 import { Text } from "./ds/Text";
+import { DividedList } from "./ds/DividedList";
 import { send } from "../atoms/globals";
 import { t } from "../i18n";
 import type { Repo } from "../atoms/store";
@@ -55,29 +56,34 @@ export function GearPopover({ selectedRepo }: GearPopoverProps) {
         <GearIcon />
       </Button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-30 min-w-48 border border-edge rounded bg-surface px-3 py-2 space-y-2 shadow-sm">
+        <div className="absolute right-0 top-full mt-1 z-30 min-w-48 border border-edge rounded bg-surface shadow-sm">
           {selectedRepo && (
-            <Text variant="mono" as="p">
-              {selectedRepo.owner}/{selectedRepo.repo}
-            </Text>
+            <div className="px-3 py-2 border-b border-edge">
+              <Text variant="mono" as="p">
+                {selectedRepo.owner}/{selectedRepo.repo}
+              </Text>
+            </div>
           )}
-          <p>
-            <NavLink to="/settings" onClick={() => setOpen(false)}>
-              {t("menu.settings")}
-            </NavLink>
-          </p>
-          <p>
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => {
-                setOpen(false);
-                void send({ type: "LOGOUT" });
-              }}
-            >
-              {t("auth.logout")}
-            </Button>
-          </p>
+          <div className="px-3">
+            <DividedList>
+              <li>
+                <NavLink to="/settings" variant="listItem" onClick={() => setOpen(false)}>
+                  {t("menu.settings")}
+                </NavLink>
+              </li>
+              <li>
+                <button
+                  className="block w-full text-left py-2.5 text-sm text-paper hover:underline"
+                  onClick={() => {
+                    setOpen(false);
+                    void send({ type: "LOGOUT" });
+                  }}
+                >
+                  {t("auth.logout")}
+                </button>
+              </li>
+            </DividedList>
+          </div>
         </div>
       )}
     </div>

@@ -67,6 +67,12 @@ export const prettyDateTime = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
+const prettyTime = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "UTC",
+});
+
 function parseTimestampFilename(stem: string): Date | null {
   const compactMatch = stem.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?$/);
   if (compactMatch) {
@@ -110,7 +116,7 @@ function noteTitle(relativePath: string): string {
 
   const stem = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
   const tsDate = parseTimestampFilename(stem);
-  if (tsDate) return t("note.unnamedWithDate", { date: prettyDateTime.format(tsDate) });
+  if (tsDate) return prettyTime.format(tsDate);
 
   return t("note.unnamedWithStem", { stem });
 }
@@ -150,6 +156,13 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
     entries.push({ path, relativePath, title, date });
   }
 
+  entries.sort((a, b) => {
+    if (a.date && b.date) return b.date.getTime() - a.date.getTime();
+    if (a.date && !b.date) return -1;
+    if (!a.date && b.date) return 1;
+    return b.relativePath.localeCompare(a.relativePath);
+  });
+
   return entries;
 });
 
@@ -175,7 +188,10 @@ function findCutPoint(body: string, threshold: number): number {
   return threshold;
 }
 
-const cardCache = new Map<string, { html: string; isShort: boolean }>();
+const cardCache = new Map<
+  string,
+  { html: string; isShort: boolean; derivedTitle: string | null }
+>();
 
 export function clearCardCache() {
   cardCache.clear();
@@ -189,16 +205,23 @@ export const noteCardAtom = atomFamily((path: string) =>
     const content = file.content;
     const bodyStart = findBodyStart(content);
     const body = content.slice(bodyStart);
-    const isShort = body.length <= NOTE_CARD_THRESHOLD;
-    const displayContent = isShort
-      ? content
-      : content.slice(0, bodyStart + findCutPoint(body, NOTE_CARD_THRESHOLD));
+
+    const h1Re = /^#\s+(.+)$/m;
+    const h1Match = body.match(h1Re);
+    const derivedTitle = h1Match ? h1Match[1].trim() : null;
+    const strippedBody = derivedTitle ? body.replace(h1Re, "").trimStart() : body;
+
+    const isShort = strippedBody.length <= NOTE_CARD_THRESHOLD;
+    const previewBody = isShort
+      ? strippedBody
+      : strippedBody.slice(0, findCutPoint(strippedBody, NOTE_CARD_THRESHOLD));
+    const displayContent = content.slice(0, bodyStart) + previewBody;
 
     const cached = cardCache.get(displayContent);
     if (cached) return cached;
 
     const { html } = await renderMarkdown(displayContent);
-    const result = { html, isShort };
+    const result = { html, isShort, derivedTitle };
     cardCache.set(displayContent, result);
     return result;
   }),

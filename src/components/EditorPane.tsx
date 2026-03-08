@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "./Button";
 import { Text } from "./ds/Text";
@@ -48,11 +48,12 @@ export function EditorPane({ draft }: EditorPaneProps) {
     void navigate({ to: "/", search: (prev) => ({ ...prev, draft: undefined }) });
   };
 
-  const handleDiscard = async () => {
-    if (!window.confirm(t("draft.discardConfirm"))) return;
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+
+  const handleDiscard = useCallback(async () => {
     await discardDraft(draft.timestamp, draft.isNew);
     void navigate({ to: "/", search: (prev) => ({ ...prev, draft: undefined }) });
-  };
+  }, [draft.timestamp, draft.isNew, navigate]);
 
   const title = extractDisplayTitle(content);
 
@@ -62,15 +63,39 @@ export function EditorPane({ draft }: EditorPaneProps) {
         <Text variant="body" as="span" className="flex-1 truncate font-medium">
           {title}
         </Text>
-        <Button variant="ghost" size="sm" onClick={handleMinimize} aria-label={t("draft.minimize")}>
-          ↓
+        <Button variant="ghost" size="sm" onClick={handleMinimize}>
+          {t("draft.minimize")}
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => void handleSave()}>
+        <Button variant="secondary" size="sm" onClick={() => void handleSave()}>
           {t("draft.save")}
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => void handleDiscard()}>
-          {t("draft.discard")}
-        </Button>
+        {confirmingDiscard ? (
+          <>
+            <Text variant="body" as="span" className="text-red-600 text-sm">
+              {t("draft.discardAreYouSure")}
+            </Text>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-600"
+              onClick={() => void handleDiscard()}
+            >
+              {t("draft.discardConfirmAction")}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmingDiscard(false)}>
+              {t("draft.discardCancel")}
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-600"
+            onClick={() => setConfirmingDiscard(true)}
+          >
+            {t("draft.discard")}
+          </Button>
+        )}
       </div>
 
       <textarea
