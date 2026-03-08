@@ -56,7 +56,7 @@ export function ReferencePanel() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="sticky top-0 z-10 bg-base px-4 py-2 border-b border-edge">
+      <div className="sticky top-0 z-10 bg-base h-11 flex items-center px-4 border-b border-edge">
         <SearchBar />
       </div>
 

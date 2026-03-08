@@ -87,8 +87,11 @@ export function TopBar() {
       </div>
 
       {machine.phase === "ready" && (
-        <Button variant="ghost" onClick={() => void handleNewNote()} aria-label={t("note.new")}>
-          <PlusIcon />
+        <Button variant="secondary" onClick={() => void handleNewNote()}>
+          <span className="flex items-center gap-1.5">
+            <PlusIcon />
+            {t("note.new")}
+          </span>
         </Button>
       )}
 

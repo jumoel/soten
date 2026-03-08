@@ -58,7 +58,7 @@ export function EditorPane({ draft }: EditorPaneProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-edge bg-surface">
+      <div className="flex items-center gap-2 px-4 h-11 border-b border-edge bg-surface">
         <Text variant="body" as="span" className="flex-1 truncate font-medium">
           {title}
         </Text>
