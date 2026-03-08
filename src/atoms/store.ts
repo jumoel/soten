@@ -43,6 +43,7 @@ export type AppMachine =
       repos: string[];
       selectedRepo: Repo;
       filenames: string[];
+      hasRemote: boolean;
     }
   | { phase: "error"; message: string; user: User };
 

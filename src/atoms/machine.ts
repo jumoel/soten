@@ -163,8 +163,11 @@ async function cloneAndLoad(
   const filenames = await worker.readRepoFiles();
   checkAborted();
 
+  const hasRemote = await worker.hasRemote();
+  checkAborted();
+
   refreshFs();
-  store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames });
+  store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames, hasRemote });
   buildSearchIndex(store.get(noteListAtom));
   await recoverDrafts(filenames);
 }

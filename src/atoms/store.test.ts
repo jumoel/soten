@@ -20,6 +20,7 @@ const baseReady: Extract<AppMachine, { phase: "ready" }> = {
   repos: ["acme/notes"],
   selectedRepo: { owner: "acme", repo: "notes" },
   filenames: [],
+  hasRemote: true,
 };
 
 beforeEach(() => {

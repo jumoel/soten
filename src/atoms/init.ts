@@ -97,6 +97,7 @@ export async function init() {
 
   if (selectedRepo && cachedRepos && (await worker.isInitialized())) {
     const filenames = await worker.readRepoFiles();
+    const hasRemote = await worker.hasRemote();
     refreshFs();
     store.set(machineAtom, {
       phase: "ready",
@@ -104,6 +105,7 @@ export async function init() {
       repos: cachedRepos,
       selectedRepo,
       filenames,
+      hasRemote,
     });
     buildSearchIndex(store.get(noteListAtom));
     await recoverDrafts(filenames);

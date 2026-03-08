@@ -92,6 +92,16 @@ async function push(user: { username: string; token: string }, ref?: string): Pr
   });
 }
 
+async function hasRemote(): Promise<boolean> {
+  const { git } = await getGit();
+  try {
+    const remotes = await git.listRemotes({ fs, dir: REPO_DIR });
+    return remotes.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 async function isInitialized(): Promise<boolean> {
   try {
     const files = await pfs.readdir(REPO_DIR);
@@ -395,6 +405,9 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         break;
       case "readFileFromBranch":
         result = await readFileFromBranch(msg.branch, msg.filepath);
+        break;
+      case "hasRemote":
+        result = await hasRemote();
         break;
     }
 

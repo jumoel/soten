@@ -32,6 +32,7 @@ export async function initFromLocalRepo(dir: string): Promise<void> {
     repos: [`local/${repoName}`],
     selectedRepo: { owner: "local", repo: repoName },
     filenames,
+    hasRemote: false,
   });
 
   buildSearchIndex(store.get(noteListAtom));

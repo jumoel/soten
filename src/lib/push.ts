@@ -8,6 +8,7 @@ export async function pushIfOnline(ref?: string): Promise<void> {
 
   const machine = store.get(machineAtom);
   if (machine.phase !== "ready") return;
+  if (!machine.hasRemote) return;
 
   const worker = getRepoWorker();
   try {

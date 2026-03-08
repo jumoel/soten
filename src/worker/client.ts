@@ -45,6 +45,10 @@ class RepoWorkerClient {
     return this.call({ type: "isInitialized" }) as Promise<boolean>;
   }
 
+  hasRemote(): Promise<boolean> {
+    return this.call({ type: "hasRemote" }) as Promise<boolean>;
+  }
+
   readRepoFiles(): Promise<string[]> {
     return this.call({ type: "readRepoFiles" }) as Promise<string[]>;
   }

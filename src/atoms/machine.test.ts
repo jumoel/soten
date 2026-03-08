@@ -10,6 +10,7 @@ vi.mock("../worker/client", () => {
     pull: vi.fn(),
     isInitialized: vi.fn(),
     readRepoFiles: vi.fn(),
+    hasRemote: vi.fn().mockResolvedValue(true),
     buildSearchIndex: vi.fn(),
     updateSearchIndex: vi.fn(),
     search: vi.fn(),
@@ -119,6 +120,7 @@ describe("LOGOUT", () => {
       repos: ["acme/notes"],
       selectedRepo: { owner: "acme", repo: "notes" },
       filenames: [],
+      hasRemote: true,
     });
 
     await send({ type: "LOGOUT" });

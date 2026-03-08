@@ -25,7 +25,8 @@ export type WorkerRequest =
   | { id: number; type: "squashMergeToMain"; branch: string; message: string }
   | { id: number; type: "deleteBranch"; name: string }
   | { id: number; type: "listDraftBranches" }
-  | { id: number; type: "readFileFromBranch"; branch: string; filepath: string };
+  | { id: number; type: "readFileFromBranch"; branch: string; filepath: string }
+  | { id: number; type: "hasRemote" };
 
 export type WorkerResponse =
   | { id: number; ok: true; result?: unknown }
