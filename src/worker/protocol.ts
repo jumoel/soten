@@ -16,7 +16,8 @@ export type WorkerRequest =
       entries: SearchEntry[];
     }
   | { id: number; type: "search"; query: string }
-  | { id: number; type: "clearSearchIndex" };
+  | { id: number; type: "clearSearchIndex" }
+  | { id: number; type: "populateFiles"; files: Array<{ path: string; content: string }> };
 
 export type WorkerResponse =
   | { id: number; ok: true; result?: unknown }

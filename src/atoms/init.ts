@@ -54,6 +54,15 @@ export async function init() {
   initOnlineListener();
   initSearchSubscription();
 
+  if (import.meta.env.DEV) {
+    const localRepo = new URLSearchParams(window.location.search).get("localRepo");
+    if (localRepo) {
+      const { initFromLocalRepo } = await import("./init.local");
+      await initFromLocalRepo(localRepo);
+      return;
+    }
+  }
+
   const authError = parseAuthError();
 
   if (authError) {

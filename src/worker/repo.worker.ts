@@ -128,6 +128,31 @@ async function readTextFile(path: string): Promise<string | null> {
 }
 
 // ---------------------------------------------------------------------------
+// Local file population (dev/test only)
+// ---------------------------------------------------------------------------
+
+async function mkdirp(path: string): Promise<void> {
+  try {
+    await pfs.mkdir(path);
+  } catch (e) {
+    if ((e as { code?: string }).code === "EEXIST") return;
+    const parent = path.slice(0, path.lastIndexOf("/"));
+    if (!parent || parent === path) throw e;
+    await mkdirp(parent);
+    await pfs.mkdir(path);
+  }
+}
+
+async function populateFiles(files: Array<{ path: string; content: string }>): Promise<void> {
+  const enc = new TextEncoder();
+  for (const file of files) {
+    const dir = file.path.slice(0, file.path.lastIndexOf("/"));
+    if (dir) await mkdirp(dir);
+    await pfs.writeFile(file.path, enc.encode(file.content));
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Search index
 // ---------------------------------------------------------------------------
 
@@ -232,6 +257,9 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         break;
       case "clearSearchIndex":
         clearSearchIndex();
+        break;
+      case "populateFiles":
+        await populateFiles(msg.files);
         break;
     }
 

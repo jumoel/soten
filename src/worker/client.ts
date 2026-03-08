@@ -69,6 +69,10 @@ class RepoWorkerClient {
   clearSearchIndex(): Promise<void> {
     return this.call({ type: "clearSearchIndex" }) as Promise<void>;
   }
+
+  populateFiles(files: Array<{ path: string; content: string }>): Promise<void> {
+    return this.call({ type: "populateFiles", files }) as Promise<void>;
+  }
 }
 
 export function getRepoWorker(): RepoWorkerClient {
