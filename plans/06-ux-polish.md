@@ -115,14 +115,40 @@ Findings from a systematic DevTools audit of the full app flow. Issues are group
 
 ---
 
+## 11. Note list sort control
+
+**Observed:** The note list is sorted ascending by date (oldest at the top) with no way to change the order. For a "recent notes" workflow, newest-first is more useful. When search is active, sorting by relevance score is preferred over chronological.
+
+**Fix:**
+
+Add a sort selector to the `ReferencePanel` header bar, inline with the search input. Three options:
+
+| Option | Behaviour |
+|---|---|
+| **Newest** (default) | Sort by `date` descending; nulls last |
+| **Oldest** | Sort by `date` ascending; nulls last |
+| **Best match** | Only active when `searchQuery !== ""`; uses MiniSearch relevance score (already returned by the search index); falls back to Newest when query is cleared |
+
+**Implementation sketch:**
+
+- Add `sortAtom` (`atom<"newest" | "oldest" | "best-match">`) — defaults to `"newest"`.
+- Derive `sortedResultsAtom` from `searchResultsAtom` + `sortAtom`:
+  - `best-match` is the raw MiniSearch order (already sorted by score).
+  - `newest`/`oldest` sort by `NoteListEntry.date`.
+- Render a `<select>` or small segmented control in the `ReferencePanel` search header, right-aligned. Disable/hide "Best match" when there is no active query.
+- Reset sort to `"newest"` (or keep user preference) when the query is cleared.
+- Use `ds/Text variant="meta"` for the control label.
+
+---
+
 ## Implementation order
 
-1. § 1 — Save bug (blocks all testing with localRepo)
+1. § 1 — Save bug (moved to plan 07; blocks all testing with localRepo)
 2. § 2 + 3 — Card title/heading cleanup (highest visual impact)
 3. § 4 — Wikilinks (content fidelity)
 4. § 5 — Frontmatter (reading view quality)
 5. § 6 — Editor button hierarchy (editing UX)
 6. § 7 — Gear popover (consistency)
 7. § 8 — Empty states (onboarding)
-8. § 9 — Sort order (navigation)
+8. § 9 + 11 — Sort order + sort control (navigation)
 9. § 10 — Accessibility (quick win)
