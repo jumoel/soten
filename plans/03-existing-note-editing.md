@@ -13,77 +13,180 @@ autosave, save, and discard mechanics are identical to new note creation.
 
 ## Edit / View Distinction
 
-In the reference panel, expanded notes (Phase 1) gain an "Edit" button in their header alongside
-the existing "Pin" button. Pinned notes similarly gain an "Edit" button when expanded.
+In the reference panel, expanded notes (Phase 1's `NoteExpanded` component) already accept an
+`onEdit?: () => void` prop. Phase 3 wires this prop.
 
-Clicking "Edit":
-1. Reads the file content from LightningFS (current main state)
-2. Generates the branch name from the note's filename stem: `draft/<timestamp>` where
-   `<timestamp>` is the numeric stem of the filename (e.g. `1702739869049.md` → `draft/1702739869049`)
-3. Creates the branch
-4. Opens the editor pre-populated with the file content
-5. Sets `?draft=<timestamp>` in the URL
+### Where the "Edit" button appears
 
-The editor layout, minimize/restore, tray, and resize handle are all reused from Phase 2.
+The `NoteExpanded` component (Phase 1) renders an "Edit" button alongside the "Pin" button when
+`onEdit` is provided. The button is always shown when a note is expanded — in both the results
+list and the pinned zone.
 
-## Branch Naming
+### What clicking "Edit" does
 
-For existing notes, the branch name is derived from the filename: `draft/<stem>`. Since all
-filenames are timestamp-based (`<timestamp>.md`), this is always `draft/<timestamp>`.
+1. Reads the file content from LightningFS (current main state) via `readFile(path)`
+2. Derives the timestamp from the filename: `pathToTimestamp(path)` (from `src/lib/note-paths.ts`)
+3. Opens a draft with `isNew: false` via the `openExistingDraft` helper
 
-This means a new note and an edit of an existing note with the same timestamp are
-indistinguishable by branch name — which is correct, since a new note *becomes* an existing
-note after its first save.
+### Helper: `openExistingDraft`
 
-## Autosave
-
-Identical to Phase 2. Debounced 2 seconds after the last keystroke, commits to
-`draft/<timestamp>` with message `draft: autosave`.
-
-## Save
-
-1. Write final content to `<REPO_DIR>/<timestamp>.md`
-2. Commit to `draft/<timestamp>`
-3. Squash-merge into main
-   - Commit message: frontmatter `title:` → first `# Heading` → `update note <timestamp>`
-   - Note: uses "update" prefix instead of "add" since the file already exists on main
-4. Delete `draft/<timestamp>`
-5. Invalidate `fileAtom(<path>)` and `renderedNoteAtom(<path>)` so the note re-renders
-6. Close the editor
-
-## Discard
-
-After confirmation dialog:
-1. Delete `draft/<timestamp>`
-2. The file in LightningFS is left as-is (main state is already there — autosave writes to
-   the branch, but the working file may have been updated). Re-read the file from the main
-   branch to restore the correct content in LightningFS.
-3. Close the editor, remove tray entry
-
-## Distinguishing New vs Existing Notes in the Editor
-
-The `Draft` type from Phase 2 gains an `isNew` flag:
+Add to `src/atoms/drafts.ts`:
 
 ```ts
-type Draft = {
-  timestamp: string;
-  content: string;
-  minimized: boolean;
-  isNew: boolean;  // true = file doesn't exist on main yet
+export function openExistingDraft(timestamp: string, content: string): void {
+  store.set(draftsAtom, (prev) => [
+    ...prev.map((d) => ({ ...d, minimized: true })),
+    { timestamp, content, isNew: false, minimized: false },
+  ]);
+}
+```
+
+Re-export from `globals.ts`.
+
+### `handleEdit` in `ReferencePanel.tsx`
+
+```ts
+const handleEdit = async (path: string) => {
+  const timestamp = pathToTimestamp(path);
+  if (!timestamp) return;
+
+  // Check if a draft already exists for this timestamp (e.g. recovered from a branch)
+  const existing = store.get(draftsAtom).find((d) => d.timestamp === timestamp);
+  if (existing) {
+    restoreDraft(timestamp);
+    navigate({ search: (prev) => ({ ...prev, draft: timestamp }) });
+    return;
+  }
+
+  // Read current content from the filesystem
+  const file = await readFile(path);
+  if (!file || file.type !== "text") return;
+
+  // Create git branch and open draft
+  const worker = getRepoWorker();
+  await worker.createBranch(`draft/${timestamp}`);
+  await worker.checkoutBranch(`draft/${timestamp}`);
+
+  openExistingDraft(timestamp, file.content);
+  navigate({ search: (prev) => ({ ...prev, draft: timestamp }) });
 };
 ```
 
-This determines:
-- The save commit message prefix ("add" vs "update")
-- Whether discard needs to clean up a file from LightningFS
+## Branch Naming
+
+For existing notes, the branch name is derived from the filename stem:
+`draft/<timestamp>` where `<timestamp>` is the numeric portion of the `.md` filename.
+
+Since all filenames are timestamp-based, this is always `draft/<timestamp>`. A new note and an
+edit of the same file share the same branch name — which is correct, since a saved new note
+becomes an existing note.
+
+## Autosave
+
+Identical to Phase 2. `scheduleAutosave(timestamp)` is called from the `EditorPane` component's
+`handleChange` callback. The autosave module doesn't need to know whether the draft is new or
+existing.
+
+## Save
+
+The `saveDraft` function from `src/lib/draft-operations.ts` (Phase 2) already handles both
+cases via the `isNew` flag:
+
+- `isNew: true` → commit message prefix `"add"`
+- `isNew: false` → commit message prefix `"update"`
+
+After squash merge, `machineAtom` filenames are refreshed and the search index is updated.
+This handles the case where an existing note's content changed (the search index entry for that
+path is updated).
+
+### Atom invalidation
+
+After saving an existing note edit, the cached `renderedNoteAtom(path)` and `fileAtom(path)`
+need to be invalidated so the note re-renders with the new content.
+
+Jotai's `atomFamily` returns the same atom for the same key, and `fileAtom` is an async atom
+that reads from LightningFS. After `refreshFs()` (called by `saveDraft`), reading the atom
+again will get the new content. However, Jotai won't automatically re-read the atom unless a
+dependency changes.
+
+The solution is to force invalidation by calling `refreshFs()` (already in `saveDraft`) which
+calls `fs.init(FILE_SYSTEM_NAME)`, and then triggering a `machineAtom` update (also already
+done). Since `fileAtom` reads from the filesystem and components that use it are in the
+component tree that re-renders when `machineAtom` changes, this should be sufficient.
+
+If stale cached values persist, a more explicit invalidation can be done:
+
+```ts
+// In saveDraft, after refreshFs():
+store.set(fileAtom(timestampToPath(timestamp)), undefined); // force re-fetch
+```
+
+But try without this first — the existing `refreshFs()` + `machineAtom` update flow should
+trigger re-reads.
+
+## Discard
+
+The `discardDraft` function from `src/lib/draft-operations.ts` (Phase 2) already handles
+both cases:
+
+- `isNew: true` → delete the file from LightningFS
+- `isNew: false` → checkout main to restore the file, call `refreshFs()`
+
+## Components Changed
+
+### `ReferencePanel` — wire `onEdit`
+
+The `ReferencePanel` component passes `onEdit` to `NoteExpanded`:
+
+```tsx
+<NoteExpanded
+  path={note.path}
+  onPin={() => handlePin(note.path)}
+  onEdit={() => handleEdit(note.path)}
+/>
+```
+
+And similarly in `PinnedNote` when the pinned note is expanded:
+
+```tsx
+<NoteExpanded
+  path={note.path}
+  onPin={() => {}} // already pinned
+  onEdit={() => handleEdit(note.path)}
+/>
+```
+
+### `NoteExpanded` — unchanged
+
+Phase 1 already defined the `onEdit?: () => void` prop. No component changes needed.
+
+### `EditorPane` — unchanged
+
+The `EditorPane` from Phase 2 works for both new and existing notes. It receives a `Draft`
+object and doesn't care about `isNew` (that's handled by `saveDraft` and `discardDraft`).
 
 ## URL State
 
-Identical to Phase 2. `?draft=<timestamp>` is set when editing an existing note. This composes
-with `?note=<timestamp>` (which note is expanded in the reference panel) and `?q=<query>`.
+Identical to Phase 2. `?draft=<timestamp>` is set when editing. The timestamp happens to be
+the same as the existing note's filename stem, which means `?note=<timestamp>&draft=<timestamp>`
+is valid (the note is expanded in the reference panel while its edit is open in the editor).
 
-## What Does Not Change
+## File change summary
+
+| File | Action |
+|---|---|
+| `src/atoms/drafts.ts` | Add `openExistingDraft` function |
+| `src/atoms/globals.ts` | Re-export `openExistingDraft` |
+| `src/components/ReferencePanel.tsx` | Wire `onEdit` to `NoteExpanded` and `PinnedNote` |
+
+All other files from Phase 2 are unchanged. The `EditorPane`, `DraftTray`, autosave, save, and
+discard flows work for existing notes without modification because the `Draft` type's `isNew`
+flag was included from the start.
+
+## What does not change
 
 - All Phase 2 editor components (`EditorPane`, `DraftTray`, `ResizeHandle`)
-- Worker git operations
-- Reference panel behaviour
+- Worker git operations (all added in Phase 2)
+- Reference panel display logic
+- Autosave module
+- Save and discard modules (they already handle `isNew: true` and `isNew: false`)

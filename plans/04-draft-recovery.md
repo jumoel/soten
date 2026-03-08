@@ -12,67 +12,178 @@ branch has been pushed — see Phase 5).
 
 ## Init Sequence Change
 
-The current init sequence (in `init.ts`) after the repo is confirmed initialized:
+### Current init sequence (after Phase 1–3)
 
-1. `readRepoFiles()` — build file list
-2. `refreshFs()` — refresh the in-memory fs view
-3. Set `machineAtom` to `ready`
-4. `buildSearchIndex()`
-5. `backgroundSync()`
+The init path in `src/atoms/init.ts` for a returning user with a cached repo:
 
-Phase 4 inserts a step between 1 and 2:
+```ts
+// (abbreviated from init.ts)
+const worker = getRepoWorker();
+if (selectedRepo && cachedRepos && (await worker.isInitialized())) {
+  const filenames = await worker.readRepoFiles();
+  refreshFs();
+  store.set(machineAtom, { phase: "ready", user, repos: cachedRepos, selectedRepo, filenames });
+  buildSearchIndex(store.get(noteListAtom));
+  backgroundSync(user);
+  return;
+}
+```
 
-1. `readRepoFiles()`
-2. **`listDraftBranches()`** — scan for `draft/*` branches → populate draft tray
-3. `refreshFs()`
-4. Set `machineAtom` to `ready`
-5. `buildSearchIndex()`
-6. `backgroundSync()`
+### Updated init sequence
 
-The same applies to the local-repo init path in `init.local.ts` (no-op since there are no
-branches in the local test repo, but the call should still be made for consistency).
+Insert `recoverDrafts()` between setting `machineAtom` to `ready` and `backgroundSync`:
+
+```ts
+const worker = getRepoWorker();
+if (selectedRepo && cachedRepos && (await worker.isInitialized())) {
+  const filenames = await worker.readRepoFiles();
+  refreshFs();
+  store.set(machineAtom, { phase: "ready", user, repos: cachedRepos, selectedRepo, filenames });
+  buildSearchIndex(store.get(noteListAtom));
+  await recoverDrafts(filenames);   // ← new
+  backgroundSync(user);
+  return;
+}
+```
+
+The same insertion applies to the `cloneAndLoad` path in `src/atoms/machine.ts` — after the
+machine reaches `ready`, call `recoverDrafts`.
+
+### `recoverDrafts` function
+
+New file: `src/atoms/draft-recovery.ts`
+
+```ts
+import { getRepoWorker } from "../worker/client";
+import { store } from "./store";
+import { draftsAtom } from "./drafts";
+import { REPO_DIR } from "../lib/constants";
+
+/**
+ * Scans for draft/* branches and populates the drafts atom with
+ * minimized entries for each found branch.
+ */
+export async function recoverDrafts(filenames: string[]): Promise<void> {
+  const worker = getRepoWorker();
+
+  let branches: Array<{ timestamp: string; content: string }>;
+  try {
+    branches = await worker.listDraftBranches();
+  } catch {
+    return; // If listing fails, silently skip recovery
+  }
+
+  if (branches.length === 0) return;
+
+  // Build a set of existing filenames on main for isNew detection
+  const existingFiles = new Set(filenames);
+
+  const recoveredDrafts = branches.map(({ timestamp, content }) => {
+    const filePath = `${REPO_DIR}/${timestamp}.md`;
+    const isNew = !existingFiles.has(filePath);
+
+    return {
+      timestamp,
+      content,
+      isNew,
+      minimized: true,
+    };
+  });
+
+  // Merge with any drafts that may already be in the atom
+  // (shouldn't happen on init, but defensive)
+  store.set(draftsAtom, (prev) => {
+    const existingTimestamps = new Set(prev.map((d) => d.timestamp));
+    const newDrafts = recoveredDrafts.filter(
+      (d) => !existingTimestamps.has(d.timestamp),
+    );
+    return [...prev, ...newDrafts];
+  });
+}
+```
+
+### `init.local.ts` update
+
+The local-repo init path in `src/atoms/init.local.ts` also calls `recoverDrafts` for
+consistency, though it will find no branches in a local test repo:
+
+```ts
+// After buildSearchIndex:
+await recoverDrafts(filenames);
+```
 
 ## Worker: `listDraftBranches`
 
-New worker message. Uses `git.listBranches({ fs, dir: REPO_DIR })` to get all local branches,
-filters for those matching `draft/*`, and for each:
+Already implemented in Phase 2. The worker function:
 
-1. Reads the file content from the tip of that branch
-2. Returns an array of `{ timestamp: string; content: string }` objects
+1. Calls `git.listBranches({ fs, dir: REPO_DIR })`
+2. Filters for branches starting with `draft/`
+3. For each, reads the file content from the tip of the branch using `readFileFromBranch`
+4. Returns `Array<{ timestamp: string; content: string }>`
 
-The timestamp is extracted from the branch name: `draft/<timestamp>` → `<timestamp>`.
+No changes needed to the worker for Phase 4.
 
 ## Determining New vs Existing
 
-For each recovered draft, check whether `<REPO_DIR>/<timestamp>.md` exists on the main branch:
+For each recovered draft, check whether `<REPO_DIR>/<timestamp>.md` exists in the `filenames`
+array passed to `recoverDrafts`. This array comes from `readRepoFiles()` which reads the
+working directory (main branch state).
 
-- If it exists on main: this is an edit of an existing note (`isNew: false`)
-- If it does not: this is a new note in progress (`isNew: true`)
+- If the path is in `filenames`: this is an edit of an existing note (`isNew: false`)
+- If not: this is a new note in progress (`isNew: true`)
 
-This check uses `git.readBlob` or simply checking the file list from `readRepoFiles()` (which
-reads from the working directory / main state).
+This is reliable because `readRepoFiles()` runs before `recoverDrafts()` and reads from main.
 
 ## Restoring to the Tray
 
-Each recovered branch becomes a `Draft` entry in `draftsAtom` with `minimized: true`. The tray
-renders them as it would any other minimized draft.
+Each recovered branch becomes a `Draft` entry in `draftsAtom` with `minimized: true`. The
+`DraftTray` component (Phase 2) renders them exactly as it does any other minimized draft.
 
-The `?draft` URL param is not set for recovered drafts on load — they appear in the tray without
-polluting the URL until the user explicitly opens one.
+The user can:
+- Click a tray entry to restore the editor (same as Phase 2's `restoreDraft`)
+- Click `×` to discard the draft (same as Phase 2's `discardDraft`)
+- Click save from inside the editor (same as Phase 2's `saveDraft`)
+
+### URL behavior
+
+Recovered drafts do **not** set `?draft` in the URL on load. They appear silently in the tray.
+The URL only gains `?draft=<timestamp>` when the user explicitly restores a draft.
 
 ## Edge Cases
 
-**Branch exists but file is empty**: the autosave may not have fired yet before the tab closed.
-Restore with empty content — the user can discard if they don't want it.
+### Branch exists but file is empty
 
-**Branch exists but has no commits beyond the branch point**: treat as an empty draft, same as
-above.
+The autosave may not have fired before the tab closed. `readFileFromBranch` returns `null` or
+an empty string. The draft is restored with `content: ""` — the user sees an empty editor and
+can discard it.
 
-**Multiple draft branches for the same timestamp**: should not occur (branch creation is
-idempotent per timestamp), but if found, use the one with the most recent commit.
+### Branch exists but has no commits beyond the branch point
 
-## What Does Not Change
+The branch was created but no `commitFile` happened. `readFileFromBranch` may fail or return
+`null`. Same handling: restore with `content: ""`.
 
-- The `Draft` type and `draftsAtom` from Phase 2/3
-- The tray UI from Phase 2
-- All worker git operations beyond the new `listDraftBranches` message
+### Draft branch for a note that was since deleted on another device
+
+The file won't be in `filenames`, so `isNew: true`. The user can save it (re-creating the file)
+or discard it.
+
+### Draft branch already open (shouldn't happen on init)
+
+The `existingTimestamps` check in `recoverDrafts` prevents duplicates.
+
+## File change summary
+
+| File | Action |
+|---|---|
+| `src/atoms/draft-recovery.ts` | New — `recoverDrafts` function |
+| `src/atoms/init.ts` | Add `recoverDrafts(filenames)` call after machine reaches ready |
+| `src/atoms/machine.ts` | Add `recoverDrafts(filenames)` call at end of `cloneAndLoad` |
+| `src/atoms/init.local.ts` | Add `recoverDrafts(filenames)` call for consistency |
+
+## What does not change
+
+- The `Draft` type and `draftsAtom` from Phase 2
+- The `DraftTray` UI from Phase 2
+- All worker git operations (all added in Phase 2)
+- The `listDraftBranches` worker function (added in Phase 2)
+- Save, discard, and autosave logic

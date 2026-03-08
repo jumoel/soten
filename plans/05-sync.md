@@ -13,78 +13,461 @@ Add two UI indicators (offline status and git working status) and ensure all loc
 
 ## Offline Indicator
 
-The existing `online.ts` module fires events when connectivity changes. A new `isOnlineAtom`
-(derived from the online listener) drives a small indicator in the top bar.
+### Existing infrastructure
 
-When offline: a dot or icon appears near the gear icon. It is not alarming — a muted gray or
-amber dot is sufficient. No toast, no modal, no blocking UI. The app continues to work fully
-offline (reads from LightningFS, autosaves to local branches); pushes are queued and happen
-when the app comes back online.
+`src/lib/online.ts` already maintains an `onlineAtom` (Jotai atom, `atom(navigator.onLine)`)
+and calls `backgroundSync` when the app comes back online. The current `TopBar.tsx` already
+reads `onlineAtom` and shows an "offline" text label.
 
-When online: the indicator disappears. If there are pending pushes (branches or main commits
-that haven't been pushed yet), they run immediately.
+### Changes
+
+The existing offline indicator in the TopBar is sufficient. Phase 1 rewrote `TopBar` but should
+have preserved the offline indicator. Ensure the new TopBar includes:
+
+```tsx
+const online = useAtomValue(onlineAtom);
+// ...
+{!online && <Text variant="meta">offline</Text>}
+```
+
+No new atom or component needed. The `onlineAtom` already exists and is reactive.
 
 ## Git Working Indicator
 
-A small spinner appears in the top bar during any git operation. Driven by a new
-`gitWorkingAtom: atom<boolean>`.
+### New atom
 
-Set to `true` before any worker call that touches git (autosave commit, save merge, push, pull).
-Set to `false` in the `finally` block after the operation completes or errors.
+Add to `src/atoms/store.ts`:
 
-The spinner is non-blocking — the user can continue interacting with the app while git works.
+```ts
+export const gitWorkingAtom = atom(false);
+```
 
-## Auto-Push
+Re-export from `src/atoms/globals.ts`.
 
-### After autosave commit
+### TopBar display
 
-After each successful debounced commit to `draft/<timestamp>`:
-- If online: push `draft/<timestamp>` to remote
-- If offline: no push; the branch will be pushed when the app next comes online
+In the new `TopBar.tsx`:
 
-### After save (squash merge to main)
+```tsx
+const gitWorking = useAtomValue(gitWorkingAtom);
+// ...
+{gitWorking && <LoadingSpinner size="sm" />}
+```
 
-After each successful squash merge:
-- If online: push `main` to remote
-- If offline: main is ahead of remote; push when online
+Add a `size` prop to `LoadingSpinner` if it doesn't already have one, or use a small inline
+spinner:
 
-### Coming back online
+```tsx
+{gitWorking && (
+  <svg className="animate-spin h-4 w-4 text-muted" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10"
+            stroke="currentColor" strokeWidth="4" fill="none" />
+    <path className="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+  </svg>
+)}
+```
 
-The online listener triggers a sync when the app transitions from offline to online:
-1. Push any `draft/*` branches that have unpushed commits
-2. Push main if it is ahead of remote
-3. Pull main (existing background sync behaviour)
+### Where to set `gitWorkingAtom`
 
-This is an extension of `backgroundSync` in `sync.ts`. The pull already happens there; push is
-added to the same function.
+Wrap git-touching operations with `gitWorkingAtom` updates. Create a helper in
+`src/lib/git-status.ts`:
+
+```ts
+import { store } from "../atoms/store";
+import { gitWorkingAtom } from "../atoms/store";
+
+let activeCount = 0;
+
+export async function withGitWorking<T>(fn: () => Promise<T>): Promise<T> {
+  activeCount++;
+  store.set(gitWorkingAtom, true);
+  try {
+    return await fn();
+  } finally {
+    activeCount--;
+    if (activeCount === 0) store.set(gitWorkingAtom, false);
+  }
+}
+```
+
+Uses a counter to handle concurrent git operations (e.g. autosave and background sync
+running simultaneously).
+
+### Call sites
+
+Wrap the following operations with `withGitWorking`:
+
+| Call site | Function |
+|---|---|
+| `src/lib/autosave.ts` | `autosave()` — the `checkoutBranch` + `commitFile` + push |
+| `src/lib/draft-operations.ts` | `saveDraft()` — the squash merge + push |
+| `src/lib/draft-operations.ts` | `discardDraft()` — the branch delete + push |
+| `src/atoms/machine.ts` | `cloneAndLoad()` — clone/pull operations |
+| `src/atoms/sync.ts` | `backgroundSync()` — pull + push |
+| `src/atoms/draft-recovery.ts` | `recoverDrafts()` — listing branches |
+| `src/components/TopBar.tsx` | `handleNewNote()` — createBranch + checkoutBranch |
+
+Example for autosave:
+
+```ts
+async function autosave(timestamp: string): Promise<void> {
+  // ... existing checks ...
+  await withGitWorking(async () => {
+    await worker.checkoutBranch(branch);
+    await worker.commitFile(filepath, draft.content, "draft: autosave");
+    lastSaved.set(timestamp, draft.content);
+    await pushIfOnline(branch);
+  });
+}
+```
 
 ## Worker: `push`
 
-New worker message. Uses `git.push` with the existing `corsProxy` and auth callback (same
-pattern as `clone` and `pull`). Takes an optional `ref` param to push a specific branch; if
-omitted, pushes the current branch.
+### New protocol message
+
+Added to `src/worker/protocol.ts`:
 
 ```ts
-push(user: { username: string; token: string }, ref?: string): Promise<void>
+| { id: number; type: "push"; user: { username: string; token: string }; ref?: string }
 ```
 
-## Tracking Unpushed State
+### Worker implementation
 
-To know which branches need pushing when coming back online, the worker maintains a
-`pendingPush: Set<string>` (branch names). After each local commit, the branch name is added.
-After a successful push, it is removed. This set is in-memory only (lost on worker restart),
-so on app load the init sequence should check for any `draft/*` branches and treat them all as
-needing a push attempt.
+New function in `src/worker/repo.worker.ts`:
 
-## Interaction with `backgroundSync`
+```ts
+async function push(
+  user: { username: string; token: string },
+  ref?: string,
+): Promise<void> {
+  const { git, http } = await getGit();
+  await git.push({
+    fs,
+    http,
+    dir: REPO_DIR,
+    corsProxy,
+    ref,
+    onAuth: () => ({ username: user.username, password: user.token }),
+    onMessage: (msg) => console.debug("push onMessage", msg),
+    onProgress: (prog) => console.debug("push onProgress", prog),
+  });
+}
+```
 
-`backgroundSync` in `sync.ts` currently only pulls. Phase 5 extends it to also push pending
-branches and main. The existing silent-error-catch pattern is preserved — network failures
-during background sync continue to be ignored.
+Message handler addition:
 
-## What Does Not Change
+```ts
+case "push":
+  await push(msg.user, msg.ref);
+  break;
+```
 
-- The existing pull logic in `backgroundSync`
+### Client method
+
+Added to `src/worker/client.ts`:
+
+```ts
+push(user: { username: string; token: string }, ref?: string): Promise<void> {
+  return this.call({ type: "push", user, ref }) as Promise<void>;
+}
+```
+
+## Auto-Push Helper
+
+New file: `src/lib/push.ts`
+
+```ts
+import { getRepoWorker } from "../worker/client";
+import { store, machineAtom } from "../atoms/store";
+import { onlineAtom } from "./online";
+
+/**
+ * Push a specific ref to remote if the app is online and a user is available.
+ * Silently ignores errors (network failures during push are non-fatal).
+ */
+export async function pushIfOnline(ref?: string): Promise<void> {
+  const online = store.get(onlineAtom);
+  if (!online) return;
+
+  const machine = store.get(machineAtom);
+  if (machine.phase !== "ready") return;
+
+  const worker = getRepoWorker();
+  try {
+    await worker.push(machine.user, ref);
+  } catch (e) {
+    console.debug("push failed (will retry on next sync)", e);
+  }
+}
+```
+
+## Integration with Autosave
+
+Update `src/lib/autosave.ts` — add a push after each successful commit:
+
+```ts
+import { pushIfOnline } from "./push";
+
+async function autosave(timestamp: string): Promise<void> {
+  const draft = store.get(draftsAtom).find((d) => d.timestamp === timestamp);
+  if (!draft) return;
+  if (draft.content === lastSaved.get(timestamp)) return;
+
+  const worker = getRepoWorker();
+  const branch = `draft/${timestamp}`;
+  const filepath = `${timestamp}.md`;
+
+  try {
+    await withGitWorking(async () => {
+      await worker.checkoutBranch(branch);
+      await worker.commitFile(filepath, draft.content, "draft: autosave");
+      lastSaved.set(timestamp, draft.content);
+      await pushIfOnline(branch);
+    });
+  } catch (e) {
+    console.debug("autosave failed", e);
+  }
+}
+```
+
+## Integration with Save
+
+Update `src/lib/draft-operations.ts` — push main after squash merge:
+
+```ts
+import { pushIfOnline } from "./push";
+
+export async function saveDraft(timestamp: string, content: string, isNew: boolean): Promise<void> {
+  cancelAutosave(timestamp);
+
+  await withGitWorking(async () => {
+    const worker = getRepoWorker();
+    const branch = `draft/${timestamp}`;
+    const filepath = `${timestamp}.md`;
+
+    await worker.checkoutBranch(branch);
+    await worker.commitFile(filepath, content, "draft: autosave");
+
+    const title = extractTitle(content);
+    const prefix = isNew ? "add" : "update";
+    const message = title ? `${prefix}: ${title}` : `${prefix} note ${timestamp}`;
+
+    await worker.squashMergeToMain(branch, message);
+    await pushIfOnline("main");
+
+    // Update app state
+    const machine = store.get(machineAtom);
+    if (machine.phase === "ready") {
+      const oldFilenames = machine.filenames;
+      const filenames = await worker.readRepoFiles();
+      refreshFs();
+      store.set(machineAtom, { ...machine, filenames });
+      updateSearchIndex(oldFilenames, filenames, store.get(noteListAtom));
+    }
+  });
+
+  removeDraft(timestamp);
+}
+```
+
+## Integration with Discard
+
+Update `src/lib/draft-operations.ts` — delete remote branch after local delete:
+
+```ts
+export async function discardDraft(timestamp: string, isNew: boolean): Promise<void> {
+  cancelAutosave(timestamp);
+
+  await withGitWorking(async () => {
+    const worker = getRepoWorker();
+    const branch = `draft/${timestamp}`;
+
+    try {
+      await worker.deleteBranch(branch);
+    } catch {
+      // Branch may not exist
+    }
+
+    // Try to delete the remote branch too
+    // (push with a delete ref — isomorphic-git supports this via empty ref)
+    try {
+      await pushIfOnline(`:refs/heads/${branch}`);
+    } catch {
+      // Remote branch may not exist
+    }
+
+    if (isNew) {
+      try {
+        const { pfs } = await import("../lib/fs");
+        const { REPO_DIR } = await import("../lib/constants");
+        await pfs.unlink(`${REPO_DIR}/${timestamp}.md`);
+      } catch {}
+    } else {
+      await worker.checkoutBranch("main");
+      refreshFs();
+    }
+  });
+
+  removeDraft(timestamp);
+}
+```
+
+Note: deleting a remote branch via `git.push` with `:refs/heads/<branch>` as the ref is
+standard git protocol. If isomorphic-git doesn't support this syntax, the remote branch can
+be left — it will be orphaned but harmless. A future cleanup can prune stale remote branches.
+
+## Coming Back Online
+
+### Updated `src/lib/online.ts`
+
+When the app transitions from offline to online, trigger a full sync that includes pushing:
+
+```ts
+import { atom } from "jotai";
+import { store, machineAtom } from "../atoms/store";
+import { fullSync } from "../atoms/sync";
+
+export const onlineAtom = atom(navigator.onLine);
+
+export function initOnlineListener() {
+  window.addEventListener("online", () => {
+    store.set(onlineAtom, true);
+    const machine = store.get(machineAtom);
+    if (machine.phase === "ready") {
+      fullSync(machine.user);
+    }
+  });
+
+  window.addEventListener("offline", () => {
+    store.set(onlineAtom, false);
+  });
+}
+```
+
+### Updated `src/atoms/sync.ts`
+
+Rename and extend `backgroundSync` to also push:
+
+```ts
+import { fetchCurrentUser, fetchUserRepos } from "../lib/github";
+import { refreshFs } from "../lib/fs";
+import { getRepoWorker } from "../worker/client";
+import { withGitWorking } from "../lib/git-status";
+import type { User } from "./store";
+import {
+  store,
+  machineAtom,
+  noteListAtom,
+  userAtom,
+  selectedRepoAtom,
+  cachedReposAtom,
+} from "./store";
+import { draftsAtom } from "./drafts";
+import { updateSearchIndex } from "./search";
+
+let syncing = false;
+
+export async function fullSync(user: User): Promise<void> {
+  if (syncing) return;
+  syncing = true;
+
+  try {
+    await withGitWorking(async () => {
+      if (store.get(machineAtom).phase !== "ready") return;
+
+      // Existing: validate user, check repos
+      const currentUser = await fetchCurrentUser(user.token);
+      if (!currentUser?.login) {
+        if (store.get(machineAtom).phase === "ready") {
+          store.set(userAtom, null);
+          store.set(machineAtom, { phase: "unauthenticated", authError: null });
+        }
+        return;
+      }
+
+      // Existing: update cached repos
+      const repos = await fetchUserRepos(user.installationId, user.token);
+      if (repos) {
+        store.set(cachedReposAtom, repos);
+        const selectedRepo = store.get(selectedRepoAtom);
+        if (selectedRepo && !repos.includes(`${selectedRepo.owner}/${selectedRepo.repo}`)) {
+          if (store.get(machineAtom).phase === "ready") {
+            store.set(machineAtom, { phase: "selectingRepo", user, repos });
+          }
+          return;
+        }
+      }
+
+      const worker = getRepoWorker();
+
+      // NEW: Push all draft branches
+      const drafts = store.get(draftsAtom);
+      for (const draft of drafts) {
+        try {
+          await worker.push(user, `draft/${draft.timestamp}`);
+        } catch {
+          // Individual branch push failures are non-fatal
+        }
+      }
+
+      // NEW: Push main
+      try {
+        await worker.push(user, "main");
+      } catch {
+        // Non-fatal
+      }
+
+      // Existing: pull
+      try {
+        await worker.pull(user);
+      } catch {
+        return;
+      }
+
+      // Existing: update filenames
+      const filenames = await worker.readRepoFiles();
+      refreshFs();
+      const machine = store.get(machineAtom);
+      if (machine.phase === "ready") {
+        const oldFilenames = machine.filenames;
+        store.set(machineAtom, { ...machine, filenames });
+        updateSearchIndex(oldFilenames, filenames, store.get(noteListAtom));
+      }
+    });
+  } catch {
+    // Network errors during background sync are silently ignored
+  } finally {
+    syncing = false;
+  }
+}
+
+// Keep backward compatibility — backgroundSync still called from init.ts
+export const backgroundSync = fullSync;
+```
+
+## File change summary
+
+| File | Action |
+|---|---|
+| `src/atoms/store.ts` | Add `gitWorkingAtom` |
+| `src/atoms/globals.ts` | Re-export `gitWorkingAtom` |
+| `src/lib/git-status.ts` | New — `withGitWorking` helper |
+| `src/lib/push.ts` | New — `pushIfOnline` helper |
+| `src/lib/autosave.ts` | Wrap in `withGitWorking`, add `pushIfOnline` after commit |
+| `src/lib/draft-operations.ts` | Wrap in `withGitWorking`, add `pushIfOnline` after save/discard |
+| `src/lib/online.ts` | Call `fullSync` instead of `backgroundSync` on reconnect |
+| `src/atoms/sync.ts` | Extend to push drafts + main before pulling |
+| `src/worker/protocol.ts` | Add `push` message type |
+| `src/worker/repo.worker.ts` | Add `push` handler function |
+| `src/worker/client.ts` | Add `push` client method |
+| `src/components/TopBar.tsx` | Add git working spinner, ensure offline indicator preserved |
+| `src/components/TopBar.tsx` | Wrap `handleNewNote` in `withGitWorking` |
+
+## What does not change
+
 - The existing CORS proxy (`/api/cors-proxy`)
 - Auth token usage pattern
-- All Phase 1–4 functionality
+- All Phase 1–4 functionality (only additive changes)
+- Clone and pull worker operations (existing)
+- The `onlineAtom` definition and location
