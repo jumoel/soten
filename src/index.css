@@ -7,43 +7,46 @@
 @theme {
   --animate-fade-in: fade-in 0.3s ease-out backwards;
 
-  /* Light theme defaults */
+  /* Light theme — Warm Ink */
 
   /* Surfaces */
-  --color-base: #f0ece4;
-  --color-surface: #faf8f4;
-  --color-surface-2: #ece8e0;
+  --color-base: #f7f6f3;
+  --color-surface: #fdfcfa;
+  --color-surface-2: #efeeeb;
 
   /* Borders */
-  --color-edge: #d8d4cc;
-  --color-edge-2: #c8c4bc;
+  --color-edge: #dddbd6;
+  --color-edge-2: #cbc9c4;
 
-  /* Accent */
-  --color-accent: #e07040;
-  --color-accent-hover: #c85e30;
+  /* Accent — deep teal */
+  --color-accent: #1a7a75;
+  --color-accent-hover: #15605c;
 
   /* Text */
-  --color-paper: #1a1a1e;
-  --color-paper-dim: #3d3a38;
-  --color-muted: #888888;
+  --color-paper: #2c2a28;
+  --color-paper-dim: #5c5955;
+  --color-muted: #757068;
 
   /* Errors */
-  --color-error-surface: #fff5f2;
-  --color-error-edge: #f4c9be;
-  --color-error-text: #b84020;
-  --color-error-detail: #d45030;
+  --color-error-surface: #fef5f3;
+  --color-error-edge: #f0ccc4;
+  --color-error-text: #b04030;
+  --color-error-detail: #d05040;
 }
 
-/* Dark theme overrides — applied when html.dark is set */
+/* Dark theme (OLED) — true black base, warm text */
 html.dark {
-  --color-base: #1a1a1e;
-  --color-surface: #1e1e22;
-  --color-surface-2: #28282c;
-  --color-edge: #2a2a2e;
-  --color-edge-2: #3a3a3e;
-  --color-paper: #faf8f4;
-  --color-paper-dim: #ece8e0;
-  --color-error-surface: #2e1515;
+  --color-base: #000000;
+  --color-surface: #111113;
+  --color-surface-2: #1c1c1f;
+  --color-edge: #2a2a2d;
+  --color-edge-2: #3a3a3d;
+  --color-accent: #3aada7;
+  --color-accent-hover: #2e9490;
+  --color-paper: #e8e4dc;
+  --color-paper-dim: #a09c94;
+  --color-muted: #858178;
+  --color-error-surface: #1e0c0a;
   --color-error-edge: #5a2020;
   --color-error-text: #f87171;
   --color-error-detail: #fca5a5;
