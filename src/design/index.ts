@@ -21,3 +21,12 @@ export type { TopBarProps } from "./TopBar/TopBar";
 
 export { MarkdownCard } from "./MarkdownCard/MarkdownCard";
 export type { MarkdownCardProps } from "./MarkdownCard/MarkdownCard";
+
+export { Select } from "./Select/Select";
+export type { SelectProps } from "./Select/Select";
+
+export { Popover } from "./Popover/Popover";
+export type { PopoverProps } from "./Popover/Popover";
+
+export { Textarea } from "./Textarea/Textarea";
+export type { TextareaProps } from "./Textarea/Textarea";
