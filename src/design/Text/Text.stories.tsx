@@ -33,22 +33,3 @@ export const OverrideElement: Story = {
     </p>
   ),
 };
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => (
-    <div className="flex flex-col gap-3 bg-base p-4">
-      {(["h1", "h2", "h3", "h4", "body", "body-dim", "meta", "label"] as const).map((variant) => (
-        <div key={variant} className="flex items-baseline gap-3">
-          <span className="w-20 text-xs text-muted shrink-0">{variant}</span>
-          <Text variant={variant}>The quick brown fox jumps over the lazy dog</Text>
-        </div>
-      ))}
-    </div>
-  ),
-};

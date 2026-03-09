@@ -111,20 +111,3 @@ export const FullHeight: Story = {
     );
   },
 };
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => {
-    const [value, setValue] = useState(sampleMarkdown);
-    return (
-      <div className="bg-base p-4 w-96">
-        <Textarea value={value} onChange={setValue} label="Note" mono={true} labelVisible={true} />
-      </div>
-    );
-  },
-};

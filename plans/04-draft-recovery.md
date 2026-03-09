@@ -40,7 +40,7 @@ if (selectedRepo && cachedRepos && (await worker.isInitialized())) {
   refreshFs();
   store.set(machineAtom, { phase: "ready", user, repos: cachedRepos, selectedRepo, filenames });
   buildSearchIndex(store.get(noteListAtom));
-  await recoverDrafts(filenames);   // ← new
+  await recoverDrafts(filenames); // ← new
   backgroundSync(user);
   return;
 }
@@ -94,9 +94,7 @@ export async function recoverDrafts(filenames: string[]): Promise<void> {
   // (shouldn't happen on init, but defensive)
   store.set(draftsAtom, (prev) => {
     const existingTimestamps = new Set(prev.map((d) => d.timestamp));
-    const newDrafts = recoveredDrafts.filter(
-      (d) => !existingTimestamps.has(d.timestamp),
-    );
+    const newDrafts = recoveredDrafts.filter((d) => !existingTimestamps.has(d.timestamp));
     return [...prev, ...newDrafts];
   });
 }
@@ -140,6 +138,7 @@ Each recovered branch becomes a `Draft` entry in `draftsAtom` with `minimized: t
 `DraftTray` component (Phase 2) renders them exactly as it does any other minimized draft.
 
 The user can:
+
 - Click a tray entry to restore the editor (same as Phase 2's `restoreDraft`)
 - Click `×` to discard the draft (same as Phase 2's `discardDraft`)
 - Click save from inside the editor (same as Phase 2's `saveDraft`)
@@ -173,12 +172,12 @@ The `existingTimestamps` check in `recoverDrafts` prevents duplicates.
 
 ## File change summary
 
-| File | Action |
-|---|---|
-| `src/atoms/draft-recovery.ts` | New — `recoverDrafts` function |
-| `src/atoms/init.ts` | Add `recoverDrafts(filenames)` call after machine reaches ready |
-| `src/atoms/machine.ts` | Add `recoverDrafts(filenames)` call at end of `cloneAndLoad` |
-| `src/atoms/init.local.ts` | Add `recoverDrafts(filenames)` call for consistency |
+| File                          | Action                                                          |
+| ----------------------------- | --------------------------------------------------------------- |
+| `src/atoms/draft-recovery.ts` | New — `recoverDrafts` function                                  |
+| `src/atoms/init.ts`           | Add `recoverDrafts(filenames)` call after machine reaches ready |
+| `src/atoms/machine.ts`        | Add `recoverDrafts(filenames)` call at end of `cloneAndLoad`    |
+| `src/atoms/init.local.ts`     | Add `recoverDrafts(filenames)` call for consistency             |
 
 ## What does not change
 

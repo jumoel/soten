@@ -8,7 +8,7 @@ Implementation-ready plan based on a systematic DevTools audit. Issues are group
 
 ## Commit A: Card title/heading cleanup (§2 + §3)
 
-**Problem:** Double date in card headers ("Dec 7, 2023  Unnamed note · December 7, 2023 at 9:54 AM") and H1/H2 headings render at full prose size inside card previews.
+**Problem:** Double date in card headers ("Dec 7, 2023 Unnamed note · December 7, 2023 at 9:54 AM") and H1/H2 headings render at full prose size inside card previews.
 
 ### A1. Fix timestamp title in `noteTitle()` — `src/atoms/store.ts:101-115`
 
@@ -109,7 +109,7 @@ Even after stripping the first H1, subsequent headings (H2, H3) may appear in pr
 Full className becomes:
 
 ```ts
-"prose prose-sm dark:prose-invert mt-1 line-clamp-5 [&_*]:!m-0 [&_*]:!p-0 [&_h1]:!text-sm [&_h1]:!font-semibold [&_h2]:!text-sm [&_h2]:!font-medium [&_h3]:!text-sm [&_h3]:!font-medium"
+"prose prose-sm dark:prose-invert mt-1 line-clamp-5 [&_*]:!m-0 [&_*]:!p-0 [&_h1]:!text-sm [&_h1]:!font-semibold [&_h2]:!text-sm [&_h2]:!font-medium [&_h3]:!text-sm [&_h3]:!font-medium";
 ```
 
 (Use `!` to override prose defaults.)
@@ -248,6 +248,7 @@ Pipeline order becomes:
 ### C2. Verify
 
 After this change:
+
 - Notes with frontmatter (e.g. the CouchDB ADR) should render without the YAML table.
 - `renderMarkdown()` still returns `frontmatter` data in the result object — the data is extracted, just not rendered.
 
@@ -274,6 +275,7 @@ Replace the three button lines with:
 ```
 
 Changes:
+
 - **Minimize**: `↓` symbol → text label "Minimize", stays `ghost`. Remove `aria-label` (the visible text is sufficient).
 - **Save**: `ghost` → `secondary` (bordered, visible as primary action).
 - **Discard**: `ghost` with `text-red-600` className to signal destructive action.
@@ -300,28 +302,35 @@ const handleDiscard = async () => {
 Replace the Discard button with a conditional:
 
 ```tsx
-{confirmingDiscard ? (
-  <>
-    <Text variant="body" as="span" className="text-red-600 text-sm">
-      {t("draft.discardAreYouSure")}
-    </Text>
-    <Button variant="ghost" size="sm" className="text-red-600" onClick={() => void handleDiscard()}>
-      {t("draft.discardConfirmAction")}
+{
+  confirmingDiscard ? (
+    <>
+      <Text variant="body" as="span" className="text-red-600 text-sm">
+        {t("draft.discardAreYouSure")}
+      </Text>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-red-600"
+        onClick={() => void handleDiscard()}
+      >
+        {t("draft.discardConfirmAction")}
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => setConfirmingDiscard(false)}>
+        {t("draft.discardCancel")}
+      </Button>
+    </>
+  ) : (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="text-red-600"
+      onClick={() => setConfirmingDiscard(true)}
+    >
+      {t("draft.discard")}
     </Button>
-    <Button variant="ghost" size="sm" onClick={() => setConfirmingDiscard(false)}>
-      {t("draft.discardCancel")}
-    </Button>
-  </>
-) : (
-  <Button
-    variant="ghost"
-    size="sm"
-    className="text-red-600"
-    onClick={() => setConfirmingDiscard(true)}
-  >
-    {t("draft.discard")}
-  </Button>
-)}
+  );
+}
 ```
 
 ### D3. Add i18n keys — `src/i18n/en.ts`
@@ -442,7 +451,7 @@ Replace the `<ul>` block (lines 75-94) with:
 Check `src/i18n/index.ts` to confirm the `t()` function handles `{query}` replacement. If it doesn't, it needs a simple `.replace("{query}", query)` path — or pass the formatted string directly:
 
 ```ts
-t("notes.noResults").replace("{query}", query)
+t("notes.noResults").replace("{query}", query);
 ```
 
 ---
@@ -584,16 +593,16 @@ Add `id` and `name` props to the `TextInput`:
 
 ## Implementation order
 
-| # | Commit | Sections | Files touched | Risk |
-|---|--------|----------|---------------|------|
-| 1 | A | §2 + §3 | `store.ts`, `NoteRow.tsx`, `en.ts` | Medium — touches title derivation and card rendering |
-| 2 | B | §4 | `markdown.ts`, `index.css`, `package.json` | Low — additive plugin, no existing code changed |
-| 3 | C | §5 | `markdown.ts` | Low — 3-line plugin, removes rendered frontmatter |
-| 4 | D | §6 | `EditorPane.tsx`, `en.ts` | Low — visual-only + remove `window.confirm` |
-| 5 | E | §7 | `GearPopover.tsx` | Low — visual-only |
-| 6 | F | §8 | `ReferencePanel.tsx`, `en.ts` | Low — additive, no existing logic changed |
-| 7 | G | §9 + §11 | `store.ts`, `search.ts`, `ReferencePanel.tsx`, `globals.ts`, `en.ts` | Medium — renames internal atom, adds sort state |
-| 8 | H | §10 | `SearchBar.tsx` | Trivial — two attributes |
+| #   | Commit | Sections | Files touched                                                        | Risk                                                 |
+| --- | ------ | -------- | -------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1   | A      | §2 + §3  | `store.ts`, `NoteRow.tsx`, `en.ts`                                   | Medium — touches title derivation and card rendering |
+| 2   | B      | §4       | `markdown.ts`, `index.css`, `package.json`                           | Low — additive plugin, no existing code changed      |
+| 3   | C      | §5       | `markdown.ts`                                                        | Low — 3-line plugin, removes rendered frontmatter    |
+| 4   | D      | §6       | `EditorPane.tsx`, `en.ts`                                            | Low — visual-only + remove `window.confirm`          |
+| 5   | E      | §7       | `GearPopover.tsx`                                                    | Low — visual-only                                    |
+| 6   | F      | §8       | `ReferencePanel.tsx`, `en.ts`                                        | Low — additive, no existing logic changed            |
+| 7   | G      | §9 + §11 | `store.ts`, `search.ts`, `ReferencePanel.tsx`, `globals.ts`, `en.ts` | Medium — renames internal atom, adds sort state      |
+| 8   | H      | §10      | `SearchBar.tsx`                                                      | Trivial — two attributes                             |
 
 ## Dependencies
 

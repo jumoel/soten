@@ -4,7 +4,7 @@
 
 The current card implementation has two related issues:
 
-**Duplicate content.** `noteCardAtom` extracts the first H1 heading, strips it from the markdown body, then renders the stripped body. `NoteRow` displays the extracted heading as a `Text variant="heading"` element *and* renders the card HTML below it. If the note opens with an H1, users see it twice — once as a styled heading, once in the preview HTML. For notes without an H1, `NoteRow` falls back to the filename-derived title, which is unrelated to content.
+**Duplicate content.** `noteCardAtom` extracts the first H1 heading, strips it from the markdown body, then renders the stripped body. `NoteRow` displays the extracted heading as a `Text variant="heading"` element _and_ renders the card HTML below it. If the note opens with an H1, users see it twice — once as a styled heading, once in the preview HTML. For notes without an H1, `NoteRow` falls back to the filename-derived title, which is unrelated to content.
 
 **Card / expanded inconsistency.** When a note is expanded, `NoteExpanded` renders `renderedNoteAtom` HTML — the full, unmodified markdown. The card preview was rendered from `noteCardAtom` with H1 stripped and body truncated. The two renderings are visually different, making expansion feel like a content switch rather than a reveal.
 
@@ -38,50 +38,48 @@ const cardCache = new Map<string, { html: string; isShort: boolean }>();
 Change the atom body from:
 
 ```ts
-    const content = file.content;
-    const bodyStart = findBodyStart(content);
-    const body = content.slice(bodyStart);
+const content = file.content;
+const bodyStart = findBodyStart(content);
+const body = content.slice(bodyStart);
 
-    const h1Re = /^#\s+(.+)$/m;
-    const h1Match = body.match(h1Re);
-    const derivedTitle = h1Match ? h1Match[1].trim() : null;
-    const strippedBody = derivedTitle ? body.replace(h1Re, "").trimStart() : body;
+const h1Re = /^#\s+(.+)$/m;
+const h1Match = body.match(h1Re);
+const derivedTitle = h1Match ? h1Match[1].trim() : null;
+const strippedBody = derivedTitle ? body.replace(h1Re, "").trimStart() : body;
 
-    const isShort = strippedBody.length <= NOTE_CARD_THRESHOLD;
-    const previewBody = isShort
-      ? strippedBody
-      : strippedBody.slice(0, findCutPoint(strippedBody, NOTE_CARD_THRESHOLD));
-    const displayContent = content.slice(0, bodyStart) + previewBody;
+const isShort = strippedBody.length <= NOTE_CARD_THRESHOLD;
+const previewBody = isShort
+  ? strippedBody
+  : strippedBody.slice(0, findCutPoint(strippedBody, NOTE_CARD_THRESHOLD));
+const displayContent = content.slice(0, bodyStart) + previewBody;
 
-    const cached = cardCache.get(displayContent);
-    if (cached) return cached;
+const cached = cardCache.get(displayContent);
+if (cached) return cached;
 
-    const { html } = await renderMarkdown(displayContent);
-    const result = { html, isShort, derivedTitle };
-    cardCache.set(displayContent, result);
-    return result;
+const { html } = await renderMarkdown(displayContent);
+const result = { html, isShort, derivedTitle };
+cardCache.set(displayContent, result);
+return result;
 ```
 
 to:
 
 ```ts
-    const content = file.content;
-    const bodyStart = findBodyStart(content);
-    const body = content.slice(bodyStart);
+const content = file.content;
+const bodyStart = findBodyStart(content);
+const body = content.slice(bodyStart);
 
-    const isShort = body.length <= NOTE_CARD_THRESHOLD;
-    const previewBody = isShort
-      ? body
-      : body.slice(0, findCutPoint(body, NOTE_CARD_THRESHOLD));
-    const displayContent = content.slice(0, bodyStart) + previewBody;
+const isShort = body.length <= NOTE_CARD_THRESHOLD;
+const previewBody = isShort ? body : body.slice(0, findCutPoint(body, NOTE_CARD_THRESHOLD));
+const displayContent = content.slice(0, bodyStart) + previewBody;
 
-    const cached = cardCache.get(displayContent);
-    if (cached) return cached;
+const cached = cardCache.get(displayContent);
+if (cached) return cached;
 
-    const { html } = await renderMarkdown(displayContent);
-    const result = { html, isShort };
-    cardCache.set(displayContent, result);
-    return result;
+const { html } = await renderMarkdown(displayContent);
+const result = { html, isShort };
+cardCache.set(displayContent, result);
+return result;
 ```
 
 ---
@@ -272,13 +270,17 @@ import { NoteFullContent } from "./NoteFullContent";
 Find the usage (check current line count with a read) and change:
 
 ```tsx
-{expanded && <NoteExpanded path={note.path} onPin={() => {}} onEdit={onEdit} />}
+{
+  expanded && <NoteExpanded path={note.path} onPin={() => {}} onEdit={onEdit} />;
+}
 ```
 
 to:
 
 ```tsx
-{expanded && <NoteFullContent path={note.path} onPin={() => {}} onEdit={onEdit} />}
+{
+  expanded && <NoteFullContent path={note.path} onPin={() => {}} onEdit={onEdit} />;
+}
 ```
 
 ---
@@ -316,13 +318,13 @@ Common issues to catch:
 
 ## Summary of changes
 
-| File | Change |
-|------|--------|
-| `src/atoms/store.ts` | Narrow `cardCache` type; remove H1 extraction from `noteCardAtom` |
-| `src/components/NoteFullContent.tsx` | **New file** — exported expanded note renderer with action buttons |
-| `src/components/NoteRow.tsx` | Remove title state and `NoteExpanded`; simplify `NoteCardPreview`; conditional expanded render inside card |
-| `src/components/NoteExpanded.tsx` | **Deleted** |
-| `src/components/PinnedNote.tsx` | Replace `NoteExpanded` import/usage with `NoteFullContent` |
+| File                                 | Change                                                                                                     |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `src/atoms/store.ts`                 | Narrow `cardCache` type; remove H1 extraction from `noteCardAtom`                                          |
+| `src/components/NoteFullContent.tsx` | **New file** — exported expanded note renderer with action buttons                                         |
+| `src/components/NoteRow.tsx`         | Remove title state and `NoteExpanded`; simplify `NoteCardPreview`; conditional expanded render inside card |
+| `src/components/NoteExpanded.tsx`    | **Deleted**                                                                                                |
+| `src/components/PinnedNote.tsx`      | Replace `NoteExpanded` import/usage with `NoteFullContent`                                                 |
 
 ## What is NOT in scope
 

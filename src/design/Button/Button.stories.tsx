@@ -9,19 +9,6 @@ export default meta;
 
 type Story = StoryObj<typeof Button>;
 
-const PlusIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 14 14"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
 export const AllVariants: Story = {
   render: () => (
     <div className="flex gap-3 p-4">
@@ -50,17 +37,59 @@ export const Sizes: Story = {
   ),
 };
 
-export const WithIcon: Story = {
+export const WithLeadingIcon: Story = {
   render: () => (
     <div className="flex gap-3 p-4">
-      <Button variant="ghost">
-        <PlusIcon />
-        Add item
-      </Button>
-      <Button variant="secondary">
-        <PlusIcon />
+      <Button variant="primary" icon="plus">
         New note
       </Button>
+      <Button variant="secondary" icon="save">
+        Save
+      </Button>
+      <Button variant="ghost" icon="edit">
+        Edit
+      </Button>
+    </div>
+  ),
+};
+
+export const WithTrailingIcon: Story = {
+  render: () => (
+    <div className="flex gap-3 p-4">
+      <Button variant="secondary" iconRight="external-link">
+        View on GitHub
+      </Button>
+    </div>
+  ),
+};
+
+export const IconOnly: Story = {
+  render: () => (
+    <div className="flex gap-2 p-4">
+      <Button variant="ghost" icon="edit" iconOnly aria-label="Edit" />
+      <Button variant="ghost" icon="trash" iconOnly aria-label="Delete" />
+      <Button variant="ghost" icon="close" iconOnly aria-label="Close" />
+    </div>
+  ),
+};
+
+export const Loading: Story = {
+  render: () => (
+    <div className="flex gap-3 p-4">
+      <Button variant="primary" loading>
+        Saving…
+      </Button>
+      <Button variant="secondary" loading>
+        Loading…
+      </Button>
+    </div>
+  ),
+};
+
+export const LoadingIconOnly: Story = {
+  render: () => (
+    <div className="flex gap-2 p-4">
+      <Button variant="ghost" iconOnly loading aria-label="Saving" />
     </div>
   ),
 };
@@ -87,22 +116,6 @@ export const KeyboardFocus: Story = {
       <p className="text-sm text-paper-dim mb-2">
         Tab to the buttons below to see focus-visible outlines:
       </p>
-      <Button variant="primary">Primary</Button>
-      <Button variant="secondary">Secondary</Button>
-      <Button variant="ghost">Ghost</Button>
-    </div>
-  ),
-};
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => (
-    <div className="flex gap-3 bg-base p-4">
       <Button variant="primary">Primary</Button>
       <Button variant="secondary">Secondary</Button>
       <Button variant="ghost">Ghost</Button>

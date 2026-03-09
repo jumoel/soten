@@ -86,24 +86,3 @@ export const Sticky: Story = {
     </div>
   ),
 };
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => (
-    <div className="bg-base">
-      <TopBar
-        left={<Text variant="h3">Soten</Text>}
-        right={
-          <Button variant="primary" size="sm">
-            New note
-          </Button>
-        }
-      />
-    </div>
-  ),
-};

@@ -140,30 +140,3 @@ export const NoToggle: Story = {
     </div>
   ),
 };
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => {
-    const [collapsed, setCollapsed] = useState(true);
-    return (
-      <div className="bg-base p-4 max-w-lg flex flex-col gap-4">
-        <MarkdownCard
-          html={longHtml}
-          collapsed={collapsed}
-          onToggle={() => setCollapsed((c) => !c)}
-          timestamp="Mon 9 Mar 2026 · 14:32"
-          actions={
-            <Button variant="ghost" size="sm" aria-label="Edit">
-              Edit
-            </Button>
-          }
-        />
-      </div>
-    );
-  },
-};

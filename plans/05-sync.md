@@ -27,7 +27,9 @@ have preserved the offline indicator. Ensure the new TopBar includes:
 ```tsx
 const online = useAtomValue(onlineAtom);
 // ...
-{!online && <Text variant="meta">offline</Text>}
+{
+  !online && <Text variant="meta">offline</Text>;
+}
 ```
 
 No new atom or component needed. The `onlineAtom` already exists and is reactive.
@@ -51,21 +53,35 @@ In the new `TopBar.tsx`:
 ```tsx
 const gitWorking = useAtomValue(gitWorkingAtom);
 // ...
-{gitWorking && <LoadingSpinner size="sm" />}
+{
+  gitWorking && <LoadingSpinner size="sm" />;
+}
 ```
 
 Add a `size` prop to `LoadingSpinner` if it doesn't already have one, or use a small inline
 spinner:
 
 ```tsx
-{gitWorking && (
-  <svg className="animate-spin h-4 w-4 text-muted" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10"
-            stroke="currentColor" strokeWidth="4" fill="none" />
-    <path className="opacity-75" fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-  </svg>
-)}
+{
+  gitWorking && (
+    <svg className="animate-spin h-4 w-4 text-muted" viewBox="0 0 24 24">
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+        fill="none"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
+  );
+}
 ```
 
 ### Where to set `gitWorkingAtom`
@@ -98,15 +114,15 @@ running simultaneously).
 
 Wrap the following operations with `withGitWorking`:
 
-| Call site | Function |
-|---|---|
-| `src/lib/autosave.ts` | `autosave()` — the `checkoutBranch` + `commitFile` + push |
-| `src/lib/draft-operations.ts` | `saveDraft()` — the squash merge + push |
-| `src/lib/draft-operations.ts` | `discardDraft()` — the branch delete + push |
-| `src/atoms/machine.ts` | `cloneAndLoad()` — clone/pull operations |
-| `src/atoms/sync.ts` | `backgroundSync()` — pull + push |
-| `src/atoms/draft-recovery.ts` | `recoverDrafts()` — listing branches |
-| `src/components/TopBar.tsx` | `handleNewNote()` — createBranch + checkoutBranch |
+| Call site                     | Function                                                  |
+| ----------------------------- | --------------------------------------------------------- |
+| `src/lib/autosave.ts`         | `autosave()` — the `checkoutBranch` + `commitFile` + push |
+| `src/lib/draft-operations.ts` | `saveDraft()` — the squash merge + push                   |
+| `src/lib/draft-operations.ts` | `discardDraft()` — the branch delete + push               |
+| `src/atoms/machine.ts`        | `cloneAndLoad()` — clone/pull operations                  |
+| `src/atoms/sync.ts`           | `backgroundSync()` — pull + push                          |
+| `src/atoms/draft-recovery.ts` | `recoverDrafts()` — listing branches                      |
+| `src/components/TopBar.tsx`   | `handleNewNote()` — createBranch + checkoutBranch         |
 
 Example for autosave:
 
@@ -137,10 +153,7 @@ Added to `src/worker/protocol.ts`:
 New function in `src/worker/repo.worker.ts`:
 
 ```ts
-async function push(
-  user: { username: string; token: string },
-  ref?: string,
-): Promise<void> {
+async function push(user: { username: string; token: string }, ref?: string): Promise<void> {
   const { git, http } = await getGit();
   await git.push({
     fs,
@@ -448,21 +461,21 @@ export const backgroundSync = fullSync;
 
 ## File change summary
 
-| File | Action |
-|---|---|
-| `src/atoms/store.ts` | Add `gitWorkingAtom` |
-| `src/atoms/globals.ts` | Re-export `gitWorkingAtom` |
-| `src/lib/git-status.ts` | New — `withGitWorking` helper |
-| `src/lib/push.ts` | New — `pushIfOnline` helper |
-| `src/lib/autosave.ts` | Wrap in `withGitWorking`, add `pushIfOnline` after commit |
+| File                          | Action                                                          |
+| ----------------------------- | --------------------------------------------------------------- |
+| `src/atoms/store.ts`          | Add `gitWorkingAtom`                                            |
+| `src/atoms/globals.ts`        | Re-export `gitWorkingAtom`                                      |
+| `src/lib/git-status.ts`       | New — `withGitWorking` helper                                   |
+| `src/lib/push.ts`             | New — `pushIfOnline` helper                                     |
+| `src/lib/autosave.ts`         | Wrap in `withGitWorking`, add `pushIfOnline` after commit       |
 | `src/lib/draft-operations.ts` | Wrap in `withGitWorking`, add `pushIfOnline` after save/discard |
-| `src/lib/online.ts` | Call `fullSync` instead of `backgroundSync` on reconnect |
-| `src/atoms/sync.ts` | Extend to push drafts + main before pulling |
-| `src/worker/protocol.ts` | Add `push` message type |
-| `src/worker/repo.worker.ts` | Add `push` handler function |
-| `src/worker/client.ts` | Add `push` client method |
-| `src/components/TopBar.tsx` | Add git working spinner, ensure offline indicator preserved |
-| `src/components/TopBar.tsx` | Wrap `handleNewNote` in `withGitWorking` |
+| `src/lib/online.ts`           | Call `fullSync` instead of `backgroundSync` on reconnect        |
+| `src/atoms/sync.ts`           | Extend to push drafts + main before pulling                     |
+| `src/worker/protocol.ts`      | Add `push` message type                                         |
+| `src/worker/repo.worker.ts`   | Add `push` handler function                                     |
+| `src/worker/client.ts`        | Add `push` client method                                        |
+| `src/components/TopBar.tsx`   | Add git working spinner, ensure offline indicator preserved     |
+| `src/components/TopBar.tsx`   | Wrap `handleNewNote` in `withGitWorking`                        |
 
 ## What does not change
 

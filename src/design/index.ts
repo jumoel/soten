@@ -1,3 +1,15 @@
+export { Icon } from "./Icon/Icon";
+export type { IconProps, IconName } from "./Icon/Icon";
+
+export { Link } from "./Link/Link";
+export type { LinkProps } from "./Link/Link";
+
+export { Alert } from "./Alert/Alert";
+export type { AlertProps } from "./Alert/Alert";
+
+export { AppShell } from "./AppShell/AppShell";
+export type { AppShellProps } from "./AppShell/AppShell";
+
 export { Box } from "./Box/Box";
 export type { BoxProps } from "./Box/Box";
 

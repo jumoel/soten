@@ -64,6 +64,7 @@ export type SelectProps = {
 ### Class mappings
 
 **Base input classes:**
+
 ```
 bg-surface border border-edge-2 rounded-md text-paper
 focus:outline-2 focus:outline-accent focus:border-transparent
@@ -75,8 +76,8 @@ trailing SVG positioned absolutely (same pattern as SearchField's icons).
 
 **Size classes:**
 
-| Size | Classes |
-|---|---|
+| Size | Classes                  |
+| ---- | ------------------------ |
 | `sm` | `pl-2 pr-7 py-1 text-xs` |
 | `md` | `pl-3 pr-8 py-2 text-sm` |
 
@@ -90,6 +91,7 @@ Use static lookup maps — no template strings.
 ### Chevron icon
 
 A small inline SVG chevron-down, absolutely positioned on the right side of the select:
+
 - Position: `absolute right-2 top-1/2 -translate-y-1/2`
 - Appearance: `text-muted pointer-events-none` `aria-hidden="true"`
 - Size: 10×10 for `sm`, 12×12 for `md`
@@ -105,14 +107,14 @@ A small inline SVG chevron-down, absolutely positioned on the right side of the 
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `Default` | Select with 3 options, md size |
-| `Small` | `size="sm"` variant |
-| `WithVisibleLabel` | `labelVisible={true}` |
-| `Disabled` | Disabled state |
-| `ManyOptions` | 10+ options to verify scroll behaviour |
-| `DarkMode` | On dark background |
+| Story              | What it shows                          |
+| ------------------ | -------------------------------------- |
+| `Default`          | Select with 3 options, md size         |
+| `Small`            | `size="sm"` variant                    |
+| `WithVisibleLabel` | `labelVisible={true}`                  |
+| `Disabled`         | Disabled state                         |
+| `ManyOptions`      | 10+ options to verify scroll behaviour |
+| `DarkMode`         | On dark background                     |
 
 ---
 
@@ -158,17 +160,17 @@ absolute z-30 min-w-48 border border-edge rounded-md bg-surface
 
 **Alignment classes (static map):**
 
-| Align | Classes |
-|---|---|
-| `start` | `left-0` |
-| `end` | `right-0` |
+| Align   | Classes   |
+| ------- | --------- |
+| `start` | `left-0`  |
+| `end`   | `right-0` |
 
 **Side classes (static map):**
 
-| Side | Classes |
-|---|---|
-| `bottom` | `top-full mt-1` |
-| `top` | `bottom-full mb-1` |
+| Side     | Classes            |
+| -------- | ------------------ |
+| `bottom` | `top-full mt-1`    |
+| `top`    | `bottom-full mb-1` |
 
 ### Behaviour
 
@@ -195,14 +197,14 @@ absolute z-30 min-w-48 border border-edge rounded-md bg-surface
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `Default` | Button trigger with a simple list panel, bottom-end aligned |
-| `AlignStart` | `align="start"` |
-| `SideTop` | `side="top"` — panel appears above trigger |
-| `WithActions` | Panel containing Button components — verifies click-through works |
-| `ControlledToggle` | Interactive toggle with local `useState` |
-| `DarkMode` | On dark background |
+| Story              | What it shows                                                     |
+| ------------------ | ----------------------------------------------------------------- |
+| `Default`          | Button trigger with a simple list panel, bottom-end aligned       |
+| `AlignStart`       | `align="start"`                                                   |
+| `SideTop`          | `side="top"` — panel appears above trigger                        |
+| `WithActions`      | Panel containing Button components — verifies click-through works |
+| `ControlledToggle` | Interactive toggle with local `useState`                          |
+| `DarkMode`         | On dark background                                                |
 
 ---
 
@@ -234,6 +236,7 @@ export type TextareaProps = {
 ### Class mappings
 
 **Base classes:**
+
 ```
 w-full rounded-md border border-edge-2 bg-surface text-paper resize-none
 placeholder:text-muted
@@ -245,8 +248,8 @@ fills its container width.
 
 **Size classes:**
 
-| Size | Classes |
-|---|---|
+| Size | Classes             |
+| ---- | ------------------- |
 | `sm` | `px-3 py-2 text-xs` |
 | `md` | `px-4 py-3 text-sm` |
 
@@ -268,16 +271,16 @@ fills its container width.
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `Default` | Empty textarea, md size, 8 rows |
-| `WithContent` | Pre-filled with sample markdown text |
-| `Mono` | `mono={true}` — monospace font for code/markdown |
-| `Small` | `size="sm"` variant |
-| `WithVisibleLabel` | `labelVisible={true}` |
-| `Disabled` | Disabled state |
-| `FullHeight` | Inside a fixed-height container with `className="flex-1"` |
-| `DarkMode` | On dark background |
+| Story              | What it shows                                             |
+| ------------------ | --------------------------------------------------------- |
+| `Default`          | Empty textarea, md size, 8 rows                           |
+| `WithContent`      | Pre-filled with sample markdown text                      |
+| `Mono`             | `mono={true}` — monospace font for code/markdown          |
+| `Small`            | `size="sm"` variant                                       |
+| `WithVisibleLabel` | `labelVisible={true}`                                     |
+| `Disabled`         | Disabled state                                            |
+| `FullHeight`       | Inside a fixed-height container with `className="flex-1"` |
+| `DarkMode`         | On dark background                                        |
 
 ---
 
@@ -323,6 +326,7 @@ npm run build-storybook
 ```
 
 Common issues to catch:
+
 - `useId()` requires React 18+ import — already available in this project
 - `appearance-none` on `<select>` may need vendor prefixes — Tailwind handles this
 - `aria-label` missing on icon-only elements — ESLint jsx-a11y rule
@@ -332,12 +336,12 @@ Common issues to catch:
 
 ## Summary
 
-| Component | File | Storybook title |
-|---|---|---|
-| Select | `src/design/Select/Select.tsx` | `Design/Select` |
-| Popover | `src/design/Popover/Popover.tsx` | `Design/Popover` |
-| Textarea | `src/design/Textarea/Textarea.tsx` | `Design/Textarea` |
-| Barrel | `src/design/index.ts` | — |
+| Component | File                               | Storybook title   |
+| --------- | ---------------------------------- | ----------------- |
+| Select    | `src/design/Select/Select.tsx`     | `Design/Select`   |
+| Popover   | `src/design/Popover/Popover.tsx`   | `Design/Popover`  |
+| Textarea  | `src/design/Textarea/Textarea.tsx` | `Design/Textarea` |
+| Barrel    | `src/design/index.ts`              | —                 |
 
 ## What is NOT in scope
 

@@ -173,10 +173,10 @@ is valid (the note is expanded in the reference panel while its edit is open in 
 
 ## File change summary
 
-| File | Action |
-|---|---|
-| `src/atoms/drafts.ts` | Add `openExistingDraft` function |
-| `src/atoms/globals.ts` | Re-export `openExistingDraft` |
+| File                                | Action                                           |
+| ----------------------------------- | ------------------------------------------------ |
+| `src/atoms/drafts.ts`               | Add `openExistingDraft` function                 |
+| `src/atoms/globals.ts`              | Re-export `openExistingDraft`                    |
 | `src/components/ReferencePanel.tsx` | Wire `onEdit` to `NoteExpanded` and `PinnedNote` |
 
 All other files from Phase 2 are unchanged. The `EditorPane`, `DraftTray`, autosave, save, and

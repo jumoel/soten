@@ -79,22 +79,3 @@ export const AsSemanticElement: Story = {
     </div>
   ),
 };
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => (
-    <div className="flex gap-4 bg-base p-4">
-      <Box surface="surface" border="edge" padding="card" rounded>
-        surface=surface
-      </Box>
-      <Box surface="surface-2" border="edge-2" padding="card" rounded>
-        surface=surface-2
-      </Box>
-    </div>
-  ),
-};

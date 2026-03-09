@@ -65,20 +65,3 @@ export const FullWidth: Story = {
     );
   },
 };
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => {
-    const [value, setValue] = useState("dark mode search");
-    return (
-      <div className="bg-base p-4 w-80">
-        <SearchField value={value} onChange={setValue} label="Search" placeholder="Search..." />
-      </div>
-    );
-  },
-};

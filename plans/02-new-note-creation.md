@@ -76,9 +76,9 @@ New file: `src/atoms/drafts.ts`
 import { atom } from "jotai";
 
 export type Draft = {
-  timestamp: string;     // e.g. "1709123456789"
-  content: string;       // raw markdown being edited
-  isNew: boolean;        // true = no file on main with this name
+  timestamp: string; // e.g. "1709123456789"
+  content: string; // raw markdown being edited
+  isNew: boolean; // true = no file on main with this name
   minimized: boolean;
 };
 
@@ -171,7 +171,7 @@ The `RootSearchParams` from Phase 1 gains a `draft` field:
 type RootSearchParams = {
   q?: string;
   note?: string;
-  draft?: string;  // timestamp of the active (non-minimized) draft
+  draft?: string; // timestamp of the active (non-minimized) draft
 };
 ```
 
@@ -226,11 +226,7 @@ async function checkoutBranch(name: string): Promise<void> {
   await git.checkout({ fs, dir: REPO_DIR, ref: name });
 }
 
-async function commitFile(
-  filepath: string,
-  content: string,
-  message: string,
-): Promise<void> {
+async function commitFile(filepath: string, content: string, message: string): Promise<void> {
   const { git } = await getGit();
   const enc = new TextEncoder();
   const fullpath = `${REPO_DIR}/${filepath}`;
@@ -307,10 +303,7 @@ async function listDraftBranches(): Promise<Array<{ timestamp: string; content: 
   return drafts;
 }
 
-async function readFileFromBranch(
-  branch: string,
-  filepath: string,
-): Promise<string | null> {
+async function readFileFromBranch(branch: string, filepath: string): Promise<string | null> {
   const { git } = await getGit();
   try {
     const commitOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: branch });
@@ -738,11 +731,7 @@ export function ResizeHandle({ onDrag }: ResizeHandleProps) {
 
 ```tsx
 export function AppShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="w-screen h-screen flex flex-col antialiased bg-base">
-      {children}
-    </div>
-  );
+  return <div className="w-screen h-screen flex flex-col antialiased bg-base">{children}</div>;
 }
 ```
 
@@ -752,9 +741,9 @@ it depends on `activeDraftAtom` and `useMediaQuery`, which are React hooks.
 ### Updated `app.tsx` ready-state rendering
 
 ```tsx
-{(machine.phase === "ready" || machine.phase === "selectingRepo") && (
-  <ReadyLayout />
-)}
+{
+  (machine.phase === "ready" || machine.phase === "selectingRepo") && <ReadyLayout />;
+}
 ```
 
 New `ReadyLayout` component (inline in `app.tsx` or separate file):
@@ -799,7 +788,11 @@ function ReadyLayout() {
         }}
       >
         <EditorPane draft={activeDraft} />
-        <ResizeHandle onDrag={(delta) => { /* update splitRatio */ }} />
+        <ResizeHandle
+          onDrag={(delta) => {
+            /* update splitRatio */
+          }}
+        />
         <div className="overflow-hidden">
           <Outlet />
         </div>
@@ -871,26 +864,26 @@ const handleNewNote = async () => {
 
 ## File change summary
 
-| File | Action |
-|---|---|
-| `src/atoms/drafts.ts` | New — Draft type, atoms, action functions |
-| `src/atoms/globals.ts` | Add draft re-exports |
-| `src/lib/autosave.ts` | New — debounced autosave logic |
-| `src/lib/draft-operations.ts` | New — save and discard flows |
-| `src/lib/use-media-query.ts` | New — responsive breakpoint hook |
-| `src/lib/use-local-storage.ts` | New — localStorage-backed state hook |
-| `src/lib/note-paths.ts` | Unchanged from Phase 1 |
-| `src/worker/protocol.ts` | Add 7 new message types |
-| `src/worker/repo.worker.ts` | Add 7 handler functions |
-| `src/worker/client.ts` | Add 7 client methods |
-| `src/components/EditorPane.tsx` | New |
-| `src/components/DraftTray.tsx` | New (includes DraftTrayEntry) |
-| `src/components/ResizeHandle.tsx` | New |
-| `src/components/TopBar.tsx` | Wire `handleNewNote` |
-| `src/app.tsx` | Add `ReadyLayout` with two-pane logic |
-| `src/router.tsx` | Add `draft` to `RootSearchParams` |
-| `src/i18n/en.ts` | Add draft keys |
-| `src/i18n/da.ts` | Add draft keys |
+| File                              | Action                                    |
+| --------------------------------- | ----------------------------------------- |
+| `src/atoms/drafts.ts`             | New — Draft type, atoms, action functions |
+| `src/atoms/globals.ts`            | Add draft re-exports                      |
+| `src/lib/autosave.ts`             | New — debounced autosave logic            |
+| `src/lib/draft-operations.ts`     | New — save and discard flows              |
+| `src/lib/use-media-query.ts`      | New — responsive breakpoint hook          |
+| `src/lib/use-local-storage.ts`    | New — localStorage-backed state hook      |
+| `src/lib/note-paths.ts`           | Unchanged from Phase 1                    |
+| `src/worker/protocol.ts`          | Add 7 new message types                   |
+| `src/worker/repo.worker.ts`       | Add 7 handler functions                   |
+| `src/worker/client.ts`            | Add 7 client methods                      |
+| `src/components/EditorPane.tsx`   | New                                       |
+| `src/components/DraftTray.tsx`    | New (includes DraftTrayEntry)             |
+| `src/components/ResizeHandle.tsx` | New                                       |
+| `src/components/TopBar.tsx`       | Wire `handleNewNote`                      |
+| `src/app.tsx`                     | Add `ReadyLayout` with two-pane logic     |
+| `src/router.tsx`                  | Add `draft` to `RootSearchParams`         |
+| `src/i18n/en.ts`                  | Add draft keys                            |
+| `src/i18n/da.ts`                  | Add draft keys                            |
 
 ## What does not change
 

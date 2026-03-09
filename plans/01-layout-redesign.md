@@ -113,7 +113,9 @@ export function GearPopover({ selectedRepo }: GearPopoverProps) {
   // close on Escape
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
@@ -124,8 +126,10 @@ export function GearPopover({ selectedRepo }: GearPopoverProps) {
         <GearIcon />
       </Button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-30 min-w-48 border border-edge
-                        rounded bg-surface px-3 py-2 space-y-2 shadow-sm">
+        <div
+          className="absolute right-0 top-full mt-1 z-30 min-w-48 border border-edge
+                        rounded bg-surface px-3 py-2 space-y-2 shadow-sm"
+        >
           {selectedRepo && (
             <Text variant="mono" as="p">
               {selectedRepo.owner}/{selectedRepo.repo}
@@ -134,7 +138,14 @@ export function GearPopover({ selectedRepo }: GearPopoverProps) {
           <NavLink to="/settings" onClick={() => setOpen(false)}>
             {t("menu.settings")}
           </NavLink>
-          <Button variant="link" size="sm" onClick={() => { setOpen(false); send({ type: "LOGOUT" }); }}>
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => {
+              setOpen(false);
+              send({ type: "LOGOUT" });
+            }}
+          >
             {t("auth.logout")}
           </Button>
         </div>
@@ -210,13 +221,15 @@ export function ReferencePanel() {
               expanded={expandedPath === note.path}
               onExpand={() => {
                 setExpandedPath(expandedPath === note.path ? null : note.path);
-                navigate({ search: (prev) => ({
-                  ...prev,
-                  note: pathToTimestamp(note.path) ?? undefined,
-                }) });
+                navigate({
+                  search: (prev) => ({
+                    ...prev,
+                    note: pathToTimestamp(note.path) ?? undefined,
+                  }),
+                });
               }}
               onPin={() => {
-                setPinnedPaths((ps) => ps.includes(note.path) ? ps : [...ps, note.path]);
+                setPinnedPaths((ps) => (ps.includes(note.path) ? ps : [...ps, note.path]));
                 setExpandedPath(null);
               }}
             />
@@ -329,7 +342,7 @@ Phase 3).
 type NoteExpandedProps = {
   path: string;
   onPin: () => void;
-  onEdit?: () => void;   // wired in Phase 3
+  onEdit?: () => void; // wired in Phase 3
 };
 
 export function NoteExpanded({ path, onPin, onEdit }: NoteExpandedProps) {
@@ -385,9 +398,7 @@ export function PinnedZone({ notes, onUnpin }: PinnedZoneProps) {
           key={note.path}
           note={note}
           expanded={expandedPath === note.path}
-          onToggle={() => setExpandedPath(
-            expandedPath === note.path ? null : note.path
-          )}
+          onToggle={() => setExpandedPath(expandedPath === note.path ? null : note.path)}
           onUnpin={() => onUnpin(note.path)}
         />
       ))}
@@ -414,7 +425,9 @@ export function PinnedNote({ note, expanded, onToggle, onUnpin }: PinnedNoteProp
   return (
     <li className="border-b border-edge">
       <div className="flex items-center px-4 py-2 gap-2">
-        <Text variant="meta" as="span">📌</Text>
+        <Text variant="meta" as="span">
+          📌
+        </Text>
         <button
           className="flex-1 text-left text-sm font-medium text-paper truncate"
           onClick={onToggle}
@@ -429,9 +442,7 @@ export function PinnedNote({ note, expanded, onToggle, onUnpin }: PinnedNoteProp
         </Button>
       </div>
 
-      {expanded && (
-        <NoteExpanded path={note.path} onPin={() => {}} />
-      )}
+      {expanded && <NoteExpanded path={note.path} onPin={() => {}} />}
     </li>
   );
 }
@@ -443,10 +454,10 @@ The `NoteListEntry` type already exists in `src/atoms/store.ts`:
 
 ```ts
 export type NoteListEntry = {
-  path: string;          // full LightningFS path, e.g. "/soten/1702739869049.md"
-  relativePath: string;  // e.g. "1702739869049.md"
-  title: string;         // formatted display title
-  date: Date | null;     // parsed from filename
+  path: string; // full LightningFS path, e.g. "/soten/1702739869049.md"
+  relativePath: string; // e.g. "1702739869049.md"
+  title: string; // formatted display title
+  date: Date | null; // parsed from filename
 };
 ```
 
@@ -498,19 +509,13 @@ const indexRoute = createRoute({
     q: typeof search.q === "string" ? search.q : undefined,
     note: typeof search.note === "string" ? search.note : undefined,
   }),
-  component: lazyRouteComponent(
-    () => import("./routes/front.tsx"),
-    "FrontPage",
-  ),
+  component: lazyRouteComponent(() => import("./routes/front.tsx"), "FrontPage"),
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "settings",
-  component: lazyRouteComponent(
-    () => import("./routes/settings.tsx"),
-    "SettingsPage",
-  ),
+  component: lazyRouteComponent(() => import("./routes/settings.tsx"), "SettingsPage"),
 });
 
 const routeTree = rootRoute.addChildren([indexRoute, settingsRoute]);
@@ -529,6 +534,7 @@ declare module "@tanstack/react-router" {
 ```
 
 Changes from current:
+
 - `noteRoute` and `noteViewRoute` are removed (notes no longer have their own route)
 - `indexRoute` gains `validateSearch` for typed `?q` and `?note` params
 - The `RootSearchParams` type is exported for use in components
@@ -586,7 +592,9 @@ export function App() {
   const navigate = useNavigate();
 
   // theme effect unchanged
-  useEffect(() => { /* same as current */ }, [theme]);
+  useEffect(() => {
+    /* same as current */
+  }, [theme]);
 
   useEffect(() => {
     if (machine.phase === "selectingRepo") {
@@ -600,15 +608,11 @@ export function App() {
     <AppShell>
       {showChrome && <TopBar />}
       {machine.phase === "initializing" && <LoadingSpinner />}
-      {machine.phase === "unauthenticated" && (
-        <UnauthenticatedView authError={machine.authError} />
-      )}
+      {machine.phase === "unauthenticated" && <UnauthenticatedView authError={machine.authError} />}
       {machine.phase === "error" && (
         <AuthError message={machine.message} onRetry={() => send({ type: "RETRY" })} />
       )}
-      {(machine.phase === "fetchingRepos" || machine.phase === "cloningRepo") && (
-        <LoadingSpinner />
-      )}
+      {(machine.phase === "fetchingRepos" || machine.phase === "cloningRepo") && <LoadingSpinner />}
       {(machine.phase === "ready" || machine.phase === "selectingRepo") && <Outlet />}
     </AppShell>
   );
@@ -622,11 +626,7 @@ own padding. `PageContainer` is retained for the settings page.
 
 ```tsx
 export function AppShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="w-screen h-screen flex flex-col antialiased bg-base">
-      {children}
-    </div>
-  );
+  return <div className="w-screen h-screen flex flex-col antialiased bg-base">{children}</div>;
 }
 ```
 
@@ -646,35 +646,35 @@ New keys in `src/i18n/en.ts`:
 
 ## Atoms removed
 
-| Atom | Reason |
-|---|---|
-| `pageSizeAtom` | No more pagination |
+| Atom           | Reason                                                               |
+| -------------- | -------------------------------------------------------------------- |
+| `pageSizeAtom` | No more pagination                                                   |
 | `noteCardAtom` | Cards replaced by dense rows; full rendering uses `renderedNoteAtom` |
 
 The `cardCache` and `clearCardCache()` in `store.ts` are also removed.
 
 ## Components removed
 
-| File | Reason |
-|---|---|
-| `src/components/NoteCard.tsx` | Replaced by `NoteRow` |
-| `src/components/NoteCardSkeleton.tsx` | No longer needed |
-| `src/components/NoteList.tsx` | Logic moved into `ReferencePanel` |
-| `src/components/Menu.tsx` | Replaced by `GearPopover` |
-| `src/components/ds/Overlay.tsx` | Only used by `Menu`; `GearPopover` uses click-outside instead |
-| `src/components/ds/MenuPanel.tsx` | Only used by `Menu` |
+| File                                  | Reason                                                        |
+| ------------------------------------- | ------------------------------------------------------------- |
+| `src/components/NoteCard.tsx`         | Replaced by `NoteRow`                                         |
+| `src/components/NoteCardSkeleton.tsx` | No longer needed                                              |
+| `src/components/NoteList.tsx`         | Logic moved into `ReferencePanel`                             |
+| `src/components/Menu.tsx`             | Replaced by `GearPopover`                                     |
+| `src/components/ds/Overlay.tsx`       | Only used by `Menu`; `GearPopover` uses click-outside instead |
+| `src/components/ds/MenuPanel.tsx`     | Only used by `Menu`                                           |
 
 ## Components unchanged
 
-| File | Reason |
-|---|---|
-| `src/components/BackLink.tsx` | Still used by settings page |
-| `src/components/LoadingSpinner.tsx` | Still used during loading phases |
-| `src/components/ProseContent.tsx` | Used by `NoteExpanded` |
-| `src/components/FrontmatterTable.tsx` | Used by `NoteExpanded` |
-| `src/components/UnauthenticatedView.tsx` | Unchanged |
-| `src/components/AuthError.tsx` | Unchanged |
-| `src/components/RepoSelector.tsx` | Used by settings page |
+| File                                     | Reason                           |
+| ---------------------------------------- | -------------------------------- |
+| `src/components/BackLink.tsx`            | Still used by settings page      |
+| `src/components/LoadingSpinner.tsx`      | Still used during loading phases |
+| `src/components/ProseContent.tsx`        | Used by `NoteExpanded`           |
+| `src/components/FrontmatterTable.tsx`    | Used by `NoteExpanded`           |
+| `src/components/UnauthenticatedView.tsx` | Unchanged                        |
+| `src/components/AuthError.tsx`           | Unchanged                        |
+| `src/components/RepoSelector.tsx`        | Used by settings page            |
 
 ## Settings page update
 
@@ -704,33 +704,33 @@ Removed: `noteCardAtom`, `pageSizeAtom`.
 
 ## File change summary
 
-| File | Action |
-|---|---|
-| `src/components/TopBar.tsx` | Rewrite |
-| `src/components/GearPopover.tsx` | New |
-| `src/components/SearchBar.tsx` | New (extracted from TopBar) |
-| `src/components/ReferencePanel.tsx` | New |
-| `src/components/NoteRow.tsx` | New |
-| `src/components/NoteExpanded.tsx` | New |
-| `src/components/PinnedZone.tsx` | New |
-| `src/components/PinnedNote.tsx` | New |
-| `src/lib/note-paths.ts` | New |
-| `src/router.tsx` | Rewrite (remove note route, add search params) |
-| `src/app.tsx` | Simplify (remove Menu, PageContainer wrapper) |
-| `src/routes/front.tsx` | Rewrite (delegate to ReferencePanel) |
-| `src/routes/settings.tsx` | Remove pageSize field |
-| `src/atoms/store.ts` | Add `pinnedNotesAtom`, `expandedNoteAtom`; remove `pageSizeAtom`, `noteCardAtom`, `cardCache` |
-| `src/atoms/globals.ts` | Update re-exports |
-| `src/components/ds/AppShell.tsx` | Change to `h-screen flex flex-col` |
-| `src/i18n/en.ts` | Add new keys, remove pagination keys |
-| `src/i18n/da.ts` | Same key changes |
-| `src/components/NoteCard.tsx` | Delete |
-| `src/components/NoteCardSkeleton.tsx` | Delete |
-| `src/components/NoteList.tsx` | Delete |
-| `src/components/Menu.tsx` | Delete |
-| `src/components/ds/Overlay.tsx` | Delete |
-| `src/components/ds/MenuPanel.tsx` | Delete |
-| `src/routes/note.tsx` | Delete |
+| File                                  | Action                                                                                        |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `src/components/TopBar.tsx`           | Rewrite                                                                                       |
+| `src/components/GearPopover.tsx`      | New                                                                                           |
+| `src/components/SearchBar.tsx`        | New (extracted from TopBar)                                                                   |
+| `src/components/ReferencePanel.tsx`   | New                                                                                           |
+| `src/components/NoteRow.tsx`          | New                                                                                           |
+| `src/components/NoteExpanded.tsx`     | New                                                                                           |
+| `src/components/PinnedZone.tsx`       | New                                                                                           |
+| `src/components/PinnedNote.tsx`       | New                                                                                           |
+| `src/lib/note-paths.ts`               | New                                                                                           |
+| `src/router.tsx`                      | Rewrite (remove note route, add search params)                                                |
+| `src/app.tsx`                         | Simplify (remove Menu, PageContainer wrapper)                                                 |
+| `src/routes/front.tsx`                | Rewrite (delegate to ReferencePanel)                                                          |
+| `src/routes/settings.tsx`             | Remove pageSize field                                                                         |
+| `src/atoms/store.ts`                  | Add `pinnedNotesAtom`, `expandedNoteAtom`; remove `pageSizeAtom`, `noteCardAtom`, `cardCache` |
+| `src/atoms/globals.ts`                | Update re-exports                                                                             |
+| `src/components/ds/AppShell.tsx`      | Change to `h-screen flex flex-col`                                                            |
+| `src/i18n/en.ts`                      | Add new keys, remove pagination keys                                                          |
+| `src/i18n/da.ts`                      | Same key changes                                                                              |
+| `src/components/NoteCard.tsx`         | Delete                                                                                        |
+| `src/components/NoteCardSkeleton.tsx` | Delete                                                                                        |
+| `src/components/NoteList.tsx`         | Delete                                                                                        |
+| `src/components/Menu.tsx`             | Delete                                                                                        |
+| `src/components/ds/Overlay.tsx`       | Delete                                                                                        |
+| `src/components/ds/MenuPanel.tsx`     | Delete                                                                                        |
+| `src/routes/note.tsx`                 | Delete                                                                                        |
 
 ## What does not change
 

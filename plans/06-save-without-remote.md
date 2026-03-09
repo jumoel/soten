@@ -109,14 +109,14 @@ const baseReady: Extract<AppMachine, { phase: "ready" }> = {
 **`src/atoms/machine.test.ts:116-122`** — add `hasRemote: true`:
 
 ```ts
-    store.set(machineAtom, {
-      phase: "ready",
-      user: mockUser,
-      repos: ["acme/notes"],
-      selectedRepo: { owner: "acme", repo: "notes" },
-      filenames: [],
-      hasRemote: true,
-    });
+store.set(machineAtom, {
+  phase: "ready",
+  user: mockUser,
+  repos: ["acme/notes"],
+  selectedRepo: { owner: "acme", repo: "notes" },
+  filenames: [],
+  hasRemote: true,
+});
 ```
 
 ---
@@ -130,24 +130,24 @@ There are three call sites that transition the machine to `phase: "ready"`. Each
 Change:
 
 ```ts
-  const filenames = await worker.readRepoFiles();
-  checkAborted();
+const filenames = await worker.readRepoFiles();
+checkAborted();
 
-  refreshFs();
-  store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames });
+refreshFs();
+store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames });
 ```
 
 to:
 
 ```ts
-  const filenames = await worker.readRepoFiles();
-  checkAborted();
+const filenames = await worker.readRepoFiles();
+checkAborted();
 
-  const hasRemote = await worker.hasRemote();
-  checkAborted();
+const hasRemote = await worker.hasRemote();
+checkAborted();
 
-  refreshFs();
-  store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames, hasRemote });
+refreshFs();
+store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames, hasRemote });
 ```
 
 ### `src/atoms/init.ts:98-107`
@@ -189,14 +189,14 @@ to:
 The localRepo path populates files via fetch, not via git clone — there is no git remote. Hard-code `hasRemote: false`:
 
 ```ts
-  store.set(machineAtom, {
-    phase: "ready",
-    user: { username: "local", token: "no-token", installationId: "0", email: "local@test" },
-    repos: [`local/${repoName}`],
-    selectedRepo: { owner: "local", repo: repoName },
-    filenames,
-    hasRemote: false,
-  });
+store.set(machineAtom, {
+  phase: "ready",
+  user: { username: "local", token: "no-token", installationId: "0", email: "local@test" },
+  repos: [`local/${repoName}`],
+  selectedRepo: { owner: "local", repo: repoName },
+  filenames,
+  hasRemote: false,
+});
 ```
 
 Note: `init.local.ts` doesn't use `worker.hasRemote()` because the local dev path populates files into LightningFS without a real git clone — there is no `.git/config` with remote entries. The value is always `false`.
@@ -271,18 +271,18 @@ The single added line (`if (!machine.hasRemote) return;`) prevents any push atte
 
 ## Summary of changes
 
-| File | Change |
-|------|--------|
-| `src/worker/protocol.ts:28` | Add `{ id; type: "hasRemote" }` to `WorkerRequest` union |
-| `src/worker/repo.worker.ts:102+` | Add `hasRemote()` function + dispatch case |
-| `src/worker/client.ts:46+` | Add `hasRemote()` client method |
-| `src/atoms/store.ts:40-46` | Add `hasRemote: boolean` to `ready` phase |
-| `src/atoms/machine.ts:163-167` | Call `worker.hasRemote()`, pass to machine |
-| `src/atoms/init.ts:98-107` | Call `worker.hasRemote()`, pass to machine |
-| `src/atoms/init.local.ts:29-35` | Hard-code `hasRemote: false` |
-| `src/lib/push.ts:10+` | Add `if (!machine.hasRemote) return;` guard |
-| `src/atoms/store.test.ts:17-23` | Add `hasRemote: true` to test fixture |
-| `src/atoms/machine.test.ts:116-122` | Add `hasRemote: true` to test fixture |
+| File                                | Change                                                   |
+| ----------------------------------- | -------------------------------------------------------- |
+| `src/worker/protocol.ts:28`         | Add `{ id; type: "hasRemote" }` to `WorkerRequest` union |
+| `src/worker/repo.worker.ts:102+`    | Add `hasRemote()` function + dispatch case               |
+| `src/worker/client.ts:46+`          | Add `hasRemote()` client method                          |
+| `src/atoms/store.ts:40-46`          | Add `hasRemote: boolean` to `ready` phase                |
+| `src/atoms/machine.ts:163-167`      | Call `worker.hasRemote()`, pass to machine               |
+| `src/atoms/init.ts:98-107`          | Call `worker.hasRemote()`, pass to machine               |
+| `src/atoms/init.local.ts:29-35`     | Hard-code `hasRemote: false`                             |
+| `src/lib/push.ts:10+`               | Add `if (!machine.hasRemote) return;` guard              |
+| `src/atoms/store.test.ts:17-23`     | Add `hasRemote: true` to test fixture                    |
+| `src/atoms/machine.test.ts:116-122` | Add `hasRemote: true` to test fixture                    |
 
 ## What is NOT in scope
 

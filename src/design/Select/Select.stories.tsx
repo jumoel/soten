@@ -83,26 +83,3 @@ export const ManyOptions: Story = {
     );
   },
 };
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => {
-    const [value, setValue] = useState("apple");
-    return (
-      <div className="bg-base p-4 w-64">
-        <Select
-          value={value}
-          onChange={setValue}
-          options={basicOptions}
-          label="Fruit"
-          labelVisible={true}
-        />
-      </div>
-    );
-  },
-};

@@ -135,30 +135,3 @@ export const ControlledToggle: Story = {
     );
   },
 };
-
-export const DarkMode: Story = {
-  decorators: [
-    (Story) => {
-      document.documentElement.classList.add("dark");
-      return <Story />;
-    },
-  ],
-  render: () => {
-    const [open, setOpen] = useState(false);
-    return (
-      <div className="bg-base p-8 flex justify-end">
-        <Popover
-          trigger={
-            <Button onClick={() => setOpen((o) => !o)} aria-label="Open popover">
-              Open
-            </Button>
-          }
-          open={open}
-          onOpenChange={setOpen}
-        >
-          <SamplePanel />
-        </Popover>
-      </div>
-    );
-  },
-};

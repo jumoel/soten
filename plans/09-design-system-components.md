@@ -70,17 +70,17 @@ type BoxProps<T extends ElementType = "div"> = {
 
 ### Class mappings
 
-| Prop value | Classes |
-|---|---|
-| `surface="base"` | `bg-base` |
-| `surface="surface"` | `bg-surface` |
-| `surface="surface-2"` | `bg-surface-2` |
-| `border="edge"` | `border border-edge` |
-| `border="edge-2"` | `border border-edge-2` |
-| `padding="compact"` | `px-3 py-2` |
-| `padding="card"` | `px-4 py-3` |
-| `padding="page"` | `px-4 sm:px-6` |
-| `rounded={true}` | `rounded-md` |
+| Prop value            | Classes                |
+| --------------------- | ---------------------- |
+| `surface="base"`      | `bg-base`              |
+| `surface="surface"`   | `bg-surface`           |
+| `surface="surface-2"` | `bg-surface-2`         |
+| `border="edge"`       | `border border-edge`   |
+| `border="edge-2"`     | `border border-edge-2` |
+| `padding="compact"`   | `px-3 py-2`            |
+| `padding="card"`      | `px-4 py-3`            |
+| `padding="page"`      | `px-4 sm:px-6`         |
+| `rounded={true}`      | `rounded-md`           |
 
 Defaults: `surface="none"`, `border="none"`, `padding="none"`, `rounded={false}`.
 
@@ -92,14 +92,14 @@ Defaults: `surface="none"`, `border="none"`, `padding="none"`, `rounded={false}`
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `Surface` | All three surface values side by side on `bg-base` background |
-| `Borders` | `edge` vs `edge-2` |
-| `Padding` | `compact`, `card`, `page` with visible content |
-| `Rounded` | Rounded vs flat |
-| `AsSemanticElement` | `as="section"` and `as="aside"` to verify polymorphism |
-| `DarkMode` | Same set on dark background — tokens must auto-invert |
+| Story               | What it shows                                                 |
+| ------------------- | ------------------------------------------------------------- |
+| `Surface`           | All three surface values side by side on `bg-base` background |
+| `Borders`           | `edge` vs `edge-2`                                            |
+| `Padding`           | `compact`, `card`, `page` with visible content                |
+| `Rounded`           | Rounded vs flat                                               |
+| `AsSemanticElement` | `as="section"` and `as="aside"` to verify polymorphism        |
+| `DarkMode`          | Same set on dark background — tokens must auto-invert         |
 
 ---
 
@@ -156,12 +156,12 @@ Defaults: `gap={2}`, `align="stretch"`, `justify="start"`.
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
+| Story        | What it shows                                |
+| ------------ | -------------------------------------------- |
 | `DefaultGap` | Three placeholder items with default `gap-2` |
-| `AllGaps` | Gaps 1–6 in a row, labelled |
-| `Alignment` | `align` prop variants |
-| `AsUl` | `as="ul"` with `<li>` children |
+| `AllGaps`    | Gaps 1–6 in a row, labelled                  |
+| `Alignment`  | `align` prop variants                        |
+| `AsUl`       | `as="ul"` with `<li>` children               |
 
 ---
 
@@ -221,13 +221,13 @@ Defaults: `cols={2}`, `gap={3}`.
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `TwoColumns` | Default `cols={2}` with six placeholder cells |
-| `ThreeColumns` | `cols={3}` |
-| `FourColumns` | `cols={4}` |
+| Story            | What it shows                                                                   |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `TwoColumns`     | Default `cols={2}` with six placeholder cells                                   |
+| `ThreeColumns`   | `cols={3}`                                                                      |
+| `FourColumns`    | `cols={4}`                                                                      |
 | `NarrowViewport` | Use Storybook's viewport addon to show `cols={4}` collapsing to 1 col on mobile |
-| `MixedContent` | Grid with Box children of varying heights (verifies alignment) |
+| `MixedContent`   | Grid with Box children of varying heights (verifies alignment)                  |
 
 ---
 
@@ -238,16 +238,16 @@ rendered element to the semantically appropriate HTML tag.
 
 ### Variants
 
-| Variant | Default element | Classes |
-|---|---|---|
-| `h1` | `h1` | `text-2xl font-semibold leading-tight tracking-tight text-paper` |
-| `h2` | `h2` | `text-lg font-semibold leading-tight tracking-tight text-paper` |
-| `h3` | `h3` | `text-base font-medium leading-tight text-paper` |
-| `h4` | `h4` | `text-sm font-medium leading-tight text-paper` |
-| `body` | `p` | `text-sm font-normal leading-snug text-paper` |
-| `body-dim` | `p` | `text-sm font-normal leading-snug text-paper-dim` |
-| `meta` | `span` | `text-xs font-semibold uppercase tracking-widest text-muted` |
-| `label` | `span` | `text-sm font-medium text-paper` |
+| Variant    | Default element | Classes                                                          |
+| ---------- | --------------- | ---------------------------------------------------------------- |
+| `h1`       | `h1`            | `text-2xl font-semibold leading-tight tracking-tight text-paper` |
+| `h2`       | `h2`            | `text-lg font-semibold leading-tight tracking-tight text-paper`  |
+| `h3`       | `h3`            | `text-base font-medium leading-tight text-paper`                 |
+| `h4`       | `h4`            | `text-sm font-medium leading-tight text-paper`                   |
+| `body`     | `p`             | `text-sm font-normal leading-snug text-paper`                    |
+| `body-dim` | `p`             | `text-sm font-normal leading-snug text-paper-dim`                |
+| `meta`     | `span`          | `text-xs font-semibold uppercase tracking-widest text-muted`     |
+| `label`    | `span`          | `text-sm font-medium text-paper`                                 |
 
 ### API
 
@@ -273,11 +273,11 @@ Defaults: `variant="body"`, element inferred from variant (override with `as`).
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `AllVariants` | All eight variants stacked, labelled with variant name |
+| Story             | What it shows                                              |
+| ----------------- | ---------------------------------------------------------- |
+| `AllVariants`     | All eight variants stacked, labelled with variant name     |
 | `OverrideElement` | `variant="body"` with `as="span"` inline inside a sentence |
-| `DarkMode` | All variants on dark background — contrast must hold |
+| `DarkMode`        | All variants on dark background — contrast must hold       |
 
 ---
 
@@ -307,6 +307,7 @@ type ButtonProps = {
 ### Class mappings
 
 **Primary:**
+
 ```
 bg-accent text-white dark:text-black font-medium rounded-md
 hover:bg-accent-hover
@@ -316,6 +317,7 @@ focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acc
 Size: `px-4 py-2` (md), `px-3 py-1.5 text-sm` (sm).
 
 **Secondary:**
+
 ```
 bg-surface border border-edge text-paper font-medium rounded-md
 hover:bg-surface-2
@@ -325,6 +327,7 @@ focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acc
 Size: `px-4 py-2` (md), `px-3 py-1.5 text-sm` (sm).
 
 **Ghost:**
+
 ```
 text-paper-dim font-medium rounded-md
 hover:bg-surface-2
@@ -345,14 +348,14 @@ background/border-specific hover classes too. Do NOT use `opacity-*`.
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `AllVariants` | Primary, Secondary, Ghost at default (md) size |
-| `Sizes` | Each variant in sm and md |
-| `WithIcon` | Ghost button with leading SVG icon |
-| `Disabled` | All variants in disabled state |
+| Story           | What it shows                                                    |
+| --------------- | ---------------------------------------------------------------- |
+| `AllVariants`   | Primary, Secondary, Ghost at default (md) size                   |
+| `Sizes`         | Each variant in sm and md                                        |
+| `WithIcon`      | Ghost button with leading SVG icon                               |
+| `Disabled`      | All variants in disabled state                                   |
 | `KeyboardFocus` | Visual demonstration of `focus-visible` outline (no mouse hover) |
-| `DarkMode` | All on dark background — Primary must use `dark:text-black` |
+| `DarkMode`      | All on dark background — Primary must use `dark:text-black`      |
 
 ---
 
@@ -368,9 +371,9 @@ type SearchFieldProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  label: string;         // always required — either visible or sr-only
+  label: string; // always required — either visible or sr-only
   labelVisible?: boolean; // default false → label is sr-only
-  id?: string;           // auto-generated if not provided
+  id?: string; // auto-generated if not provided
   className?: string;
 };
 ```
@@ -385,7 +388,7 @@ type SearchFieldProps = {
 - Outer wrapper: `relative flex flex-col gap-1`
 - Label: `text-sm font-medium text-paper` when visible; `sr-only` when not
 - Input: `bg-surface border border-edge-2 rounded-md pl-8 pr-8 py-2 text-sm text-paper
-  placeholder:text-muted focus:outline-2 focus:outline-accent focus:border-transparent w-full`
+placeholder:text-muted focus:outline-2 focus:outline-accent focus:border-transparent w-full`
 - Search icon: absolutely-positioned inside the input on the left (`left-2.5`), `text-muted`,
   `pointer-events-none`, `aria-hidden="true"`
 - Clear button: absolutely-positioned on the right (`right-1.5`), renders only when
@@ -400,13 +403,13 @@ type SearchFieldProps = {
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `Empty` | Default empty state |
-| `WithValue` | Controlled with a pre-filled value — shows clear button |
-| `VisibleLabel` | `labelVisible={true}` |
-| `FullWidth` | Inside a container with `w-full` |
-| `DarkMode` | Input on dark background |
+| Story          | What it shows                                           |
+| -------------- | ------------------------------------------------------- |
+| `Empty`        | Default empty state                                     |
+| `WithValue`    | Controlled with a pre-filled value — shows clear button |
+| `VisibleLabel` | `labelVisible={true}`                                   |
+| `FullWidth`    | Inside a container with `w-full`                        |
+| `DarkMode`     | Input on dark background                                |
 
 ---
 
@@ -422,7 +425,7 @@ type TopBarProps = {
   left?: ReactNode;
   center?: ReactNode;
   right?: ReactNode;
-  sticky?: boolean;    // default false
+  sticky?: boolean; // default false
   as?: "header" | "nav" | "div";
   className?: string;
 };
@@ -462,13 +465,13 @@ grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2 border-b border-edge 
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `WithAllSlots` | App title left, search center, action buttons right |
-| `LeftOnly` | Just a logo/title — center and right empty |
-| `RightOnly` | Just action buttons |
-| `Sticky` | In a tall scrollable container to show sticky behaviour |
-| `DarkMode` | On dark background |
+| Story          | What it shows                                           |
+| -------------- | ------------------------------------------------------- |
+| `WithAllSlots` | App title left, search center, action buttons right     |
+| `LeftOnly`     | Just a logo/title — center and right empty              |
+| `RightOnly`    | Just action buttons                                     |
+| `Sticky`       | In a tall scrollable container to show sticky behaviour |
+| `DarkMode`     | On dark background                                      |
 
 ---
 
@@ -481,6 +484,7 @@ height. This is the critical constraint.
 ### Design constraint — identical rendering
 
 Both states use the same prose wrapper:
+
 ```html
 <div class="prose prose-sm dark:prose-invert">
   <!-- dangerouslySetInnerHTML -->
@@ -488,6 +492,7 @@ Both states use the same prose wrapper:
 ```
 
 The **container** around this div differs:
+
 - **Collapsed**: `max-h-32 overflow-hidden` — clips content at a fixed height
 - **Expanded**: `max-h-[60vh] overflow-y-auto` — allows scroll for very long content
 
@@ -503,10 +508,10 @@ rendering between states.
 ```ts
 type MarkdownCardProps = {
   html: string;
-  collapsed?: boolean;         // controlled; default true
-  onToggle?: () => void;       // called when card is clicked
+  collapsed?: boolean; // controlled; default true
+  onToggle?: () => void; // called when card is clicked
   maxCollapsedHeight?: string; // default "8rem" (max-h-32)
-  maxExpandedHeight?: string;  // default "60vh"
+  maxExpandedHeight?: string; // default "60vh"
   className?: string;
 };
 ```
@@ -524,10 +529,11 @@ type MarkdownCardProps = {
 ### Expand/collapse indicator
 
 When `onToggle` is provided:
+
 - Collapsed: a hairline fade-out gradient at the bottom of the content container
   (`bg-gradient-to-t from-surface to-transparent h-6 -mt-6 relative`) plus a
   chevron-down icon below the card border — `text-muted text-xs flex items-center
-  justify-center gap-1 py-1`
+justify-center gap-1 py-1`
 - Expanded: chevron-up, no gradient
 
 The gradient creates a natural fade rather than an abrupt clip, signalling that content
@@ -543,13 +549,15 @@ gets `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outli
 ### Gradient implementation
 
 ```tsx
-{collapsed && (
-  <div
-    className="h-6 -mt-6 relative pointer-events-none"
-    style={{ background: "linear-gradient(to top, var(--color-surface), transparent)" }}
-    aria-hidden="true"
-  />
-)}
+{
+  collapsed && (
+    <div
+      className="h-6 -mt-6 relative pointer-events-none"
+      style={{ background: "linear-gradient(to top, var(--color-surface), transparent)" }}
+      aria-hidden="true"
+    />
+  );
+}
 ```
 
 Using CSS custom properties directly in `style` preserves dark mode correctness (tokens shift
@@ -564,14 +572,14 @@ automatically). Do not use Tailwind's `from-surface` gradient utility as it may 
 
 ### Stories
 
-| Story | What it shows |
-|---|---|
-| `ShortContent` | Content shorter than collapsed height — no indicator shown |
-| `LongCollapsed` | Long markdown with collapse clipping and gradient |
-| `LongExpanded` | Same content in expanded state — prose rendering visually identical |
-| `Uncontrolled` | Local `useState` toggle to demonstrate expand/collapse interaction |
-| `NoToggle` | Display-only card (no `onToggle`) |
-| `DarkMode` | Collapsed and expanded on dark background |
+| Story           | What it shows                                                       |
+| --------------- | ------------------------------------------------------------------- |
+| `ShortContent`  | Content shorter than collapsed height — no indicator shown          |
+| `LongCollapsed` | Long markdown with collapse clipping and gradient                   |
+| `LongExpanded`  | Same content in expanded state — prose rendering visually identical |
+| `Uncontrolled`  | Local `useState` toggle to demonstrate expand/collapse interaction  |
+| `NoToggle`      | Display-only card (no `onToggle`)                                   |
+| `DarkMode`      | Collapsed and expanded on dark background                           |
 
 For stories that need HTML content, define a local `sampleHtml` constant with pre-rendered
 markdown HTML (a mix of headings, paragraphs, and a list) — no markdown rendering dependency
@@ -633,6 +641,7 @@ type Story = StoryObj<typeof ComponentName>;
 ### Story title hierarchy
 
 All components appear under `Design/` in the Storybook sidebar:
+
 - `Design/Box`
 - `Design/Stack`
 - `Design/Grid`
@@ -681,6 +690,7 @@ npm run build-storybook
 ```
 
 Common issues to catch:
+
 - Polymorphic `as` prop requiring correct generic constraint — TypeScript will flag mismatches
 - Static class maps missing variants — Tailwind will purge un-referenced dynamic strings
 - `aria-label` missing on icon-only buttons — ESLint jsx-a11y rule
@@ -690,17 +700,17 @@ Common issues to catch:
 
 ## Summary
 
-| Component | File | Storybook title |
-|---|---|---|
-| Box | `src/design/Box/Box.tsx` | `Design/Box` |
-| Stack | `src/design/Stack/Stack.tsx` | `Design/Stack` |
-| Grid | `src/design/Grid/Grid.tsx` | `Design/Grid` |
-| Text | `src/design/Text/Text.tsx` | `Design/Text` |
-| Button | `src/design/Button/Button.tsx` | `Design/Button` |
-| SearchField | `src/design/SearchField/SearchField.tsx` | `Design/SearchField` |
-| TopBar | `src/design/TopBar/TopBar.tsx` | `Design/TopBar` |
+| Component    | File                                       | Storybook title       |
+| ------------ | ------------------------------------------ | --------------------- |
+| Box          | `src/design/Box/Box.tsx`                   | `Design/Box`          |
+| Stack        | `src/design/Stack/Stack.tsx`               | `Design/Stack`        |
+| Grid         | `src/design/Grid/Grid.tsx`                 | `Design/Grid`         |
+| Text         | `src/design/Text/Text.tsx`                 | `Design/Text`         |
+| Button       | `src/design/Button/Button.tsx`             | `Design/Button`       |
+| SearchField  | `src/design/SearchField/SearchField.tsx`   | `Design/SearchField`  |
+| TopBar       | `src/design/TopBar/TopBar.tsx`             | `Design/TopBar`       |
 | MarkdownCard | `src/design/MarkdownCard/MarkdownCard.tsx` | `Design/MarkdownCard` |
-| Barrel | `src/design/index.ts` | — |
+| Barrel       | `src/design/index.ts`                      | —                     |
 
 ## What is NOT in scope
 
