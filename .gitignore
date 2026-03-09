@@ -27,3 +27,4 @@ yarn-error.log*
 # plans
 plan.md
 storybook-static
+.claude/settings.local.json
