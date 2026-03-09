@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
 import { MarkdownCard } from "./MarkdownCard";
 import { Button } from "../Button/Button";
 
@@ -38,7 +37,7 @@ const longHtml = `
 export const ShortContent: Story = {
   render: () => (
     <div className="p-4 max-w-lg">
-      <MarkdownCard html={shortHtml} collapsed={true} />
+      <MarkdownCard html={shortHtml} />
     </div>
   ),
 };
@@ -46,7 +45,7 @@ export const ShortContent: Story = {
 export const LongCollapsed: Story = {
   render: () => (
     <div className="p-4 max-w-lg">
-      <MarkdownCard html={longHtml} collapsed={true} onToggle={() => {}} />
+      <MarkdownCard html={longHtml} />
     </div>
   ),
 };
@@ -54,89 +53,44 @@ export const LongCollapsed: Story = {
 export const LongExpanded: Story = {
   render: () => (
     <div className="p-4 max-w-lg">
-      <MarkdownCard html={longHtml} collapsed={false} onToggle={() => {}} />
+      <MarkdownCard html={longHtml} collapsed={false} />
     </div>
   ),
 };
 
-export const Uncontrolled: Story = {
-  render: () => {
-    const [collapsed, setCollapsed] = useState(true);
-    return (
-      <div className="p-4 max-w-lg">
-        <MarkdownCard
-          html={longHtml}
-          collapsed={collapsed}
-          onToggle={() => setCollapsed((c) => !c)}
-        />
-      </div>
-    );
-  },
-};
-
 export const WithTimestamp: Story = {
-  render: () => {
-    const [collapsed, setCollapsed] = useState(true);
-    return (
-      <div className="p-4 max-w-lg">
-        <MarkdownCard
-          html={longHtml}
-          collapsed={collapsed}
-          onToggle={() => setCollapsed((c) => !c)}
-          timestamp="Mon 9 Mar 2026 · 14:32"
-        />
-      </div>
-    );
-  },
+  render: () => (
+    <div className="p-4 max-w-lg">
+      <MarkdownCard html={longHtml} timestamp="Mon 9 Mar 2026 · 14:32" />
+    </div>
+  ),
 };
 
 export const WithActions: Story = {
-  render: () => {
-    const [collapsed, setCollapsed] = useState(true);
-    return (
-      <div className="p-4 max-w-lg">
-        <MarkdownCard
-          html={longHtml}
-          collapsed={collapsed}
-          onToggle={() => setCollapsed((c) => !c)}
-          timestamp="Mon 9 Mar 2026 · 14:32"
-          actions={
-            <>
-              <Button variant="ghost" size="sm" aria-label="Edit note">
-                Edit
-              </Button>
-              <Button variant="ghost" size="sm" aria-label="Delete note">
-                Delete
-              </Button>
-            </>
-          }
-        />
-      </div>
-    );
-  },
+  render: () => (
+    <div className="p-4 max-w-lg">
+      <MarkdownCard
+        html={longHtml}
+        timestamp="Mon 9 Mar 2026 · 14:32"
+        actions={
+          <>
+            <Button variant="ghost" size="sm" aria-label="Edit note">
+              Edit
+            </Button>
+            <Button variant="ghost" size="sm" aria-label="Delete note">
+              Delete
+            </Button>
+          </>
+        }
+      />
+    </div>
+  ),
 };
 
 export const FullWidth: Story = {
-  render: () => {
-    const [collapsed, setCollapsed] = useState(true);
-    return (
-      <div className="p-4 flex gap-3">
-        <MarkdownCard
-          html={longHtml}
-          collapsed={collapsed}
-          onToggle={() => setCollapsed((c) => !c)}
-          timestamp="Mon 9 Mar 2026 · 14:32"
-          fullWidth
-        />
-      </div>
-    );
-  },
-};
-
-export const NoToggle: Story = {
   render: () => (
-    <div className="p-4 max-w-lg">
-      <MarkdownCard html={longHtml} collapsed={false} timestamp="Mon 9 Mar 2026 · 14:32" />
+    <div className="p-4 flex gap-3">
+      <MarkdownCard html={longHtml} timestamp="Mon 9 Mar 2026 · 14:32" fullWidth />
     </div>
   ),
 };

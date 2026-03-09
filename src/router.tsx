@@ -8,7 +8,6 @@ import { App } from "./app.tsx";
 
 type RootSearchParams = {
   q?: string;
-  note?: string;
   draft?: string;
 };
 
@@ -21,7 +20,6 @@ const indexRoute = createRoute({
   path: "/",
   validateSearch: (search: Record<string, unknown>): RootSearchParams => ({
     q: typeof search.q === "string" ? search.q : undefined,
-    note: typeof search.note === "string" ? search.note : undefined,
     draft: typeof search.draft === "string" ? search.draft : undefined,
   }),
   component: lazyRouteComponent(() => import("./routes/front.tsx"), "FrontPage"),

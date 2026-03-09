@@ -1,6 +1,5 @@
-import { useEffect } from "react";
 import { useAtom, useAtomValue } from "jotai";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { SearchBar } from "./SearchBar";
 import { NoteRow } from "./NoteRow";
 import { PinnedZone } from "./PinnedZone";
@@ -10,7 +9,6 @@ import {
   searchQueryAtom,
   sortAtom,
   pinnedNotesAtom,
-  expandedNoteAtom,
   draftsAtom,
   openExistingDraft,
   restoreDraft,
@@ -19,7 +17,7 @@ import type { SortOrder } from "../atoms/globals";
 import { store } from "../atoms/store";
 import { readFile } from "../lib/fs";
 import { getRepoWorker } from "../worker/client";
-import { pathToTimestamp, timestampToPath } from "../lib/note-paths";
+import { pathToTimestamp } from "../lib/note-paths";
 import { t } from "../i18n";
 
 export function ReferencePanel() {
@@ -27,15 +25,7 @@ export function ReferencePanel() {
   const query = useAtomValue(searchQueryAtom);
   const [sort, setSort] = useAtom(sortAtom);
   const [pinnedPaths, setPinnedPaths] = useAtom(pinnedNotesAtom);
-  const [expandedPath, setExpandedPath] = useAtom(expandedNoteAtom);
   const navigate = useNavigate();
-  const searchParams = useSearch({ from: "/" });
-
-  useEffect(() => {
-    if (searchParams.note) {
-      setExpandedPath(timestampToPath(searchParams.note));
-    }
-  }, []); // intentionally empty - restore expanded state from URL on mount only
 
   const pinnedNotes = notes.filter((n) => pinnedPaths.includes(n.path));
 
@@ -104,17 +94,7 @@ export function ReferencePanel() {
               <NoteRow
                 key={note.path}
                 note={note}
-                expanded={expandedPath === note.path}
-                onExpand={() => {
-                  const next = expandedPath === note.path ? null : note.path;
-                  setExpandedPath(next);
-                  const ts = next ? (pathToTimestamp(note.path) ?? undefined) : undefined;
-                  void navigate({ to: "/", search: (prev) => ({ ...prev, note: ts }) });
-                }}
-                onPin={() => {
-                  setPinnedPaths((ps) => (ps.includes(note.path) ? ps : [...ps, note.path]));
-                  setExpandedPath(null);
-                }}
+                onPin={() => setPinnedPaths((ps) => (ps.includes(note.path) ? ps : [...ps, note.path]))}
                 onEdit={() => void handleEdit(note.path)}
               />
             ))}

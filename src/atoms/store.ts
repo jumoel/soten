@@ -167,7 +167,6 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
 });
 
 export const pinnedNotesAtom = atom<string[]>([]);
-export const expandedNoteAtom = atom<string | null>(null);
 
 const NOTE_CARD_THRESHOLD = 375;
 const closingFmRe = /\n---\r?\n/;
@@ -193,28 +192,5 @@ const cardCache = new Map<string, { html: string; isShort: boolean }>();
 export function clearCardCache() {
   cardCache.clear();
 }
-
-export const noteCardAtom = atomFamily((path: string) =>
-  atom(async (get) => {
-    const file = await get(fileAtom(path));
-    if (!file || file.type !== "text") return null;
-
-    const content = file.content;
-    const bodyStart = findBodyStart(content);
-    const body = content.slice(bodyStart);
-
-    const isShort = body.length <= NOTE_CARD_THRESHOLD;
-    const previewBody = isShort ? body : body.slice(0, findCutPoint(body, NOTE_CARD_THRESHOLD));
-    const displayContent = content.slice(0, bodyStart) + previewBody;
-
-    const cached = cardCache.get(displayContent);
-    if (cached) return cached;
-
-    const { html } = await renderMarkdown(displayContent);
-    const result = { html, isShort };
-    cardCache.set(displayContent, result);
-    return result;
-  }),
-);
 
 export const gitWorkingAtom = atom(false);

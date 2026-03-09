@@ -1,9 +1,8 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export type MarkdownCardProps = {
   html: string;
   collapsed?: boolean;
-  onToggle?: () => void;
   maxCollapsedHeight?: string;
   maxExpandedHeight?: string;
   timestamp?: string;
@@ -55,14 +54,15 @@ function ChevronUp() {
 
 export function MarkdownCard({
   html,
-  collapsed = true,
-  onToggle,
+  collapsed: initialCollapsed = true,
   maxCollapsedHeight = "8rem",
   maxExpandedHeight = "60vh",
   timestamp,
   actions,
   fullWidth = false,
 }: MarkdownCardProps) {
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
+
   const cardClasses = [
     "bg-surface border border-edge rounded-md px-3 py-2 flex flex-col gap-1",
     fullWidth ? "w-full" : "",
@@ -71,31 +71,6 @@ export function MarkdownCard({
     .join(" ");
 
   const hasHeader = timestamp || actions;
-
-  const contentInner = (
-    <>
-      <div
-        style={{
-          maxHeight: collapsed ? maxCollapsedHeight : maxExpandedHeight,
-          overflow: collapsed ? "hidden" : "auto",
-        }}
-      >
-        <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
-      </div>
-      {onToggle && collapsed && (
-        <div
-          className="h-6 -mt-6 relative pointer-events-none"
-          style={{ background: "linear-gradient(to top, var(--color-surface), transparent)" }}
-          aria-hidden="true"
-        />
-      )}
-      {onToggle && (
-        <div className="flex items-center justify-center gap-1 py-1 text-xs text-muted">
-          {collapsed ? <ChevronDown /> : <ChevronUp />}
-        </div>
-      )}
-    </>
-  );
 
   return (
     <div className={cardClasses}>
@@ -112,17 +87,30 @@ export function MarkdownCard({
         </div>
       )}
 
-      {onToggle ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent rounded-sm"
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        className="w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent rounded-sm"
+      >
+        <div
+          style={{
+            maxHeight: collapsed ? maxCollapsedHeight : maxExpandedHeight,
+            overflow: collapsed ? "hidden" : "auto",
+          }}
         >
-          {contentInner}
-        </button>
-      ) : (
-        <div>{contentInner}</div>
-      )}
+          <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
+        </div>
+        {collapsed && (
+          <div
+            className="h-6 -mt-6 relative pointer-events-none"
+            style={{ background: "linear-gradient(to top, var(--color-surface), transparent)" }}
+            aria-hidden="true"
+          />
+        )}
+        <div className="flex items-center justify-center gap-1 py-1 text-xs text-muted">
+          {collapsed ? <ChevronDown /> : <ChevronUp />}
+        </div>
+      </button>
     </div>
   );
 }

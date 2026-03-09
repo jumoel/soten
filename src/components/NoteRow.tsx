@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { useAtom } from "jotai";
 import { loadable } from "jotai/utils";
-import { Box, Text } from "../design";
-import { NoteFullContent } from "./NoteFullContent";
-import { noteCardAtom } from "../atoms/globals";
+import { Button, MarkdownCard, Stack } from "../design";
+import { renderedNoteAtom } from "../atoms/globals";
 import { prettyDate, prettyDateTime } from "../atoms/store";
 import type { NoteListEntry } from "../atoms/store";
+import { t } from "../i18n";
 
 function formatCardDate(date: Date): string {
   const isDateOnly = date.getUTCHours() === 0 && date.getUTCMinutes() === 0;
@@ -14,39 +14,37 @@ function formatCardDate(date: Date): string {
 
 type NoteRowProps = {
   note: NoteListEntry;
-  expanded: boolean;
-  onExpand: () => void;
   onPin: () => void;
   onEdit?: () => void;
 };
 
-function NoteCardPreview({ path }: { path: string }) {
-  const cardAtom = useMemo(() => loadable(noteCardAtom(path)), [path]);
-  const [result] = useAtom(cardAtom);
-  if (result.state !== "hasData" || !result.data) return null;
-  return (
-    <div
-      className="prose prose-sm dark:prose-invert mt-1 line-clamp-5 [&_*]:!m-0 [&_*]:!p-0 [&_h1]:!text-sm [&_h1]:!font-semibold [&_h2]:!text-sm [&_h2]:!font-medium [&_h3]:!text-sm [&_h3]:!font-medium"
-      dangerouslySetInnerHTML={{ __html: result.data.html }}
-    />
-  );
-}
+export function NoteRow({ note, onPin, onEdit }: NoteRowProps) {
+  const noteAtom = useMemo(() => loadable(renderedNoteAtom(note.path)), [note.path]);
+  const [result] = useAtom(noteAtom);
 
-export function NoteRow({ note, expanded, onExpand, onPin, onEdit }: NoteRowProps) {
+  const html = result.state === "hasData" && result.data ? result.data.html : "";
+
+  const actions = (
+    <Stack direction="horizontal" gap={1}>
+      <Button variant="ghost" size="sm" onClick={onPin} aria-label={t("note.pin")}>
+        {t("note.pin")}
+      </Button>
+      {onEdit && (
+        <Button variant="ghost" size="sm" onClick={onEdit} aria-label={t("note.edit")}>
+          {t("note.edit")}
+        </Button>
+      )}
+    </Stack>
+  );
+
   return (
-    <li className="flex flex-col gap-1">
-      <Box as="button" surface="surface" border="edge" padding="card" rounded onClick={onExpand}>
-        {note.date && (
-          <Text variant="meta" as="span">
-            {formatCardDate(note.date)}
-          </Text>
-        )}
-        {expanded ? (
-          <NoteFullContent path={note.path} onPin={onPin} onEdit={onEdit} />
-        ) : (
-          <NoteCardPreview path={note.path} />
-        )}
-      </Box>
+    <li>
+      <MarkdownCard
+        html={html}
+        timestamp={note.date ? formatCardDate(note.date) : undefined}
+        actions={actions}
+        fullWidth
+      />
     </li>
   );
 }

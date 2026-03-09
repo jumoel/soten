@@ -21,10 +21,10 @@ function ReadyLayout() {
   if (!activeDraft) {
     return (
       <>
+        <DraftTray />
         <div className="flex-1 overflow-hidden">
           <Outlet />
         </div>
-        <DraftTray />
       </>
     );
   }
@@ -32,10 +32,10 @@ function ReadyLayout() {
   if (!isWide) {
     return (
       <>
+        <DraftTray />
         <div className="flex-1 overflow-hidden">
           <EditorPane draft={activeDraft} />
         </div>
-        <DraftTray />
       </>
     );
   }
@@ -44,6 +44,7 @@ function ReadyLayout() {
 
   return (
     <>
+      <DraftTray />
       <div
         className="flex-1 overflow-hidden grid"
         style={{
@@ -63,7 +64,6 @@ function ReadyLayout() {
           <Outlet />
         </div>
       </div>
-      <DraftTray />
     </>
   );
 }

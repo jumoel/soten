@@ -1,5 +1,8 @@
-import { Button, Text, Link, Stack } from "../design";
-import { NoteFullContent } from "./NoteFullContent";
+import { useMemo } from "react";
+import { useAtom } from "jotai";
+import { loadable } from "jotai/utils";
+import { Button, MarkdownCard, Text, Link, Stack } from "../design";
+import { renderedNoteAtom } from "../atoms/globals";
 import type { NoteListEntry } from "../atoms/store";
 
 type PinnedNoteProps = {
@@ -11,6 +14,11 @@ type PinnedNoteProps = {
 };
 
 export function PinnedNote({ note, expanded, onToggle, onUnpin, onEdit }: PinnedNoteProps) {
+  const noteAtom = useMemo(() => loadable(renderedNoteAtom(note.path)), [note.path]);
+  const [result] = useAtom(noteAtom);
+
+  const html = result.state === "hasData" && result.data ? result.data.html : "";
+
   return (
     <li className="border-b border-edge">
       <Stack direction="horizontal" gap={2} as="div">
@@ -26,12 +34,21 @@ export function PinnedNote({ note, expanded, onToggle, onUnpin, onEdit }: Pinned
           <Button variant="ghost" size="sm" onClick={onToggle} aria-label="Toggle expand">
             {expanded ? "▾" : "▸"}
           </Button>
+          {onEdit && (
+            <Button variant="ghost" size="sm" onClick={onEdit} aria-label="Edit">
+              ✏
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={onUnpin} aria-label="Unpin">
             ×
           </Button>
         </div>
       </Stack>
-      {expanded && <NoteFullContent path={note.path} onPin={() => {}} onEdit={onEdit} />}
+      {expanded && html && (
+        <div className="px-4 pb-3">
+          <MarkdownCard html={html} collapsed={false} fullWidth />
+        </div>
+      )}
     </li>
   );
 }

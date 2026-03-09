@@ -4,10 +4,8 @@ export {
   fileAtom,
   noteListAtom,
   renderedNoteAtom,
-  noteCardAtom,
   clearCardCache,
   pinnedNotesAtom,
-  expandedNoteAtom,
   themeAtom,
   gitWorkingAtom,
 } from "./store";

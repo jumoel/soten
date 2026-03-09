@@ -48,6 +48,7 @@ export function Box<T extends ElementType = "div">({
     borderClass[border],
     paddingClass[padding],
     rounded ? "rounded-md" : "",
+    as === "button" ? "text-left w-full" : "",
   ]
     .filter(Boolean)
     .join(" ");
