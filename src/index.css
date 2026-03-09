@@ -52,6 +52,54 @@ html.dark {
   --color-error-detail: #fca5a5;
 }
 
+/* Prose — align colours and type scale with design system tokens */
+.prose {
+  --tw-prose-body: var(--color-paper);
+  --tw-prose-headings: var(--color-paper);
+  --tw-prose-lead: var(--color-paper-dim);
+  --tw-prose-links: var(--color-accent);
+  --tw-prose-bold: var(--color-paper);
+  --tw-prose-counters: var(--color-muted);
+  --tw-prose-bullets: var(--color-edge-2);
+  --tw-prose-hr: var(--color-edge);
+  --tw-prose-quotes: var(--color-paper-dim);
+  --tw-prose-quote-borders: var(--color-edge-2);
+  --tw-prose-captions: var(--color-muted);
+  --tw-prose-code: var(--color-paper);
+  --tw-prose-pre-code: var(--color-paper);
+  --tw-prose-pre-bg: var(--color-surface-2);
+  --tw-prose-th-borders: var(--color-edge-2);
+  --tw-prose-td-borders: var(--color-edge);
+}
+
+/* Match Text component type scale (h1→text-2xl, h2→text-xl, h3→text-lg, h4→text-base) */
+.prose h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+.prose h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+.prose h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
+}
+.prose h4 {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
+}
+.prose p,
+.prose li {
+  line-height: var(--leading-tight);
+}
+
 [data-wikilink] {
   color: var(--color-muted);
   font-weight: 500;
