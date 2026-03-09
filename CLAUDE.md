@@ -212,10 +212,11 @@ A chronological record of all significant changes is kept in `BUILD_LOG.md` at t
 
 Prose description of what changed and why. One to three sentences.
 
-![Description](docs/build-log/YYYY-MM-DD-slug.png)  ← include for any visual change
+![Description](docs/build-log/YYYY-MM-DD-slug.png) ← include for any visual change
 ```
 
 Rules:
+
 - Entries are appended in chronological order — never insert or reorder
 - Timestamp is local time (no timezone needed)
 - For visual changes, take a screenshot with the Chrome DevTools MCP and save it to `docs/build-log/` before writing the entry

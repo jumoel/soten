@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { useAtom } from "jotai";
 import { loadable } from "jotai/utils";
-import { Card } from "./ds/Card";
-import { Text } from "./ds/Text";
+import { Box, Text } from "../design";
 import { NoteFullContent } from "./NoteFullContent";
 import { noteCardAtom } from "../atoms/globals";
 import { prettyDate, prettyDateTime } from "../atoms/store";
@@ -36,7 +35,7 @@ function NoteCardPreview({ path }: { path: string }) {
 export function NoteRow({ note, expanded, onExpand, onPin, onEdit }: NoteRowProps) {
   return (
     <li className="flex flex-col gap-1">
-      <Card as="button" interactive hoverable onClick={onExpand} className="w-full text-left">
+      <Box as="button" surface="surface" border="edge" padding="card" rounded onClick={onExpand}>
         {note.date && (
           <Text variant="meta" as="span">
             {formatCardDate(note.date)}
@@ -47,7 +46,7 @@ export function NoteRow({ note, expanded, onExpand, onPin, onEdit }: NoteRowProp
         ) : (
           <NoteCardPreview path={note.path} />
         )}
-      </Card>
+      </Box>
     </li>
   );
 }

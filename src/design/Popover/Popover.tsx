@@ -9,7 +9,6 @@ export type PopoverProps = {
   onOpenChange: (open: boolean) => void;
   align?: PopoverAlign;
   side?: PopoverSide;
-  className?: string;
   children?: ReactNode;
 };
 
@@ -31,7 +30,6 @@ export function Popover({
   onOpenChange,
   align = "end",
   side = "bottom",
-  className,
   children,
 }: PopoverProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -60,7 +58,7 @@ export function Popover({
     };
   }, [open, onOpenChange]);
 
-  const panelClasses = [panelBaseClasses, alignClasses[align], sideClasses[side], className ?? ""]
+  const panelClasses = [panelBaseClasses, alignClasses[align], sideClasses[side]]
     .filter(Boolean)
     .join(" ");
 

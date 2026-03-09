@@ -4,10 +4,9 @@ import { Icon } from "../Icon/Icon";
 type LinkVariant = "default" | "muted" | "nav";
 
 export type LinkProps = {
-  href: string;
+  href?: string;
   variant?: LinkVariant;
   external?: boolean;
-  className?: string;
   children: ReactNode;
   onClick?: () => void;
 };
@@ -25,17 +24,17 @@ function isExternal(href: string) {
   return href.startsWith("http://") || href.startsWith("https://");
 }
 
-export function Link({
-  href,
-  variant = "default",
-  external,
-  className,
-  children,
-  onClick,
-}: LinkProps) {
-  const classes = [variantClasses[variant], focusClasses, className ?? ""]
-    .filter(Boolean)
-    .join(" ");
+export function Link({ href, variant = "default", external, children, onClick }: LinkProps) {
+  const classes = [variantClasses[variant], focusClasses].filter(Boolean).join(" ");
+
+  if (!href) {
+    return (
+      <button type="button" className={classes} onClick={onClick}>
+        {children}
+      </button>
+    );
+  }
+
   const isExt = external ?? isExternal(href);
 
   if (isExt) {
@@ -48,7 +47,7 @@ export function Link({
         onClick={onClick}
       >
         {children}
-        <Icon name="external-link" size="4" className="ml-0.5" />
+        <Icon name="external-link" size="4" />
       </a>
     );
   }

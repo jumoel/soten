@@ -13,7 +13,6 @@ export type TextareaProps = {
   rows?: number;
   size?: TextareaSize;
   mono?: boolean;
-  className?: string;
 };
 
 const sizeClasses: Record<TextareaSize, string> = {
@@ -37,7 +36,6 @@ export function Textarea({
   rows = 8,
   size = "md",
   mono = false,
-  className,
 }: TextareaProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -47,7 +45,6 @@ export function Textarea({
     sizeClasses[size],
     disabled ? disabledClasses : "",
     mono ? "font-mono" : "",
-    className ?? "",
   ]
     .filter(Boolean)
     .join(" ");

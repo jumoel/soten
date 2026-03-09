@@ -25,7 +25,6 @@ export const WithAllSlots: Story = {
             onChange={setSearch}
             label="Search"
             placeholder="Search notes..."
-            className="w-64"
           />
         }
         right={

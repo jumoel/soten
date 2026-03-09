@@ -42,3 +42,6 @@ export type { PopoverProps } from "./Popover/Popover";
 
 export { Textarea } from "./Textarea/Textarea";
 export type { TextareaProps } from "./Textarea/Textarea";
+
+export { DataTable } from "./DataTable/DataTable";
+export type { DataTableProps, DataTableEntry } from "./DataTable/DataTable";

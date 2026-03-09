@@ -39,6 +39,7 @@ const en = {
   "notes.empty": "No notes yet. Click + New note to get started.",
   "notes.noResults": "No notes matching \u2018{query}\u2019.",
 
+  "sort.label": "Sort",
   "sort.newest": "Newest",
   "sort.oldest": "Oldest",
   "sort.bestMatch": "Best match",

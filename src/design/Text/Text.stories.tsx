@@ -26,7 +26,7 @@ export const OverrideElement: Story = {
   render: () => (
     <p className="text-sm text-paper p-4">
       This is a sentence with{" "}
-      <Text variant="body" as="span" className="font-medium">
+      <Text variant="body" as="span">
         inline emphasis
       </Text>{" "}
       using body variant rendered as a span.

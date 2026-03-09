@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { TextInput } from "./ds/TextInput";
+import { SearchField } from "../design";
 import { searchQueryAtom } from "../atoms/globals";
 import { t } from "../i18n";
 
@@ -19,15 +19,12 @@ export function SearchBar() {
   }, [local, setQuery]);
 
   return (
-    <TextInput
+    <SearchField
       id="note-search"
-      name="q"
-      type="search"
+      label={t("search.placeholder")}
       placeholder={t("search.placeholder")}
-      aria-label={t("search.placeholder")}
       value={local}
-      onChange={(e) => setLocal(e.target.value)}
-      width="full"
+      onChange={setLocal}
     />
   );
 }

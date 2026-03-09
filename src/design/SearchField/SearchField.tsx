@@ -7,7 +7,6 @@ export type SearchFieldProps = {
   label: string;
   labelVisible?: boolean;
   id?: string;
-  className?: string;
 };
 
 export function SearchField({
@@ -17,13 +16,12 @@ export function SearchField({
   label,
   labelVisible = false,
   id,
-  className,
 }: SearchFieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
   return (
-    <div className={["relative flex flex-col gap-1", className ?? ""].filter(Boolean).join(" ")}>
+    <div className="relative flex flex-col gap-1">
       <label
         htmlFor={inputId}
         className={labelVisible ? "text-sm font-medium text-paper" : "sr-only"}

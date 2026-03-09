@@ -17,7 +17,6 @@ export type SelectProps = {
   labelVisible?: boolean;
   id?: string;
   disabled?: boolean;
-  className?: string;
 };
 
 const sizeClasses: Record<SelectSize, string> = {
@@ -44,12 +43,11 @@ export function Select({
   labelVisible = false,
   id,
   disabled = false,
-  className,
 }: SelectProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
-  const classes = [baseClasses, sizeClasses[size], disabled ? disabledClasses : "", className ?? ""]
+  const classes = [baseClasses, sizeClasses[size], disabled ? disabledClasses : ""]
     .filter(Boolean)
     .join(" ");
 

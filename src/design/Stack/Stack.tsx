@@ -3,13 +3,14 @@ import { type ComponentPropsWithoutRef, type ElementType, type ReactNode } from 
 type StackGap = 1 | 2 | 3 | 4 | 6;
 type StackAlign = "start" | "center" | "end" | "stretch";
 type StackJustify = "start" | "center" | "end" | "between";
+type StackDirection = "vertical" | "horizontal";
 
 export type StackProps<T extends ElementType = "div"> = {
   as?: T;
   gap?: StackGap;
   align?: StackAlign;
   justify?: StackJustify;
-  className?: string;
+  direction?: StackDirection;
   children?: ReactNode;
 } & Omit<ComponentPropsWithoutRef<T>, "className" | "children">;
 
@@ -40,17 +41,16 @@ export function Stack<T extends ElementType = "div">({
   gap = 2,
   align = "stretch",
   justify = "start",
-  className,
+  direction = "vertical",
   children,
   ...rest
 }: StackProps<T>) {
   const Tag = (as ?? "div") as ElementType;
   const classes = [
-    "flex flex-col",
+    direction === "horizontal" ? "flex flex-row items-center" : "flex flex-col",
     gapClass[gap],
-    alignClass[align],
+    direction === "vertical" ? alignClass[align] : "",
     justifyClass[justify],
-    className ?? "",
   ]
     .filter(Boolean)
     .join(" ");

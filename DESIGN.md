@@ -22,48 +22,48 @@ All colours are defined as CSS custom properties in `src/index.css` and have aut
 
 ### Surfaces
 
-| Token | Class | Light | Dark (OLED) | Use |
-|---|---|---|---|---|
-| `--color-base` | `bg-base` | `#f7f6f3` light warm gray | `#000000` true black | Page background |
-| `--color-surface` | `bg-surface` | `#fdfcfa` near-white | `#111113` barely visible | Cards, panels, elevated surfaces |
-| `--color-surface-2` | `bg-surface-2` | `#efeeeb` soft gray | `#1c1c1f` charcoal | Hover states, secondary surfaces, inset areas |
+| Token               | Class          | Light                     | Dark (OLED)              | Use                                           |
+| ------------------- | -------------- | ------------------------- | ------------------------ | --------------------------------------------- |
+| `--color-base`      | `bg-base`      | `#f7f6f3` light warm gray | `#000000` true black     | Page background                               |
+| `--color-surface`   | `bg-surface`   | `#fdfcfa` near-white      | `#111113` barely visible | Cards, panels, elevated surfaces              |
+| `--color-surface-2` | `bg-surface-2` | `#efeeeb` soft gray       | `#1c1c1f` charcoal       | Hover states, secondary surfaces, inset areas |
 
 Dark mode uses true black (`#000`) as the base for OLED — pixels turn fully off, saving battery and producing deep contrast. Elevated surfaces (`surface`, `surface-2`) are only a few stops above black so the hierarchy is subtle but real.
 
 ### Borders
 
-| Token | Class | Light | Dark | Use |
-|---|---|---|---|---|
-| `--color-edge` | `border-edge` | `#dddbd6` | `#2a2a2d` | Default borders, dividers, card outlines |
+| Token            | Class           | Light     | Dark      | Use                                            |
+| ---------------- | --------------- | --------- | --------- | ---------------------------------------------- |
+| `--color-edge`   | `border-edge`   | `#dddbd6` | `#2a2a2d` | Default borders, dividers, card outlines       |
 | `--color-edge-2` | `border-edge-2` | `#cbc9c4` | `#3a3a3d` | Stronger borders — input fields, active states |
 
 ### Text
 
-| Token | Class | Light | Dark | Use |
-|---|---|---|---|---|
-| `--color-paper` | `text-paper` | `#2c2a28` espresso | `#e8e4dc` warm white | Primary text — headings, body, labels |
-| `--color-paper-dim` | `text-paper-dim` | `#5c5955` stone | `#a09c94` warm gray | Secondary text — descriptions, less prominent body |
-| `--color-muted` | `text-muted` | `#757068` ash | `#858178` warm dim | Tertiary text — timestamps, metadata, placeholders |
+| Token               | Class            | Light              | Dark                 | Use                                                |
+| ------------------- | ---------------- | ------------------ | -------------------- | -------------------------------------------------- |
+| `--color-paper`     | `text-paper`     | `#2c2a28` espresso | `#e8e4dc` warm white | Primary text — headings, body, labels              |
+| `--color-paper-dim` | `text-paper-dim` | `#5c5955` stone    | `#a09c94` warm gray  | Secondary text — descriptions, less prominent body |
+| `--color-muted`     | `text-muted`     | `#757068` ash      | `#858178` warm dim   | Tertiary text — timestamps, metadata, placeholders |
 
 All three text stops maintain ≥4.5:1 contrast against `base` and `surface` in both modes. Warm undertones throughout — no cold grays.
 
 ### Accent — deep teal
 
-| Token | Class | Light | Dark | Use |
-|---|---|---|---|---|
-| `--color-accent` | `bg-accent`, `text-accent`, `border-accent` | `#1a7a75` deep teal | `#3aada7` bright teal | Primary actions, links, active indicators |
-| `--color-accent-hover` | `hover:bg-accent-hover` | `#15605c` darker teal | `#2e9490` mid teal | Hover state for accent elements |
+| Token                  | Class                                       | Light                 | Dark                  | Use                                       |
+| ---------------------- | ------------------------------------------- | --------------------- | --------------------- | ----------------------------------------- |
+| `--color-accent`       | `bg-accent`, `text-accent`, `border-accent` | `#1a7a75` deep teal   | `#3aada7` bright teal | Primary actions, links, active indicators |
+| `--color-accent-hover` | `hover:bg-accent-hover`                     | `#15605c` darker teal | `#2e9490` mid teal    | Hover state for accent elements           |
 
 The accent shifts lighter in dark mode so it reads clearly against true black. For **primary buttons**, use `text-white` in light mode and `dark:text-black` in dark mode to maintain contrast against the accent background.
 
 ### Error
 
-| Token | Class | Light | Dark | Use |
-|---|---|---|---|---|
-| `--color-error-surface` | `bg-error-surface` | `#fef5f3` | `#1e0c0a` | Error container background |
-| `--color-error-edge` | `border-error-edge` | `#f0ccc4` | `#5a2020` | Error container border |
-| `--color-error-text` | `text-error-text` | `#b04030` | `#f87171` | Error headings and labels |
-| `--color-error-detail` | `text-error-detail` | `#d05040` | `#fca5a5` | Error descriptions, stack traces |
+| Token                   | Class               | Light     | Dark      | Use                              |
+| ----------------------- | ------------------- | --------- | --------- | -------------------------------- |
+| `--color-error-surface` | `bg-error-surface`  | `#fef5f3` | `#1e0c0a` | Error container background       |
+| `--color-error-edge`    | `border-error-edge` | `#f0ccc4` | `#5a2020` | Error container border           |
+| `--color-error-text`    | `text-error-text`   | `#b04030` | `#f87171` | Error headings and labels        |
+| `--color-error-detail`  | `text-error-detail` | `#d05040` | `#fca5a5` | Error descriptions, stack traces |
 
 ## Typography
 
@@ -71,23 +71,23 @@ The accent shifts lighter in dark mode so it reads clearly against true black. F
 
 Use a constrained type scale. These are the only sizes you should reach for:
 
-| Size | Class | Use |
-|---|---|---|
-| 12px | `text-xs` | Metadata, timestamps, labels, tertiary info |
-| 14px | `text-sm` | Body text, form inputs, descriptions, most UI text |
-| 16px | `text-base` | Emphasized body, subheadings in dense contexts |
-| 18px | `text-lg` | Section headings |
-| 24px | `text-2xl` | Page titles (use sparingly — one per view) |
+| Size | Class       | Use                                                |
+| ---- | ----------- | -------------------------------------------------- |
+| 12px | `text-xs`   | Metadata, timestamps, labels, tertiary info        |
+| 14px | `text-sm`   | Body text, form inputs, descriptions, most UI text |
+| 16px | `text-base` | Emphasized body, subheadings in dense contexts     |
+| 18px | `text-lg`   | Section headings                                   |
+| 24px | `text-2xl`  | Page titles (use sparingly — one per view)         |
 
 `text-sm` (14px) is the default. Reach for `text-base` or above only when you have a clear hierarchy reason.
 
 ### Weight
 
-| Weight | Class | Use |
-|---|---|---|
-| 400 | `font-normal` | Body text, descriptions |
-| 500 | `font-medium` | Interactive labels, secondary headings, emphasis within body |
-| 600 | `font-semibold` | Primary headings, form labels, buttons |
+| Weight | Class           | Use                                                          |
+| ------ | --------------- | ------------------------------------------------------------ |
+| 400    | `font-normal`   | Body text, descriptions                                      |
+| 500    | `font-medium`   | Interactive labels, secondary headings, emphasis within body |
+| 600    | `font-semibold` | Primary headings, form labels, buttons                       |
 
 Never use `font-bold` (700) or above — the warm palette reads heavy with bold weights.
 
@@ -109,21 +109,21 @@ Never use `font-bold` (700) or above — the warm palette reads heavy with bold 
 
 Dense by default. These are the standard internal padding values:
 
-| Context | Padding | Example |
-|---|---|---|
-| Cards, panels | `px-4 py-3` | Content cards in lists |
-| Compact cards | `px-3 py-2` | Toolbar items, tight list rows |
-| Buttons | `px-3 py-1.5` (sm), `px-4 py-2` (md) | Action buttons |
-| Page margins | `px-4` mobile, `px-6` desktop | Outer page container |
+| Context       | Padding                              | Example                        |
+| ------------- | ------------------------------------ | ------------------------------ |
+| Cards, panels | `px-4 py-3`                          | Content cards in lists         |
+| Compact cards | `px-3 py-2`                          | Toolbar items, tight list rows |
+| Buttons       | `px-3 py-1.5` (sm), `px-4 py-2` (md) | Action buttons                 |
+| Page margins  | `px-4` mobile, `px-6` desktop        | Outer page container           |
 
 ### Gaps
 
-| Context | Gap |
-|---|---|
-| Between items in a list | `gap-2` or `gap-3` |
-| Between sections | `gap-4` or `gap-6` |
+| Context                        | Gap                |
+| ------------------------------ | ------------------ |
+| Between items in a list        | `gap-2` or `gap-3` |
+| Between sections               | `gap-4` or `gap-6` |
 | Inside a card between elements | `gap-1` or `gap-2` |
-| Toolbar items | `gap-2` |
+| Toolbar items                  | `gap-2`            |
 
 When in doubt, use the smaller value. Add space only when elements are visually colliding.
 
@@ -145,6 +145,7 @@ bg-surface border border-edge rounded-md
 Three visual tiers:
 
 **Primary** — for the single most important action on screen:
+
 ```
 bg-accent text-white dark:text-black font-medium rounded-md px-4 py-2
 hover:bg-accent-hover
@@ -152,6 +153,7 @@ focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acc
 ```
 
 **Secondary** — for supporting actions:
+
 ```
 bg-surface border border-edge text-paper font-medium rounded-md px-3 py-1.5
 hover:bg-surface-2
@@ -159,6 +161,7 @@ focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acc
 ```
 
 **Ghost** — for de-emphasized actions (toolbars, inline actions):
+
 ```
 text-paper-dim font-medium rounded-md px-2 py-1
 hover:bg-surface-2

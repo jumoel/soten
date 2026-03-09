@@ -5,7 +5,6 @@ type TextVariant = "h1" | "h2" | "h3" | "h4" | "body" | "body-dim" | "meta" | "l
 export type TextProps<T extends ElementType = "span"> = {
   variant?: TextVariant;
   as?: T;
-  className?: string;
   children?: ReactNode;
 } & Omit<ComponentPropsWithoutRef<T>, "className" | "children">;
 
@@ -34,15 +33,13 @@ const variantClass: Record<TextVariant, string> = {
 export function Text<T extends ElementType = "span">({
   variant = "body",
   as,
-  className,
   children,
   ...rest
 }: TextProps<T>) {
   const Tag = (as ?? variantDefaultElement[variant]) as ElementType;
-  const classes = [variantClass[variant], className ?? ""].filter(Boolean).join(" ");
 
   return (
-    <Tag className={classes} {...rest}>
+    <Tag className={variantClass[variant]} {...rest}>
       {children}
     </Tag>
   );

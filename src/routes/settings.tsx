@@ -3,8 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { machineAtom, send, themeAtom } from "../atoms/globals";
 import type { Theme } from "../atoms/store";
 import { RepoSelector } from "../components/RepoSelector";
-import { Text } from "../components/ds/Text";
-import { Box } from "../components/ds/Box";
+import { Text, Button, Stack } from "../design";
 import { t } from "../i18n";
 
 export function SettingsPage() {
@@ -16,28 +15,22 @@ export function SettingsPage() {
   if (!repos) return null;
 
   return (
-    <div>
-      <Box mb="6">
-        <Box mb="1">
-          <Text variant="label">{t("settings.theme")}</Text>
-        </Box>
-        <div className="inline-flex rounded border border-edge overflow-hidden">
+    <Stack gap={6}>
+      <Stack gap={2}>
+        <Text variant="label">{t("settings.theme")}</Text>
+        <Stack direction="horizontal" gap={1}>
           {(["light", "dark", "system"] as const).map((option: Theme) => (
-            <button
+            <Button
               key={option}
+              variant={theme === option ? "primary" : "ghost"}
+              size="sm"
               onClick={() => setTheme(option)}
-              className={[
-                "px-3 py-1.5 text-sm border-r border-edge last:border-r-0",
-                theme === option
-                  ? "bg-accent text-white"
-                  : "bg-surface-2 text-muted hover:text-paper-dim",
-              ].join(" ")}
             >
               {t(`settings.theme.${option}`)}
-            </button>
+            </Button>
           ))}
-        </div>
-      </Box>
+        </Stack>
+      </Stack>
       <RepoSelector
         repos={repos}
         onSelect={(owner, repo) => {
@@ -45,6 +38,6 @@ export function SettingsPage() {
           send({ type: "SELECT_REPO", owner, repo });
         }}
       />
-    </div>
+    </Stack>
   );
 }

@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "./Button";
+import { Button, Box, Link, Text } from "../design";
 import { draftsAtom, restoreDraft } from "../atoms/globals";
 import { discardDraft } from "../lib/draft-operations";
 import { t } from "../i18n";
@@ -25,10 +25,12 @@ function DraftTrayEntry({ draft, onRestore, onDiscard }: DraftTrayEntryProps) {
 
   return (
     <div className="flex items-center px-4 py-1.5 gap-2 text-sm">
-      <span className="text-muted">✏</span>
-      <button className="flex-1 text-left truncate text-paper" onClick={onRestore}>
+      <Text variant="meta" as="span">
+        ✏
+      </Text>
+      <Link variant="muted" onClick={onRestore}>
         {title}
-      </button>
+      </Link>
       <Button variant="ghost" size="sm" onClick={onRestore} aria-label="Restore">
         ↑
       </Button>
@@ -47,7 +49,7 @@ export function DraftTray() {
   if (minimized.length === 0) return null;
 
   return (
-    <div className="border-t border-edge bg-surface">
+    <Box surface="surface" border="edge">
       {minimized.map((draft) => (
         <DraftTrayEntry
           key={draft.timestamp}
@@ -62,6 +64,6 @@ export function DraftTray() {
           }}
         />
       ))}
-    </div>
+    </Box>
   );
 }

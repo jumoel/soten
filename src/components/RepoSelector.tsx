@@ -1,9 +1,5 @@
 import { send } from "../atoms/globals";
-import { Card } from "./ds/Card";
-import { Stack } from "./ds/Stack";
-import { Text } from "./ds/Text";
-import { Box } from "./ds/Box";
-import { ExternalLink } from "./ds/ExternalLink";
+import { Box, Stack, Text, Link } from "../design";
 import { t } from "../i18n";
 
 export function RepoSelector({
@@ -14,35 +10,39 @@ export function RepoSelector({
   onSelect?: (owner: string, repo: string) => void;
 }) {
   return (
-    <Box my="4">
-      <Box mb="2">
-        <Text variant="sectionLabel">{t("repo.selectRepository")}</Text>
-      </Box>
-      <Stack gap="1.5">
+    <div className="my-4">
+      <div className="mb-2">
+        <Text variant="meta">{t("repo.selectRepository")}</Text>
+      </div>
+      <Stack gap={1}>
         {repos.map((fullName) => {
           const [owner, repo] = fullName.split("/");
           return (
-            <Card
+            <Box
               key={fullName}
-              muted
-              interactive
               as="button"
+              surface="surface"
+              border="edge"
+              padding="card"
+              rounded
               onClick={() =>
                 onSelect ? onSelect(owner, repo) : send({ type: "SELECT_REPO", owner, repo })
               }
             >
-              <Text variant="monoStrong">{fullName}</Text>
-            </Card>
+              <Text variant="body" as="span">
+                {fullName}
+              </Text>
+            </Box>
           );
         })}
       </Stack>
-      <Box mt="4">
-        <Text variant="secondary">
-          <ExternalLink href="https://github.com/apps/soten-notes/installations/select_target">
+      <div className="mt-4">
+        <Text variant="body-dim" as="p">
+          <Link href="https://github.com/apps/soten-notes/installations/select_target">
             {t("repo.manageAccess")}
-          </ExternalLink>
+          </Link>
         </Text>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

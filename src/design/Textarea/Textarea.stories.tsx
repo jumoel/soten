@@ -106,7 +106,7 @@ export const FullHeight: Story = {
     const [value, setValue] = useState(sampleMarkdown);
     return (
       <div className="p-4 h-64 flex flex-col">
-        <Textarea value={value} onChange={setValue} label="Note" mono={true} className="flex-1" />
+        <Textarea value={value} onChange={setValue} label="Note" mono={true} />
       </div>
     );
   },

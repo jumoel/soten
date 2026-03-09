@@ -62,3 +62,14 @@ timestamp files show the full datetime including time.
 Removed duplicate content and expand inconsistency. Card preview now shows the raw body (no H1 stripping); expanded state renders inline inside the card with Pin/Edit buttons, replacing the separate `NoteExpanded` component. `NoteFullContent` is a new shared component used by both `NoteRow` and `PinnedNote`.
 
 ![Expanded card inline with full content and action buttons](docs/build-log/2026-03-09-card-expand-redesign.png)
+
+### 2026-03-09 — Design system migration: replace ds/ with design/
+
+Migrated all components from the old `src/components/ds/` layer to the consolidated `src/design/`
+system. The legacy `ds/` directory (19 files) and thin wrapper components (`AlertBox`, `Button`,
+`ProseContent`, `PageContainer`, `BackLink`) were deleted. All handrolled SVG icons replaced with
+lucide-react; GitHub icon kept as inline SVG since lucide removed brand icons. Design components
+now reject `className` via TypeScript. All user-visible strings migrated to the i18n system.
+`DataTable` and `Stack direction` support were added to the design system to cover gaps.
+
+![App after design system migration](docs/build-log/2026-03-09-ds-migration.png)

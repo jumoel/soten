@@ -1,24 +1,24 @@
 import { t } from "../i18n";
-import { AlertBox } from "./AlertBox";
+import { Alert, Text, Stack } from "../design";
 import { GitHubAuthButton } from "./GitHubAuthButton";
-import { Text } from "./ds/Text";
-import { Box } from "./ds/Box";
-import { Center } from "./ds/Center";
 
 export function UnauthenticatedView({ authError }: { authError: string | null }) {
   return (
-    <Center>
-      <Text variant="title">soten</Text>
-      <Text variant="heading">{t("app.tagline")}</Text>
-      {authError && (
-        <AlertBox>
-          <Text variant="error">{t("auth.loginFailed")}</Text>
-          <Box mt="2">
-            <Text variant="errorDetail">{authError}</Text>
-          </Box>
-        </AlertBox>
-      )}
-      <GitHubAuthButton />
-    </Center>
+    <div className="flex flex-col items-center justify-center h-full p-8">
+      <Stack gap={3} align="center">
+        <Text variant="h1" as="h1">
+          soten
+        </Text>
+        <Text variant="h3" as="p">
+          {t("app.tagline")}
+        </Text>
+        {authError && (
+          <Alert variant="error" title={t("auth.loginFailed")}>
+            {authError}
+          </Alert>
+        )}
+        <GitHubAuthButton />
+      </Stack>
+    </div>
   );
 }

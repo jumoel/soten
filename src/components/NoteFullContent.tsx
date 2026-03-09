@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { useAtom } from "jotai";
 import { loadable } from "jotai/utils";
-import { Button } from "./Button";
-import { ProseContent } from "./ProseContent";
+import { Button, MarkdownCard } from "../design";
 import { FrontmatterTable } from "./FrontmatterTable";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { renderedNoteAtom } from "../atoms/globals";
@@ -82,10 +81,8 @@ export function NoteFullContent({ path, onPin, onEdit }: NoteFullContentProps) {
           </Button>
         )}
       </div>
-      <div className="max-h-[60vh] overflow-y-auto">
-        <FrontmatterTable data={result.data.frontmatter} />
-        <ProseContent html={result.data.html} />
-      </div>
+      <FrontmatterTable data={result.data.frontmatter} />
+      <MarkdownCard html={result.data.html} collapsed={false} />
     </>
   );
 }

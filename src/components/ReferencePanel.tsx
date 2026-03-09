@@ -4,7 +4,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { SearchBar } from "./SearchBar";
 import { NoteRow } from "./NoteRow";
 import { PinnedZone } from "./PinnedZone";
-import { Text } from "./ds/Text";
+import { Text, Select } from "../design";
 import {
   searchResultsAtom,
   searchQueryAtom,
@@ -39,6 +39,12 @@ export function ReferencePanel() {
 
   const pinnedNotes = notes.filter((n) => pinnedPaths.includes(n.path));
 
+  const sortOptions = [
+    { value: "newest", label: t("sort.newest") },
+    { value: "oldest", label: t("sort.oldest") },
+    ...(query.trim() ? [{ value: "best-match", label: t("sort.bestMatch") }] : []),
+  ];
+
   const handleEdit = async (path: string) => {
     const timestamp = pathToTimestamp(path);
     if (!timestamp) return;
@@ -65,15 +71,13 @@ export function ReferencePanel() {
     <div className="flex flex-col h-full">
       <div className="sticky top-0 z-10 bg-base h-11 flex items-center gap-2 px-4 border-b border-edge">
         <SearchBar />
-        <select
-          className="text-xs text-muted bg-transparent border-none focus:outline-none cursor-pointer"
+        <Select
+          label={t("sort.label")}
           value={sort === "best-match" && !query.trim() ? "newest" : sort}
-          onChange={(e) => setSort(e.target.value as SortOrder)}
-        >
-          <option value="newest">{t("sort.newest")}</option>
-          <option value="oldest">{t("sort.oldest")}</option>
-          {query.trim() ? <option value="best-match">{t("sort.bestMatch")}</option> : null}
-        </select>
+          onChange={(v) => setSort(v as SortOrder)}
+          options={sortOptions}
+          size="sm"
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -90,7 +94,7 @@ export function ReferencePanel() {
 
         {notes.length === 0 ? (
           <div className="flex items-center justify-center h-48">
-            <Text variant="secondary" className="text-center">
+            <Text variant="body-dim" as="p">
               {query ? t("notes.noResults", { query }) : t("notes.empty")}
             </Text>
           </div>

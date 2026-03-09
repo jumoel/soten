@@ -1,8 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import { Button } from "./Button";
-import { NavLink } from "./ds/NavLink";
-import { Text } from "./ds/Text";
-import { DividedList } from "./ds/DividedList";
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { Button, Popover, Stack, Text, Link } from "../design";
 import { send } from "../atoms/globals";
 import { t } from "../i18n";
 import type { Repo } from "../atoms/store";
@@ -30,62 +28,51 @@ type GearPopoverProps = { selectedRepo?: Repo };
 
 export function GearPopover({ selectedRepo }: GearPopoverProps) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open]);
+  const navigate = useNavigate();
 
   return (
-    <div className="relative" ref={ref}>
-      <Button variant="ghost" onClick={() => setOpen((v) => !v)} aria-label="Settings">
-        <GearIcon />
-      </Button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-30 min-w-48 border border-edge rounded bg-surface shadow-sm">
-          {selectedRepo && (
-            <div className="px-3 py-2 border-b border-edge">
-              <Text variant="mono" as="p">
-                {selectedRepo.owner}/{selectedRepo.repo}
-              </Text>
-            </div>
-          )}
-          <div className="px-3">
-            <DividedList>
-              <li>
-                <NavLink to="/settings" variant="listItem" onClick={() => setOpen(false)}>
-                  {t("menu.settings")}
-                </NavLink>
-              </li>
-              <li>
-                <button
-                  className="block w-full text-left py-2.5 text-sm text-paper hover:underline"
-                  onClick={() => {
-                    setOpen(false);
-                    void send({ type: "LOGOUT" });
-                  }}
-                >
-                  {t("auth.logout")}
-                </button>
-              </li>
-            </DividedList>
+    <Popover
+      trigger={
+        <Button variant="ghost" iconOnly aria-label="Settings" onClick={() => setOpen((v) => !v)}>
+          <GearIcon />
+        </Button>
+      }
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <div className="py-1">
+        {selectedRepo && (
+          <div className="px-3 py-2 border-b border-edge">
+            <Text variant="body-dim" as="p">
+              {selectedRepo.owner}/{selectedRepo.repo}
+            </Text>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+        <Stack gap={1} as="ul">
+          <li className="px-3 py-1">
+            <Link
+              variant="muted"
+              onClick={() => {
+                setOpen(false);
+                void navigate({ to: "/settings" });
+              }}
+            >
+              {t("menu.settings")}
+            </Link>
+          </li>
+          <li className="px-3 py-1">
+            <Link
+              variant="muted"
+              onClick={() => {
+                setOpen(false);
+                void send({ type: "LOGOUT" });
+              }}
+            >
+              {t("auth.logout")}
+            </Link>
+          </li>
+        </Stack>
+      </div>
+    </Popover>
   );
 }

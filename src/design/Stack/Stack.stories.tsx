@@ -17,11 +17,13 @@ const Item = ({ label }: { label: string }) => (
 
 export const DefaultGap: Story = {
   render: () => (
-    <Stack className="p-4">
-      <Item label="Item 1" />
-      <Item label="Item 2" />
-      <Item label="Item 3" />
-    </Stack>
+    <div className="p-4">
+      <Stack>
+        <Item label="Item 1" />
+        <Item label="Item 2" />
+        <Item label="Item 3" />
+      </Stack>
+    </div>
   ),
 };
 
@@ -48,10 +50,12 @@ export const Alignment: Story = {
       {(["start", "center", "end", "stretch"] as const).map((align) => (
         <div key={align}>
           <div className="text-xs text-muted mb-2">align={align}</div>
-          <Stack align={align} className="w-32 bg-surface-2 p-2 rounded-md">
-            <Item label="Short" />
-            <Item label="A longer item" />
-          </Stack>
+          <div className="w-32 bg-surface-2 p-2 rounded-md">
+            <Stack align={align}>
+              <Item label="Short" />
+              <Item label="A longer item" />
+            </Stack>
+          </div>
         </div>
       ))}
     </div>
@@ -60,10 +64,24 @@ export const Alignment: Story = {
 
 export const AsUl: Story = {
   render: () => (
-    <Stack as="ul" gap={1} className="list-none p-4">
-      <li className="text-sm text-paper">First item</li>
-      <li className="text-sm text-paper">Second item</li>
-      <li className="text-sm text-paper">Third item</li>
-    </Stack>
+    <div className="p-4">
+      <Stack as="ul" gap={1}>
+        <li className="text-sm text-paper">First item</li>
+        <li className="text-sm text-paper">Second item</li>
+        <li className="text-sm text-paper">Third item</li>
+      </Stack>
+    </div>
+  ),
+};
+
+export const Horizontal: Story = {
+  render: () => (
+    <div className="p-4">
+      <Stack direction="horizontal" gap={3}>
+        <Item label="Left" />
+        <Item label="Center" />
+        <Item label="Right" />
+      </Stack>
+    </div>
   ),
 };

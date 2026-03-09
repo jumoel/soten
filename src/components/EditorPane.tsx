@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "./Button";
-import { Text } from "./ds/Text";
+import { Button, Text, TopBar, Stack } from "../design";
 import { minimizeDraft, updateDraftContent } from "../atoms/globals";
 import { saveDraft, discardDraft } from "../lib/draft-operations";
 import { scheduleAutosave } from "../lib/autosave";
@@ -57,47 +56,45 @@ export function EditorPane({ draft }: EditorPaneProps) {
 
   const title = extractDisplayTitle(content);
 
+  const discardControls = confirmingDiscard ? (
+    <>
+      <Text variant="meta" as="span">
+        {t("draft.discardAreYouSure")}
+      </Text>
+      <Button variant="ghost" size="sm" onClick={() => void handleDiscard()}>
+        {t("draft.discardConfirmAction")}
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => setConfirmingDiscard(false)}>
+        {t("draft.discardCancel")}
+      </Button>
+    </>
+  ) : (
+    <Button variant="ghost" size="sm" onClick={() => setConfirmingDiscard(true)}>
+      {t("draft.discard")}
+    </Button>
+  );
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 px-4 h-11 border-b border-edge bg-surface">
-        <Text variant="body" as="span" className="flex-1 truncate font-medium">
-          {title}
-        </Text>
-        <Button variant="ghost" size="sm" onClick={handleMinimize}>
-          {t("draft.minimize")}
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => void handleSave()}>
-          {t("draft.save")}
-        </Button>
-        {confirmingDiscard ? (
-          <>
-            <Text variant="body" as="span" className="text-red-600 text-sm">
-              {t("draft.discardAreYouSure")}
-            </Text>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600"
-              onClick={() => void handleDiscard()}
-            >
-              {t("draft.discardConfirmAction")}
+      <TopBar
+        as="div"
+        left={
+          <Text variant="body" as="span">
+            {title}
+          </Text>
+        }
+        right={
+          <Stack direction="horizontal" gap={1}>
+            <Button variant="ghost" size="sm" onClick={handleMinimize}>
+              {t("draft.minimize")}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setConfirmingDiscard(false)}>
-              {t("draft.discardCancel")}
+            <Button variant="secondary" size="sm" onClick={() => void handleSave()}>
+              {t("draft.save")}
             </Button>
-          </>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-600"
-            onClick={() => setConfirmingDiscard(true)}
-          >
-            {t("draft.discard")}
-          </Button>
-        )}
-      </div>
-
+            {discardControls}
+          </Stack>
+        }
+      />
       <textarea
         className="flex-1 w-full p-4 bg-surface font-mono text-sm text-paper resize-none focus:outline-none"
         value={content}

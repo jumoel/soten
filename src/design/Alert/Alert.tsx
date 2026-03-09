@@ -7,7 +7,6 @@ export type AlertProps = {
   variant: AlertVariant;
   title?: string;
   children: ReactNode;
-  className?: string;
 };
 
 const variantClasses: Record<AlertVariant, { container: string; iconText: string }> = {
@@ -25,22 +24,17 @@ const variantClasses: Record<AlertVariant, { container: string; iconText: string
   },
 };
 
-export function Alert({ variant, title, children, className }: AlertProps) {
+export function Alert({ variant, title, children }: AlertProps) {
   const { container, iconText } = variantClasses[variant];
 
   return (
     <div
       role={variant === "error" ? "alert" : "status"}
-      className={["rounded-md border px-4 py-3 flex gap-3", container, className ?? ""]
-        .filter(Boolean)
-        .join(" ")}
+      className={["rounded-md border px-4 py-3 flex gap-3", container].join(" ")}
     >
-      <Icon
-        name={variant}
-        size="5"
-        className={["shrink-0 mt-0.5", iconText].join(" ")}
-        aria-hidden={true}
-      />
+      <span className={["shrink-0 mt-0.5", iconText].join(" ")}>
+        <Icon name={variant} size="5" aria-hidden={true} />
+      </span>
       <div className={title ? "flex flex-col gap-1" : "flex items-start"}>
         {title && <p className={["font-medium", iconText].join(" ")}>{title}</p>}
         <div className="text-sm text-paper">{children}</div>

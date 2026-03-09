@@ -9,7 +9,6 @@ export type MarkdownCardProps = {
   timestamp?: string;
   actions?: ReactNode;
   fullWidth?: boolean;
-  className?: string;
 };
 
 function ChevronDown() {
@@ -63,12 +62,10 @@ export function MarkdownCard({
   timestamp,
   actions,
   fullWidth = false,
-  className,
 }: MarkdownCardProps) {
   const cardClasses = [
     "bg-surface border border-edge rounded-md px-3 py-2 flex flex-col gap-1",
     fullWidth ? "w-full" : "",
-    className ?? "",
   ]
     .filter(Boolean)
     .join(" ");

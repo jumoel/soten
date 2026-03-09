@@ -6,7 +6,7 @@ import { UnauthenticatedView } from "./components/UnauthenticatedView";
 import { AuthError } from "./components/AuthError";
 import { TopBar } from "./components/TopBar";
 import { LoadingSpinner } from "./components/LoadingSpinner";
-import { AppShell } from "./components/ds/AppShell";
+import { AppShell } from "./design";
 import { EditorPane } from "./components/EditorPane";
 import { DraftTray } from "./components/DraftTray";
 import { ResizeHandle } from "./components/ResizeHandle";
@@ -96,8 +96,7 @@ export function App() {
   const showChrome = machine.phase !== "initializing" && machine.phase !== "unauthenticated";
 
   return (
-    <AppShell>
-      {showChrome && <TopBar />}
+    <AppShell topBar={showChrome ? <TopBar /> : undefined}>
       {machine.phase === "initializing" && <LoadingSpinner />}
       {machine.phase === "unauthenticated" && <UnauthenticatedView authError={machine.authError} />}
       {machine.phase === "error" && (

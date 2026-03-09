@@ -5,16 +5,11 @@ export type AppShellProps = {
   sidebar?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
-  className?: string;
 };
 
-export function AppShell({ topBar, sidebar, footer, children, className }: AppShellProps) {
+export function AppShell({ topBar, sidebar, footer, children }: AppShellProps) {
   return (
-    <div
-      className={["w-screen h-screen flex flex-col bg-base antialiased", className ?? ""]
-        .filter(Boolean)
-        .join(" ")}
-    >
+    <div className="w-screen h-screen flex flex-col bg-base antialiased">
       {topBar}
       <div className="flex flex-1 min-h-0">
         {sidebar && (

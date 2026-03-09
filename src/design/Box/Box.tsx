@@ -10,7 +10,6 @@ export type BoxProps<T extends ElementType = "div"> = {
   border?: BoxBorder;
   padding?: BoxPadding;
   rounded?: boolean;
-  className?: string;
   children?: ReactNode;
 } & Omit<ComponentPropsWithoutRef<T>, "className" | "children">;
 
@@ -40,7 +39,6 @@ export function Box<T extends ElementType = "div">({
   border = "none",
   padding = "none",
   rounded = false,
-  className,
   children,
   ...rest
 }: BoxProps<T>) {
@@ -50,7 +48,6 @@ export function Box<T extends ElementType = "div">({
     borderClass[border],
     paddingClass[padding],
     rounded ? "rounded-md" : "",
-    className ?? "",
   ]
     .filter(Boolean)
     .join(" ");

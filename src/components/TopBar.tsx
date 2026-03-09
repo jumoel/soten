@@ -1,14 +1,15 @@
 import { useAtomValue } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "./Button";
-import { Toolbar } from "./ds/Toolbar";
-import { NavLink } from "./ds/NavLink";
-import { Text } from "./ds/Text";
+import { Button } from "../design";
+import { TopBar as DesignTopBar } from "../design";
+import { Link } from "../design";
+import { Text } from "../design";
 import { GearPopover } from "./GearPopover";
 import { onlineAtom } from "../lib/online";
 import { machineAtom, gitWorkingAtom, openNewDraft } from "../atoms/globals";
 import { getRepoWorker } from "../worker/client";
 import { withGitWorking } from "../lib/git-status";
+import { Icon } from "../design";
 import { t } from "../i18n";
 
 function SotenLogo() {
@@ -42,22 +43,6 @@ function SotenLogo() {
   );
 }
 
-function PlusIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      aria-hidden="true"
-    >
-      <path d="M10 4v12M4 10h12" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export function TopBar() {
   const online = useAtomValue(onlineAtom);
   const machine = useAtomValue(machineAtom);
@@ -77,45 +62,29 @@ export function TopBar() {
   };
 
   return (
-    <Toolbar>
-      <div className="flex items-center gap-3">
-        <NavLink to="/" variant="brand">
-          <SotenLogo />
-          soten
-        </NavLink>
-        {!online && <Text variant="meta">offline</Text>}
-      </div>
-
-      {machine.phase === "ready" && (
-        <Button variant="secondary" onClick={() => void handleNewNote()}>
-          <span className="flex items-center gap-1.5">
-            <PlusIcon />
+    <DesignTopBar
+      left={
+        <div className="flex items-center gap-3">
+          <Link variant="nav" onClick={() => void navigate({ to: "/" })}>
+            <SotenLogo />
+            soten
+          </Link>
+          {!online && <Text variant="meta">offline</Text>}
+        </div>
+      }
+      center={
+        machine.phase === "ready" ? (
+          <Button variant="secondary" icon="plus" onClick={() => void handleNewNote()}>
             {t("note.new")}
-          </span>
-        </Button>
-      )}
-
-      <div className="flex items-center gap-2">
-        {gitWorking && (
-          <svg className="animate-spin h-4 w-4 text-muted" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-        )}
-        <GearPopover selectedRepo={selectedRepo} />
-      </div>
-    </Toolbar>
+          </Button>
+        ) : undefined
+      }
+      right={
+        <div className="flex items-center gap-2">
+          {gitWorking && <Icon name="spinner" size="4" spin />}
+          <GearPopover selectedRepo={selectedRepo} />
+        </div>
+      }
+    />
   );
 }

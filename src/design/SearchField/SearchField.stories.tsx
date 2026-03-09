@@ -59,7 +59,6 @@ export const FullWidth: Story = {
           onChange={setValue}
           label="Search"
           placeholder="Search all notes..."
-          className="w-full"
         />
       </div>
     );

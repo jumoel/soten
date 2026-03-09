@@ -10,7 +10,6 @@ export type ButtonProps = {
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  className?: string;
   children?: ReactNode;
   "aria-label"?: string;
   icon?: IconName;
@@ -58,7 +57,6 @@ export function Button({
   disabled = false,
   type = "button",
   onClick,
-  className,
   children,
   "aria-label": ariaLabel,
   icon,
@@ -73,7 +71,6 @@ export function Button({
     baseClasses,
     isDisabled ? variantDisabledClasses[variant] : variantClasses[variant],
     sizeClasses[variant][size][sizeKey],
-    className ?? "",
   ]
     .filter(Boolean)
     .join(" ");
