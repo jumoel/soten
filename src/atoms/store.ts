@@ -188,10 +188,7 @@ function findCutPoint(body: string, threshold: number): number {
   return threshold;
 }
 
-const cardCache = new Map<
-  string,
-  { html: string; isShort: boolean; derivedTitle: string | null }
->();
+const cardCache = new Map<string, { html: string; isShort: boolean }>();
 
 export function clearCardCache() {
   cardCache.clear();
@@ -206,22 +203,15 @@ export const noteCardAtom = atomFamily((path: string) =>
     const bodyStart = findBodyStart(content);
     const body = content.slice(bodyStart);
 
-    const h1Re = /^#\s+(.+)$/m;
-    const h1Match = body.match(h1Re);
-    const derivedTitle = h1Match ? h1Match[1].trim() : null;
-    const strippedBody = derivedTitle ? body.replace(h1Re, "").trimStart() : body;
-
-    const isShort = strippedBody.length <= NOTE_CARD_THRESHOLD;
-    const previewBody = isShort
-      ? strippedBody
-      : strippedBody.slice(0, findCutPoint(strippedBody, NOTE_CARD_THRESHOLD));
+    const isShort = body.length <= NOTE_CARD_THRESHOLD;
+    const previewBody = isShort ? body : body.slice(0, findCutPoint(body, NOTE_CARD_THRESHOLD));
     const displayContent = content.slice(0, bodyStart) + previewBody;
 
     const cached = cardCache.get(displayContent);
     if (cached) return cached;
 
     const { html } = await renderMarkdown(displayContent);
-    const result = { html, isShort, derivedTitle };
+    const result = { html, isShort };
     cardCache.set(displayContent, result);
     return result;
   }),

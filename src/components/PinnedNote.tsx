@@ -1,6 +1,6 @@
 import { Button } from "./Button";
 import { Text } from "./ds/Text";
-import { NoteExpanded } from "./NoteExpanded";
+import { NoteFullContent } from "./NoteFullContent";
 import type { NoteListEntry } from "../atoms/store";
 
 type PinnedNoteProps = {
@@ -31,7 +31,7 @@ export function PinnedNote({ note, expanded, onToggle, onUnpin, onEdit }: Pinned
           ×
         </Button>
       </div>
-      {expanded && <NoteExpanded path={note.path} onPin={() => {}} onEdit={onEdit} />}
+      {expanded && <NoteFullContent path={note.path} onPin={() => {}} onEdit={onEdit} />}
     </li>
   );
 }

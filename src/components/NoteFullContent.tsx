@@ -41,33 +41,51 @@ function EditIcon() {
   );
 }
 
-type NoteExpandedProps = {
+type NoteFullContentProps = {
   path: string;
   onPin: () => void;
   onEdit?: () => void;
 };
 
-export function NoteExpanded({ path, onPin, onEdit }: NoteExpandedProps) {
-  const loadableAtom = useMemo(() => loadable(renderedNoteAtom(path)), [path]);
-  const [result] = useAtom(loadableAtom);
+export function NoteFullContent({ path, onPin, onEdit }: NoteFullContentProps) {
+  const fullAtom = useMemo(() => loadable(renderedNoteAtom(path)), [path]);
+  const [result] = useAtom(fullAtom);
 
   if (result.state === "loading") return <LoadingSpinner />;
   if (result.state !== "hasData" || !result.data) return null;
 
   return (
-    <div className="px-4 pb-3 max-h-[60vh] overflow-y-auto">
-      <div className="flex gap-2 mb-2">
-        <Button variant="ghost" size="sm" onClick={onPin} aria-label={t("note.pin")}>
+    <>
+      <div className="flex gap-2 mt-2 mb-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPin();
+          }}
+          aria-label={t("note.pin")}
+        >
           <PinIcon /> {t("note.pin")}
         </Button>
         {onEdit && (
-          <Button variant="ghost" size="sm" onClick={onEdit} aria-label={t("note.edit")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            aria-label={t("note.edit")}
+          >
             <EditIcon /> {t("note.edit")}
           </Button>
         )}
       </div>
-      <FrontmatterTable data={result.data.frontmatter} />
-      <ProseContent html={result.data.html} />
-    </div>
+      <div className="max-h-[60vh] overflow-y-auto">
+        <FrontmatterTable data={result.data.frontmatter} />
+        <ProseContent html={result.data.html} />
+      </div>
+    </>
   );
 }

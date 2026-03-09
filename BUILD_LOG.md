@@ -56,3 +56,9 @@ H1 heading below (when present), preview text after. Date-only files show just t
 timestamp files show the full datetime including time.
 
 ![Cards with vertical layout: meta date, heading, preview](docs/build-log/2026-03-08-card-layout-restored.png)
+
+### 2026-03-09 — Card and expand redesign
+
+Removed duplicate content and expand inconsistency. Card preview now shows the raw body (no H1 stripping); expanded state renders inline inside the card with Pin/Edit buttons, replacing the separate `NoteExpanded` component. `NoteFullContent` is a new shared component used by both `NoteRow` and `PinnedNote`.
+
+![Expanded card inline with full content and action buttons](docs/build-log/2026-03-09-card-expand-redesign.png)
