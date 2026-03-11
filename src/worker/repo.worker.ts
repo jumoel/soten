@@ -5,7 +5,7 @@ import type { GitUser, SearchEntry, WorkerRequest, WorkerResponse } from "./prot
 const FILE_SYSTEM_NAME = "fs";
 const REPO_DIR = "/soten";
 
-const fs = new LightningFS(FILE_SYSTEM_NAME);
+const fs = new LightningFS(FILE_SYSTEM_NAME, { defer: true });
 const pfs = fs.promises;
 
 // ---------------------------------------------------------------------------
@@ -39,7 +39,7 @@ function getGit(): Promise<GitDeps> {
   return gitDeps;
 }
 
-const corsProxy = "/api/cors-proxy";
+let corsProxy: string = "/api/cors-proxy";
 
 async function clone(url: string, user: GitUser): Promise<void> {
   const { git, http } = await getGit();
@@ -408,6 +408,9 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         break;
       case "hasRemote":
         result = await hasRemote();
+        break;
+      case "setCorsProxy":
+        corsProxy = msg.value;
         break;
     }
 

@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 
+import { execFile, spawn } from "node:child_process";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
@@ -29,8 +30,114 @@ export default defineConfig({
       name: "local-repo",
       configureServer(server) {
         const sandboxRoot = resolve(process.cwd(), "..");
+        const configuredRepos = new Set<string>();
+
+        async function ensureReceiveConfig(repoPath: string): Promise<void> {
+          if (configuredRepos.has(repoPath)) return;
+          await new Promise<void>((resolve, reject) => {
+            execFile(
+              "git",
+              ["config", "receive.denyCurrentBranch", "updateInstead"],
+              { cwd: repoPath },
+              (err) => (err ? reject(err) : resolve()),
+            );
+          });
+          configuredRepos.add(repoPath);
+        }
+
+        function resolveLocalGitRepo(
+          pathname: string,
+        ): { repoPath: string; gitPath: string } | null {
+          const prefix = "/api/local-git/";
+          if (!pathname.startsWith(prefix)) return null;
+          const rest = pathname.slice(prefix.length);
+          const slashIdx = rest.indexOf("/");
+          if (slashIdx === -1) return null;
+          const dir = decodeURIComponent(rest.slice(0, slashIdx));
+          const gitPath = rest.slice(slashIdx + 1);
+          const repoPath = resolve(process.cwd(), dir);
+          if (!repoPath.startsWith(sandboxRoot)) return null;
+          return { repoPath, gitPath };
+        }
+
         server.middlewares.use(async (req, res, next) => {
           const url = new URL(req.url ?? "/", "http://localhost");
+
+          // Git smart HTTP protocol handler
+          const gitRepo = resolveLocalGitRepo(url.pathname);
+          if (gitRepo) {
+            const { repoPath, gitPath } = gitRepo;
+
+            try {
+              await ensureReceiveConfig(repoPath);
+            } catch {
+              res.statusCode = 500;
+              res.end("Failed to configure repo");
+              return;
+            }
+
+            // GET /info/refs?service=git-upload-pack or git-receive-pack
+            if (req.method === "GET" && gitPath === "info/refs") {
+              const service = url.searchParams.get("service");
+              if (service !== "git-upload-pack" && service !== "git-receive-pack") {
+                res.statusCode = 403;
+                res.end("Unsupported service");
+                return;
+              }
+              const proc = execFile(
+                "git",
+                [service.replace("git-", ""), "--stateless-rpc", "--advertise-refs", repoPath],
+                { encoding: "buffer", maxBuffer: 50 * 1024 * 1024 },
+                (err, stdout) => {
+                  if (err) {
+                    res.statusCode = 500;
+                    res.end(err.message);
+                    return;
+                  }
+                  res.setHeader("Content-Type", `application/x-${service}-advertisement`);
+                  res.setHeader("Cache-Control", "no-cache");
+                  // Smart HTTP ref advertisement preamble
+                  const pktLine = `# service=${service}\n`;
+                  const pktLen = (pktLine.length + 4).toString(16).padStart(4, "0");
+                  res.write(pktLen + pktLine);
+                  res.write("0000");
+                  res.end(stdout);
+                },
+              );
+              proc.on("error", () => {
+                res.statusCode = 500;
+                res.end("Failed to spawn git");
+              });
+              return;
+            }
+
+            // POST /git-upload-pack or /git-receive-pack
+            if (
+              req.method === "POST" &&
+              (gitPath === "git-upload-pack" || gitPath === "git-receive-pack")
+            ) {
+              const service = gitPath.replace("git-", "");
+              res.setHeader("Content-Type", `application/x-git-${service}-result`);
+              res.setHeader("Cache-Control", "no-cache");
+
+              const proc = spawn("git", [service, "--stateless-rpc", repoPath]);
+
+              req.pipe(proc.stdin);
+              proc.stdout.pipe(res);
+              proc.stderr.on("data", (data: Buffer) => {
+                console.error("[local-git]", data.toString());
+              });
+              proc.on("error", () => {
+                res.statusCode = 500;
+                res.end("Failed to spawn git");
+              });
+              return;
+            }
+
+            res.statusCode = 404;
+            res.end("Not found");
+            return;
+          }
 
           if (url.pathname === "/api/test-repo/files") {
             const dir = url.searchParams.get("dir");
@@ -134,7 +241,9 @@ export default defineConfig({
 
   server: {
     proxy: {
-      "/api": { target: "http://localhost:8788" },
+      "/api/cors-proxy": { target: "http://localhost:8788" },
+      "/api/gh-auth": { target: "http://localhost:8788" },
+      "/api/test-repo": { target: "http://localhost:8788" },
     },
   },
 

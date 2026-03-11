@@ -1,38 +1,27 @@
-import { REPO_DIR } from "../lib/constants";
+import { refreshFs } from "../lib/fs";
 import { getRepoWorker } from "../worker/client";
 import { recoverDrafts } from "./draft-recovery";
 import { buildSearchIndex } from "./search";
 import { machineAtom, noteListAtom, store } from "./store";
 
 export async function initFromLocalRepo(dir: string): Promise<void> {
-  const filesRes = await fetch(`/api/test-repo/files?dir=${encodeURIComponent(dir)}`);
-  if (!filesRes.ok) throw new Error(`Failed to list local repo: ${filesRes.statusText}`);
+  const worker = getRepoWorker();
+  const localGitUrl = `${window.location.origin}/api/local-git/${encodeURIComponent(dir)}`;
 
-  const relativePaths = (await filesRes.json()) as string[];
-  const textPaths = relativePaths.filter((p) => !p.startsWith("uploads/"));
+  await worker.setCorsProxy("");
+  await worker.clone(localGitUrl, { username: "local", token: "", email: "local@soten" });
+  refreshFs();
 
-  const files = await Promise.all(
-    textPaths.map(async (relativePath) => {
-      const res = await fetch(
-        `/api/test-repo/file?path=${encodeURIComponent(`${dir}/${relativePath}`)}`,
-      );
-      const content = res.ok ? await res.text() : "";
-      return { path: `${REPO_DIR}/${relativePath}`, content };
-    }),
-  );
-
-  await getRepoWorker().populateFiles(files);
-
-  const filenames = files.map((f) => f.path);
+  const filenames = await worker.readRepoFiles();
   const repoName = dir.split("/").pop() ?? dir;
 
   store.set(machineAtom, {
     phase: "ready",
-    user: { username: "local", token: "no-token", installationId: "0", email: "local@test" },
+    user: { username: "local", token: "", installationId: "0", email: "local@soten" },
     repos: [`local/${repoName}`],
     selectedRepo: { owner: "local", repo: repoName },
     filenames,
-    hasRemote: false,
+    hasRemote: true,
   });
 
   buildSearchIndex(store.get(noteListAtom));

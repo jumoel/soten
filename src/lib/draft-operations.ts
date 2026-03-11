@@ -32,6 +32,7 @@ export async function saveDraft(timestamp: string, content: string, isNew: boole
     await worker.commitFile(filepath, content, "draft: autosave");
     await worker.squashMergeToMain(branch, message);
     await pushIfOnline("main");
+    await pushIfOnline(`:refs/heads/${branch}`);
   });
 
   const machine = store.get(machineAtom);

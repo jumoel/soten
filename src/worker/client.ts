@@ -111,6 +111,10 @@ class RepoWorkerClient {
   readFileFromBranch(branch: string, filepath: string): Promise<string | null> {
     return this.call({ type: "readFileFromBranch", branch, filepath }) as Promise<string | null>;
   }
+
+  setCorsProxy(value: string): Promise<void> {
+    return this.call({ type: "setCorsProxy", value }) as Promise<void>;
+  }
 }
 
 export function getRepoWorker(): RepoWorkerClient {
