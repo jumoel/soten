@@ -84,3 +84,13 @@ remote on save, fixing the bug where edits on one device didn't appear on anothe
 primitive worker methods, `git-status.ts`, `push.ts`, and `draft-recovery.ts` were removed.
 
 ![App after worker domain ops refactoring](docs/build-log/2026-03-11-worker-domain-ops.png)
+
+### 2026-03-11 — Rebuild design system as src/ds/
+
+Deleted the old `src/design/` directory and rebuilt the design system from scratch in `src/ds/`
+with 17 primitives: Box, Stack, Grid, Divider, Spacer, Text, Button, IconButton, Link, Input,
+Textarea, SearchField, Toggle, Alert, Badge, Spinner, Dialog, Card, and Icon. Each component has
+Storybook stories covering all variants and states. New components (IconButton, Input, Toggle,
+Badge, Spinner, Dialog, Card, Divider, Spacer) fill gaps the old system had. Icon set expanded
+with settings, pin, file-text, clock, grip-vertical, moon, sun, log-out, refresh-cw, wifi-off,
+and upload. All consumer imports updated.
