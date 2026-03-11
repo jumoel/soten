@@ -94,3 +94,11 @@ Storybook stories covering all variants and states. New components (IconButton, 
 Badge, Spinner, Dialog, Card, Divider, Spacer) fill gaps the old system had. Icon set expanded
 with settings, pin, file-text, clock, grip-vertical, moon, sun, log-out, refresh-cw, wifi-off,
 and upload. All consumer imports updated.
+
+### 2026-03-11 — Replace state layer with domain atoms and hash router
+
+Deleted the entire old `src/atoms/` state machine and all feature components. Replaced with
+domain-organized Jotai atoms in `src/state/` (auth, repo, ui) where write atoms handle side
+effects directly instead of a central dispatch system. Removed @tanstack/react-router in favor
+of a hash-based router in `src/lib/router.ts`. Minimal auth shell handles login, OAuth callback,
+repo selection, clone, and ready state using only design system primitives.
