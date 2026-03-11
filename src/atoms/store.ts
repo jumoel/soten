@@ -174,4 +174,5 @@ export function clearCardCache() {
   cardCache.clear();
 }
 
-export const gitWorkingAtom = atom(false);
+export type SyncStatusUI = "idle" | "working" | "local-only" | "synced";
+export const syncStatusAtom = atom<SyncStatusUI>("idle");

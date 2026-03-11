@@ -15,12 +15,12 @@ export { searchIndexReadyAtom, searchQueryAtom, searchResultsAtom, sortAtom } fr
 export {
   clearCardCache,
   fileAtom,
-  gitWorkingAtom,
   machineAtom,
   noteListAtom,
   pinnedNotesAtom,
   renderedNoteAtom,
   store,
+  syncStatusAtom,
   themeAtom,
 } from "./store";
 

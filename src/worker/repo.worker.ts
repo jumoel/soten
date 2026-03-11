@@ -1,6 +1,14 @@
 import LightningFS from "@isomorphic-git/lightning-fs";
 import MiniSearch from "minisearch";
-import type { GitUser, SearchEntry, WorkerRequest, WorkerResponse } from "./protocol";
+import type {
+  DomainResult,
+  GitUser,
+  RepoState,
+  SearchEntry,
+  SyncStatus,
+  WorkerRequest,
+  WorkerResponse,
+} from "./protocol";
 
 const FILE_SYSTEM_NAME = "fs";
 const REPO_DIR = "/soten";
@@ -41,9 +49,13 @@ function getGit(): Promise<GitDeps> {
 
 let corsProxy: string = "/api/cors-proxy";
 
+// ---------------------------------------------------------------------------
+// Low-level git helpers (private to worker)
+// ---------------------------------------------------------------------------
+
 async function clone(url: string, user: GitUser): Promise<void> {
   const { git, http } = await getGit();
-  fs.init(FILE_SYSTEM_NAME, { wipe: true });
+  await fs.promises.init(FILE_SYSTEM_NAME, { wipe: true });
 
   await git.clone({
     fs,
@@ -90,16 +102,6 @@ async function push(user: { username: string; token: string }, ref?: string): Pr
     onMessage: (msg) => console.debug("push onMessage", msg),
     onProgress: (prog) => console.debug("push onProgress", prog),
   });
-}
-
-async function hasRemote(): Promise<boolean> {
-  const { git } = await getGit();
-  try {
-    const remotes = await git.listRemotes({ fs, dir: REPO_DIR });
-    return remotes.length > 0;
-  } catch {
-    return false;
-  }
 }
 
 async function isInitialized(): Promise<boolean> {
@@ -152,91 +154,39 @@ async function readTextFile(path: string): Promise<string | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Local file population (dev/test only)
+// Tree/blob helpers for no-checkout commits
 // ---------------------------------------------------------------------------
 
-async function mkdirp(path: string): Promise<void> {
+async function buildTreeWithFile(
+  parentTreeOid: string,
+  filepath: string,
+  blobOid: string,
+): Promise<string> {
+  const { git } = await getGit();
+  const { tree: entries } = await git.readTree({ fs, dir: REPO_DIR, oid: parentTreeOid });
+
+  const existing = entries.filter((e) => e.path !== filepath);
+  const newEntry = { mode: "100644" as const, path: filepath, oid: blobOid, type: "blob" as const };
+  const newTree = [...existing, newEntry];
+
+  return await git.writeTree({ fs, dir: REPO_DIR, tree: newTree });
+}
+
+async function fileExistsOnMain(filepath: string): Promise<boolean> {
+  const { git } = await getGit();
   try {
-    await pfs.mkdir(path);
-  } catch (e) {
-    if ((e as { code?: string }).code === "EEXIST") return;
-    const parent = path.slice(0, path.lastIndexOf("/"));
-    if (!parent || parent === path) throw e;
-    await mkdirp(parent);
-    await pfs.mkdir(path);
-  }
-}
-
-async function populateFiles(files: Array<{ path: string; content: string }>): Promise<void> {
-  const enc = new TextEncoder();
-  for (const file of files) {
-    const dir = file.path.slice(0, file.path.lastIndexOf("/"));
-    if (dir) await mkdirp(dir);
-    await pfs.writeFile(file.path, enc.encode(file.content));
+    const mainOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: "main" });
+    const { commit } = await git.readCommit({ fs, dir: REPO_DIR, oid: mainOid });
+    const { tree: entries } = await git.readTree({ fs, dir: REPO_DIR, oid: commit.tree });
+    return entries.some((e) => e.path === filepath);
+  } catch {
+    return false;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Branch and commit operations
+// Draft branch helpers
 // ---------------------------------------------------------------------------
-
-async function createBranch(name: string): Promise<void> {
-  const { git } = await getGit();
-  await git.branch({ fs, dir: REPO_DIR, ref: name });
-}
-
-async function checkoutBranch(name: string): Promise<void> {
-  const { git } = await getGit();
-  await git.checkout({ fs, dir: REPO_DIR, ref: name });
-}
-
-async function commitFile(filepath: string, content: string, message: string): Promise<void> {
-  const { git } = await getGit();
-  const enc = new TextEncoder();
-  const fullpath = `${REPO_DIR}/${filepath}`;
-
-  const dir = fullpath.slice(0, fullpath.lastIndexOf("/"));
-  if (dir && dir !== REPO_DIR) await mkdirp(dir);
-
-  await pfs.writeFile(fullpath, enc.encode(content));
-  await git.add({ fs, dir: REPO_DIR, filepath });
-  await git.commit({
-    fs,
-    dir: REPO_DIR,
-    message,
-    author: { name: "soten", email: "soten@local" },
-  });
-}
-
-async function squashMergeToMain(branch: string, message: string): Promise<void> {
-  const { git } = await getGit();
-
-  const branchCommit = await git.resolveRef({ fs, dir: REPO_DIR, ref: branch });
-  const { commit } = await git.readCommit({ fs, dir: REPO_DIR, oid: branchCommit });
-  const tree = commit.tree;
-
-  await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
-
-  const mainHead = await git.resolveRef({ fs, dir: REPO_DIR, ref: "HEAD" });
-  const oid = await git.commit({
-    fs,
-    dir: REPO_DIR,
-    message,
-    tree,
-    parent: [mainHead],
-    author: { name: "soten", email: "soten@local" },
-  });
-
-  await git.writeRef({ fs, dir: REPO_DIR, ref: "refs/heads/main", value: oid, force: true });
-  await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
-  await git.deleteBranch({ fs, dir: REPO_DIR, ref: branch });
-}
-
-async function deleteBranch(name: string): Promise<void> {
-  const { git } = await getGit();
-  await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
-  await git.deleteBranch({ fs, dir: REPO_DIR, ref: name });
-}
 
 async function readFileFromBranch(branch: string, filepath: string): Promise<string | null> {
   const { git } = await getGit();
@@ -271,6 +221,260 @@ async function listDraftBranches(): Promise<Array<{ timestamp: string; content: 
   }
 
   return drafts;
+}
+
+// ---------------------------------------------------------------------------
+// gatherState
+// ---------------------------------------------------------------------------
+
+async function gatherState(opts?: { skipFilenames?: boolean }): Promise<RepoState> {
+  const filenames = opts?.skipFilenames ? [] : await readRepoFiles();
+  const drafts = await listDraftBranches();
+  return { filenames, drafts };
+}
+
+// ---------------------------------------------------------------------------
+// Domain handlers
+// ---------------------------------------------------------------------------
+
+async function autosaveDraftHandler(
+  timestamp: string,
+  content: string,
+  user: { username: string; token: string },
+  hasRemote: boolean,
+  isOnline: boolean,
+): Promise<DomainResult> {
+  const { git } = await getGit();
+  const branch = `draft/${timestamp}`;
+  const filepath = `${timestamp}.md`;
+
+  // Resolve branch tip, or create branch from main HEAD
+  let parentOid: string;
+  try {
+    parentOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: branch });
+  } catch {
+    const mainOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: "main" });
+    parentOid = mainOid;
+  }
+
+  // Read parent tree, write new blob, build new tree
+  const { commit: parentCommit } = await git.readCommit({ fs, dir: REPO_DIR, oid: parentOid });
+  const enc = new TextEncoder();
+  const blobOid = await git.writeBlob({ fs, dir: REPO_DIR, blob: enc.encode(content) });
+  const tree = await buildTreeWithFile(parentCommit.tree, filepath, blobOid);
+
+  const oid = await git.commit({
+    fs,
+    dir: REPO_DIR,
+    message: "draft: autosave",
+    tree,
+    parent: [parentOid],
+    author: { name: "soten", email: "soten@local" },
+  });
+  await git.writeRef({
+    fs,
+    dir: REPO_DIR,
+    ref: `refs/heads/${branch}`,
+    value: oid,
+    force: true,
+  });
+
+  let syncStatus: SyncStatus = "local-only";
+  if (hasRemote && isOnline) {
+    try {
+      await push(user, branch);
+      syncStatus = "synced";
+    } catch {
+      /* local-only */
+    }
+  }
+
+  return { state: await gatherState({ skipFilenames: true }), syncStatus };
+}
+
+async function publishDraftHandler(
+  timestamp: string,
+  content: string,
+  message: string,
+  user: { username: string; token: string },
+  hasRemote: boolean,
+  isOnline: boolean,
+): Promise<DomainResult> {
+  const { git } = await getGit();
+  const branch = `draft/${timestamp}`;
+  const filepath = `${timestamp}.md`;
+
+  // Commit to draft branch (same tree/blob approach as autosave)
+  let parentOid: string;
+  try {
+    parentOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: branch });
+  } catch {
+    const mainOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: "main" });
+    parentOid = mainOid;
+  }
+
+  const { commit: parentCommit } = await git.readCommit({ fs, dir: REPO_DIR, oid: parentOid });
+  const enc = new TextEncoder();
+  const blobOid = await git.writeBlob({ fs, dir: REPO_DIR, blob: enc.encode(content) });
+  const draftTree = await buildTreeWithFile(parentCommit.tree, filepath, blobOid);
+
+  const draftOid = await git.commit({
+    fs,
+    dir: REPO_DIR,
+    message: "draft: autosave",
+    tree: draftTree,
+    parent: [parentOid],
+    author: { name: "soten", email: "soten@local" },
+  });
+  await git.writeRef({
+    fs,
+    dir: REPO_DIR,
+    ref: `refs/heads/${branch}`,
+    value: draftOid,
+    force: true,
+  });
+
+  // Squash merge: commit with draft's tree, parent = main HEAD
+  const mainHead = await git.resolveRef({ fs, dir: REPO_DIR, ref: "main" });
+  const squashOid = await git.commit({
+    fs,
+    dir: REPO_DIR,
+    message,
+    tree: draftTree,
+    parent: [mainHead],
+    author: { name: "soten", email: "soten@local" },
+  });
+  await git.writeRef({
+    fs,
+    dir: REPO_DIR,
+    ref: "refs/heads/main",
+    value: squashOid,
+    force: true,
+  });
+
+  // Checkout main (updates working directory for main-thread LightningFS reads)
+  await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
+
+  // Delete draft branch locally
+  try {
+    await git.deleteBranch({ fs, dir: REPO_DIR, ref: branch });
+  } catch {
+    // Branch may already be gone
+  }
+
+  // Push main + push branch deletion if online
+  let syncStatus: SyncStatus = "local-only";
+  if (hasRemote && isOnline) {
+    let allPushed = true;
+    try {
+      await push(user, "main");
+    } catch {
+      allPushed = false;
+    }
+    try {
+      await push(user, `:refs/heads/${branch}`);
+    } catch {
+      // Remote branch may not exist
+    }
+    if (allPushed) syncStatus = "synced";
+  }
+
+  return { state: await gatherState(), syncStatus };
+}
+
+async function discardDraftHandler(
+  timestamp: string,
+  user: { username: string; token: string },
+  hasRemote: boolean,
+  isOnline: boolean,
+): Promise<DomainResult> {
+  const filepath = `${timestamp}.md`;
+  const branch = `draft/${timestamp}`;
+  const existsOnMain = await fileExistsOnMain(filepath);
+
+  // Delete branch locally
+  try {
+    const { git } = await getGit();
+    // Need to be on main before deleting the branch
+    await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
+    await git.deleteBranch({ fs, dir: REPO_DIR, ref: branch });
+  } catch {
+    // Branch may not exist yet
+  }
+
+  if (existsOnMain) {
+    // Checkout main restores the file from main
+    const { git } = await getGit();
+    await git.checkout({ fs, dir: REPO_DIR, ref: "main" });
+  } else {
+    // File doesn't exist on main, remove from IndexedDB
+    try {
+      await pfs.unlink(`${REPO_DIR}/${filepath}`);
+    } catch {
+      // File may not exist
+    }
+  }
+
+  // Push branch deletion if online
+  let syncStatus: SyncStatus = "local-only";
+  if (hasRemote && isOnline) {
+    try {
+      await push(user, `:refs/heads/${branch}`);
+      syncStatus = "synced";
+    } catch {
+      // Remote branch may not exist
+    }
+  }
+
+  return { state: await gatherState(), syncStatus };
+}
+
+async function syncHandler(
+  user: { username: string; token: string },
+  draftTimestamps: string[],
+): Promise<DomainResult> {
+  let allPushed = true;
+
+  // Push all draft branches (non-fatal per branch)
+  for (const ts of draftTimestamps) {
+    try {
+      await push(user, `draft/${ts}`);
+    } catch {
+      allPushed = false;
+    }
+  }
+
+  // Push main (non-fatal)
+  try {
+    await push(user);
+  } catch {
+    allPushed = false;
+  }
+
+  // Pull (non-fatal)
+  try {
+    await pull(user);
+  } catch {
+    allPushed = false;
+  }
+
+  const syncStatus: SyncStatus = allPushed ? "synced" : "local-only";
+  return { state: await gatherState(), syncStatus };
+}
+
+async function domainCloneHandler(url: string, user: GitUser): Promise<DomainResult> {
+  if (await isInitialized()) {
+    try {
+      await pull(user);
+    } catch {
+      await fs.promises.init(FILE_SYSTEM_NAME, { wipe: true });
+      await clone(url, user);
+    }
+  } else {
+    await clone(url, user);
+  }
+
+  return { state: await gatherState(), syncStatus: "synced" };
 }
 
 // ---------------------------------------------------------------------------
@@ -346,80 +550,80 @@ function clearSearchIndex(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Message handler
+// Message handler (queued - one message at a time)
 // ---------------------------------------------------------------------------
 
-self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
+let queue: Promise<void> = Promise.resolve();
+
+self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   const msg = e.data;
-  let result: unknown;
+  queue = queue
+    .then(async () => {
+      let result: unknown;
 
-  try {
-    switch (msg.type) {
-      case "clone":
-        await clone(msg.url, msg.user);
-        break;
-      case "pull":
-        await pull(msg.user);
-        break;
-      case "push":
-        await push(msg.user, msg.ref);
-        break;
-      case "isInitialized":
-        result = await isInitialized();
-        break;
-      case "readRepoFiles":
-        result = await readRepoFiles();
-        break;
-      case "buildSearchIndex":
-        await buildSearchIndex(msg.entries);
-        break;
-      case "updateSearchIndex":
-        await updateSearchIndex(msg.oldFilenames, msg.newFilenames, msg.entries);
-        break;
-      case "search":
-        result = search(msg.query);
-        break;
-      case "clearSearchIndex":
-        clearSearchIndex();
-        break;
-      case "populateFiles":
-        await populateFiles(msg.files);
-        break;
-      case "createBranch":
-        await createBranch(msg.name);
-        break;
-      case "checkoutBranch":
-        await checkoutBranch(msg.name);
-        break;
-      case "commitFile":
-        await commitFile(msg.filepath, msg.content, msg.message);
-        break;
-      case "squashMergeToMain":
-        await squashMergeToMain(msg.branch, msg.message);
-        break;
-      case "deleteBranch":
-        await deleteBranch(msg.name);
-        break;
-      case "listDraftBranches":
-        result = await listDraftBranches();
-        break;
-      case "readFileFromBranch":
-        result = await readFileFromBranch(msg.branch, msg.filepath);
-        break;
-      case "hasRemote":
-        result = await hasRemote();
-        break;
-      case "setCorsProxy":
-        corsProxy = msg.value;
-        break;
-    }
+      try {
+        switch (msg.type) {
+          case "buildSearchIndex":
+            await buildSearchIndex(msg.entries);
+            break;
+          case "updateSearchIndex":
+            await updateSearchIndex(msg.oldFilenames, msg.newFilenames, msg.entries);
+            break;
+          case "search":
+            result = search(msg.query);
+            break;
+          case "clearSearchIndex":
+            clearSearchIndex();
+            break;
+          case "setCorsProxy":
+            corsProxy = msg.value;
+            break;
+          case "autosaveDraft":
+            result = await autosaveDraftHandler(
+              msg.timestamp,
+              msg.content,
+              msg.user,
+              msg.hasRemote,
+              msg.isOnline,
+            );
+            break;
+          case "publishDraft":
+            result = await publishDraftHandler(
+              msg.timestamp,
+              msg.content,
+              msg.message,
+              msg.user,
+              msg.hasRemote,
+              msg.isOnline,
+            );
+            break;
+          case "discardDraft":
+            result = await discardDraftHandler(
+              msg.timestamp,
+              msg.user,
+              msg.hasRemote,
+              msg.isOnline,
+            );
+            break;
+          case "sync":
+            result = await syncHandler(msg.user, msg.draftTimestamps);
+            break;
+          case "domainClone":
+            result = await domainCloneHandler(msg.url, msg.user);
+            break;
+          case "getState":
+            result = await gatherState();
+            break;
+        }
 
-    self.postMessage({ id: msg.id, ok: true, result } satisfies WorkerResponse);
-  } catch (err) {
-    self.postMessage({
-      id: msg.id,
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    } satisfies WorkerResponse);
-  }
+        self.postMessage({ id: msg.id, ok: true, result } satisfies WorkerResponse);
+      } catch (err) {
+        self.postMessage({
+          id: msg.id,
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        } satisfies WorkerResponse);
+      }
+    })
+    .catch(() => {});
 };

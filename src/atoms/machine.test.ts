@@ -6,16 +6,15 @@ vi.mock("../lib/github", () => ({
 
 vi.mock("../worker/client", () => {
   const mockWorker = {
-    clone: vi.fn(),
-    pull: vi.fn(),
-    isInitialized: vi.fn(),
-    readRepoFiles: vi.fn(),
-    hasRemote: vi.fn().mockResolvedValue(true),
+    domainClone: vi.fn().mockResolvedValue({
+      state: { filenames: [], drafts: [] },
+      syncStatus: "synced",
+    }),
+    getState: vi.fn().mockResolvedValue({ filenames: [], drafts: [] }),
     buildSearchIndex: vi.fn(),
     updateSearchIndex: vi.fn(),
     search: vi.fn(),
     clearSearchIndex: vi.fn(),
-    listDraftBranches: vi.fn().mockResolvedValue([]),
   };
   return { getRepoWorker: () => mockWorker };
 });
@@ -56,8 +55,10 @@ function machine(): AppMachine {
 describe("AUTHENTICATE", () => {
   it("auto-clones single repo and reaches ready", async () => {
     vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
-    vi.mocked(worker.isInitialized).mockResolvedValue(false);
-    vi.mocked(worker.readRepoFiles).mockResolvedValue(["/soten/a.md"]);
+    vi.mocked(worker.domainClone).mockResolvedValue({
+      state: { filenames: ["/soten/a.md"], drafts: [] },
+      syncStatus: "synced",
+    });
 
     await send({ type: "AUTHENTICATE", user: mockUser });
 
@@ -68,7 +69,7 @@ describe("AUTHENTICATE", () => {
     expect(m.repos).toEqual(["acme/notes"]);
     expect(m.selectedRepo).toEqual({ owner: "acme", repo: "notes" });
     expect(m.filenames).toEqual(["/soten/a.md"]);
-    expect(worker.clone).toHaveBeenCalledWith("https://github.com/acme/notes.git", mockUser);
+    expect(worker.domainClone).toHaveBeenCalledWith("https://github.com/acme/notes.git", mockUser);
   });
 
   it("shows selectingRepo when multiple repos returned", async () => {
@@ -102,13 +103,15 @@ describe("AUTHENTICATE", () => {
   it("uses cached repo when valid", async () => {
     store.set(selectedRepoAtom, { owner: "acme", repo: "notes" });
     vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes", "acme/wiki"]);
-    vi.mocked(worker.isInitialized).mockResolvedValue(false);
-    vi.mocked(worker.readRepoFiles).mockResolvedValue([]);
+    vi.mocked(worker.domainClone).mockResolvedValue({
+      state: { filenames: [], drafts: [] },
+      syncStatus: "synced",
+    });
 
     await send({ type: "AUTHENTICATE", user: mockUser });
 
     expect(machine().phase).toBe("ready");
-    expect(worker.clone).toHaveBeenCalledWith("https://github.com/acme/notes.git", mockUser);
+    expect(worker.domainClone).toHaveBeenCalledWith("https://github.com/acme/notes.git", mockUser);
   });
 });
 
@@ -139,8 +142,10 @@ describe("SELECT_REPO", () => {
       user: mockUser,
       repos: ["acme/notes", "acme/wiki"],
     });
-    vi.mocked(worker.isInitialized).mockResolvedValue(false);
-    vi.mocked(worker.readRepoFiles).mockResolvedValue(["/soten/readme.md"]);
+    vi.mocked(worker.domainClone).mockResolvedValue({
+      state: { filenames: ["/soten/readme.md"], drafts: [] },
+      syncStatus: "synced",
+    });
 
     await send({ type: "SELECT_REPO", owner: "acme", repo: "notes" });
 
@@ -157,20 +162,23 @@ describe("SELECT_REPO", () => {
       user: mockUser,
       repos: ["acme/notes"],
     });
-    vi.mocked(worker.isInitialized).mockResolvedValue(false);
-    vi.mocked(worker.readRepoFiles).mockResolvedValue([]);
+    vi.mocked(worker.domainClone).mockResolvedValue({
+      state: { filenames: [], drafts: [] },
+      syncStatus: "synced",
+    });
 
     const callOrder: string[] = [];
     vi.mocked(refreshFs).mockImplementation(() => {
       callOrder.push("refreshFs");
     });
-    vi.mocked(worker.clone).mockImplementation(async () => {
-      callOrder.push("clone");
+    vi.mocked(worker.domainClone).mockImplementation(async () => {
+      callOrder.push("domainClone");
+      return { state: { filenames: [], drafts: [] }, syncStatus: "synced" };
     });
 
     await send({ type: "SELECT_REPO", owner: "acme", repo: "notes" });
 
-    expect(callOrder.indexOf("refreshFs")).toBeLessThan(callOrder.indexOf("clone"));
+    expect(callOrder.indexOf("refreshFs")).toBeLessThan(callOrder.indexOf("domainClone"));
   });
 });
 
@@ -178,8 +186,10 @@ describe("RETRY", () => {
   it("re-enters authenticate flow from error", async () => {
     store.set(machineAtom, { phase: "error", message: "Failed", user: mockUser });
     vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
-    vi.mocked(worker.isInitialized).mockResolvedValue(false);
-    vi.mocked(worker.readRepoFiles).mockResolvedValue([]);
+    vi.mocked(worker.domainClone).mockResolvedValue({
+      state: { filenames: [], drafts: [] },
+      syncStatus: "synced",
+    });
 
     await send({ type: "RETRY" });
 
@@ -189,8 +199,10 @@ describe("RETRY", () => {
   it("refreshes fs before retrying", async () => {
     store.set(machineAtom, { phase: "error", message: "Failed", user: mockUser });
     vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
-    vi.mocked(worker.isInitialized).mockResolvedValue(false);
-    vi.mocked(worker.readRepoFiles).mockResolvedValue([]);
+    vi.mocked(worker.domainClone).mockResolvedValue({
+      state: { filenames: [], drafts: [] },
+      syncStatus: "synced",
+    });
 
     await send({ type: "RETRY" });
 
@@ -199,25 +211,9 @@ describe("RETRY", () => {
 });
 
 describe("error recovery", () => {
-  it("falls back to clone when pull fails", async () => {
+  it("goes to error when domainClone fails", async () => {
     vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
-    vi.mocked(worker.isInitialized).mockResolvedValue(true);
-    vi.mocked(worker.pull).mockRejectedValue(new Error("corrupt"));
-    vi.mocked(worker.clone).mockResolvedValue(undefined);
-    vi.mocked(worker.readRepoFiles).mockResolvedValue([]);
-
-    await send({ type: "AUTHENTICATE", user: mockUser });
-
-    expect(worker.pull).toHaveBeenCalled();
-    expect(refreshFs).toHaveBeenCalled();
-    expect(worker.clone).toHaveBeenCalled();
-    expect(machine().phase).toBe("ready");
-  });
-
-  it("goes to error when clone fails", async () => {
-    vi.mocked(fetchUserRepos).mockResolvedValue(["acme/notes"]);
-    vi.mocked(worker.isInitialized).mockResolvedValue(false);
-    vi.mocked(worker.clone).mockRejectedValue(new Error("network failure"));
+    vi.mocked(worker.domainClone).mockRejectedValue(new Error("network failure"));
 
     await send({ type: "AUTHENTICATE", user: mockUser });
 

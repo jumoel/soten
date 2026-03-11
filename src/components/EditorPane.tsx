@@ -50,9 +50,9 @@ export function EditorPane({ draft }: EditorPaneProps) {
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
 
   const handleDiscard = useCallback(async () => {
-    await discardDraft(draft.timestamp, draft.isNew);
+    await discardDraft(draft.timestamp);
     void navigate({ to: "/", search: (prev) => ({ ...prev, draft: undefined }) });
-  }, [draft.timestamp, draft.isNew, navigate]);
+  }, [draft.timestamp, navigate]);
 
   const title = extractDisplayTitle(content);
 

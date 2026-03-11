@@ -15,15 +15,15 @@ vi.mock("../lib/fs", () => ({
 
 vi.mock("../worker/client", () => {
   const mockWorker = {
-    clone: vi.fn(),
-    pull: vi.fn(),
-    isInitialized: vi.fn(),
-    readRepoFiles: vi.fn(),
+    domainClone: vi.fn().mockResolvedValue({
+      state: { filenames: [], drafts: [] },
+      syncStatus: "synced",
+    }),
+    getState: vi.fn().mockResolvedValue({ filenames: [], drafts: [] }),
     buildSearchIndex: vi.fn(),
     updateSearchIndex: vi.fn(),
     search: vi.fn(),
     clearSearchIndex: vi.fn(),
-    listDraftBranches: vi.fn().mockResolvedValue([]),
   };
   return { getRepoWorker: () => mockWorker };
 });

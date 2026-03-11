@@ -1,4 +1,4 @@
-import type { SearchEntry, WorkerResponse } from "./protocol";
+import type { DomainResult, GitUser, RepoState, SearchEntry, WorkerResponse } from "./protocol";
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void };
 
@@ -29,30 +29,6 @@ class RepoWorkerClient {
     });
   }
 
-  clone(url: string, user: { username: string; token: string; email: string }): Promise<void> {
-    return this.call({ type: "clone", url, user }) as Promise<void>;
-  }
-
-  pull(user: { username: string; token: string }): Promise<void> {
-    return this.call({ type: "pull", user }) as Promise<void>;
-  }
-
-  push(user: { username: string; token: string }, ref?: string): Promise<void> {
-    return this.call({ type: "push", user, ref }) as Promise<void>;
-  }
-
-  isInitialized(): Promise<boolean> {
-    return this.call({ type: "isInitialized" }) as Promise<boolean>;
-  }
-
-  hasRemote(): Promise<boolean> {
-    return this.call({ type: "hasRemote" }) as Promise<boolean>;
-  }
-
-  readRepoFiles(): Promise<string[]> {
-    return this.call({ type: "readRepoFiles" }) as Promise<string[]>;
-  }
-
   buildSearchIndex(entries: SearchEntry[]): Promise<void> {
     return this.call({ type: "buildSearchIndex", entries }) as Promise<void>;
   }
@@ -78,42 +54,74 @@ class RepoWorkerClient {
     return this.call({ type: "clearSearchIndex" }) as Promise<void>;
   }
 
-  populateFiles(files: Array<{ path: string; content: string }>): Promise<void> {
-    return this.call({ type: "populateFiles", files }) as Promise<void>;
-  }
-
-  createBranch(name: string): Promise<void> {
-    return this.call({ type: "createBranch", name }) as Promise<void>;
-  }
-
-  checkoutBranch(name: string): Promise<void> {
-    return this.call({ type: "checkoutBranch", name }) as Promise<void>;
-  }
-
-  commitFile(filepath: string, content: string, message: string): Promise<void> {
-    return this.call({ type: "commitFile", filepath, content, message }) as Promise<void>;
-  }
-
-  squashMergeToMain(branch: string, message: string): Promise<void> {
-    return this.call({ type: "squashMergeToMain", branch, message }) as Promise<void>;
-  }
-
-  deleteBranch(name: string): Promise<void> {
-    return this.call({ type: "deleteBranch", name }) as Promise<void>;
-  }
-
-  listDraftBranches(): Promise<Array<{ timestamp: string; content: string }>> {
-    return this.call({ type: "listDraftBranches" }) as Promise<
-      Array<{ timestamp: string; content: string }>
-    >;
-  }
-
-  readFileFromBranch(branch: string, filepath: string): Promise<string | null> {
-    return this.call({ type: "readFileFromBranch", branch, filepath }) as Promise<string | null>;
-  }
-
   setCorsProxy(value: string): Promise<void> {
     return this.call({ type: "setCorsProxy", value }) as Promise<void>;
+  }
+
+  autosaveDraft(
+    timestamp: string,
+    content: string,
+    user: { username: string; token: string },
+    hasRemote: boolean,
+    isOnline: boolean,
+  ): Promise<DomainResult> {
+    return this.call({
+      type: "autosaveDraft",
+      timestamp,
+      content,
+      user,
+      hasRemote,
+      isOnline,
+    }) as Promise<DomainResult>;
+  }
+
+  publishDraft(
+    timestamp: string,
+    content: string,
+    message: string,
+    user: { username: string; token: string },
+    hasRemote: boolean,
+    isOnline: boolean,
+  ): Promise<DomainResult> {
+    return this.call({
+      type: "publishDraft",
+      timestamp,
+      content,
+      message,
+      user,
+      hasRemote,
+      isOnline,
+    }) as Promise<DomainResult>;
+  }
+
+  discardDraft(
+    timestamp: string,
+    user: { username: string; token: string },
+    hasRemote: boolean,
+    isOnline: boolean,
+  ): Promise<DomainResult> {
+    return this.call({
+      type: "discardDraft",
+      timestamp,
+      user,
+      hasRemote,
+      isOnline,
+    }) as Promise<DomainResult>;
+  }
+
+  sync(
+    user: { username: string; token: string },
+    draftTimestamps: string[],
+  ): Promise<DomainResult> {
+    return this.call({ type: "sync", user, draftTimestamps }) as Promise<DomainResult>;
+  }
+
+  domainClone(url: string, user: GitUser): Promise<DomainResult> {
+    return this.call({ type: "domainClone", url, user }) as Promise<DomainResult>;
+  }
+
+  getState(): Promise<RepoState> {
+    return this.call({ type: "getState" }) as Promise<RepoState>;
   }
 }
 

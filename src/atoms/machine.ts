@@ -1,8 +1,8 @@
 import { t } from "../i18n";
+import { applyRepoState } from "../lib/apply-repo-state";
 import { refreshFs } from "../lib/fs";
 import { fetchUserRepos } from "../lib/github";
 import { getRepoWorker } from "../worker/client";
-import { recoverDrafts } from "./draft-recovery";
 import { buildSearchIndex, clearSearchIndex } from "./search";
 import type { Repo, User } from "./store";
 import {
@@ -138,17 +138,9 @@ async function cloneAndLoad(
   const url = `https://github.com/${selectedRepo.owner}/${selectedRepo.repo}.git`;
   const worker = getRepoWorker();
 
+  let result: Awaited<ReturnType<typeof worker.domainClone>>;
   try {
-    if (await worker.isInitialized()) {
-      try {
-        await worker.pull(user);
-      } catch {
-        resetLocalState();
-        await worker.clone(url, user);
-      }
-    } else {
-      await worker.clone(url, user);
-    }
+    result = await worker.domainClone(url, user);
   } catch (e) {
     store.set(machineAtom, {
       phase: "error",
@@ -160,14 +152,16 @@ async function cloneAndLoad(
 
   checkAborted();
 
-  const filenames = await worker.readRepoFiles();
-  checkAborted();
-
-  const hasRemote = await worker.hasRemote();
-  checkAborted();
-
+  const hasRemote = true; // domainClone always clones from a remote
   refreshFs();
-  store.set(machineAtom, { phase: "ready", user, repos, selectedRepo, filenames, hasRemote });
+  store.set(machineAtom, {
+    phase: "ready",
+    user,
+    repos,
+    selectedRepo,
+    filenames: result.state.filenames,
+    hasRemote,
+  });
   buildSearchIndex(store.get(noteListAtom));
-  await recoverDrafts(filenames);
+  applyRepoState(result.state);
 }

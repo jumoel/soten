@@ -73,3 +73,14 @@ now reject `className` via TypeScript. All user-visible strings migrated to the 
 `DataTable` and `Stack direction` support were added to the design system to cover gaps.
 
 ![App after design system migration](docs/build-log/2026-03-09-ds-migration.png)
+
+### 2026-03-11 — Move domain logic into web worker as atomic operations
+
+Moved all git domain operations (autosave, publish, discard, sync, clone) into the web worker
+behind a serial promise queue. The main thread no longer touches git directly - it sends
+high-level commands and receives complete state snapshots back. No-checkout commits via tree/blob
+APIs eliminate working tree churn during autosave. Draft branch deletion is now pushed to the
+remote on save, fixing the bug where edits on one device didn't appear on another. The old
+primitive worker methods, `git-status.ts`, `push.ts`, and `draft-recovery.ts` were removed.
+
+![App after worker domain ops refactoring](docs/build-log/2026-03-11-worker-domain-ops.png)

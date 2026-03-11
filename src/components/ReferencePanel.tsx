@@ -15,7 +15,6 @@ import { Select, Text } from "../design";
 import { t } from "../i18n";
 import { readFile } from "../lib/fs";
 import { pathToTimestamp } from "../lib/note-paths";
-import { getRepoWorker } from "../worker/client";
 import { NoteRow } from "./NoteRow";
 import { PinnedZone } from "./PinnedZone";
 import { SearchBar } from "./SearchBar";
@@ -48,10 +47,6 @@ export function ReferencePanel() {
 
     const file = await readFile(path);
     if (!file || file.type !== "text") return;
-
-    const worker = getRepoWorker();
-    await worker.createBranch(`draft/${timestamp}`);
-    await worker.checkoutBranch(`draft/${timestamp}`);
 
     openExistingDraft(timestamp, file.content);
     void navigate({ to: "/", search: (prev) => ({ ...prev, draft: timestamp }) });

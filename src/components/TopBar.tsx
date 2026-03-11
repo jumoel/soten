@@ -1,11 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
-import { gitWorkingAtom, machineAtom, openNewDraft } from "../atoms/globals";
+import { machineAtom, openNewDraft, syncStatusAtom } from "../atoms/globals";
 import { Button, TopBar as DesignTopBar, Icon, Link, Text } from "../design";
 import { t } from "../i18n";
-import { withGitWorking } from "../lib/git-status";
 import { onlineAtom } from "../lib/online";
-import { getRepoWorker } from "../worker/client";
 import { GearPopover } from "./GearPopover";
 
 function SotenLogo() {
@@ -39,21 +37,34 @@ function SotenLogo() {
   );
 }
 
+function SyncIndicator() {
+  const syncStatus = useAtomValue(syncStatusAtom);
+
+  switch (syncStatus) {
+    case "working":
+      return <Icon name="spinner" size="4" spin />;
+    case "local-only":
+      return (
+        <Text variant="meta" as="span" title="Changes saved locally, not yet synced">
+          local
+        </Text>
+      );
+    case "synced":
+      return null;
+    case "idle":
+      return null;
+  }
+}
+
 export function TopBar() {
   const online = useAtomValue(onlineAtom);
   const machine = useAtomValue(machineAtom);
-  const gitWorking = useAtomValue(gitWorkingAtom);
   const navigate = useNavigate();
 
   const selectedRepo = "selectedRepo" in machine ? machine.selectedRepo : undefined;
 
-  const handleNewNote = async () => {
+  const handleNewNote = () => {
     const timestamp = openNewDraft();
-    await withGitWorking(async () => {
-      const worker = getRepoWorker();
-      await worker.createBranch(`draft/${timestamp}`);
-      await worker.checkoutBranch(`draft/${timestamp}`);
-    });
     void navigate({ to: "/", search: (prev) => ({ ...prev, draft: timestamp }) });
   };
 
@@ -70,14 +81,14 @@ export function TopBar() {
       }
       center={
         machine.phase === "ready" ? (
-          <Button variant="secondary" icon="plus" onClick={() => void handleNewNote()}>
+          <Button variant="secondary" icon="plus" onClick={handleNewNote}>
             {t("note.new")}
           </Button>
         ) : undefined
       }
       right={
         <div className="flex items-center gap-2">
-          {gitWorking && <Icon name="spinner" size="4" spin />}
+          <SyncIndicator />
           <GearPopover selectedRepo={selectedRepo} />
         </div>
       }

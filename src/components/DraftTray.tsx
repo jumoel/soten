@@ -60,7 +60,7 @@ export function DraftTray() {
           }}
           onDiscard={async () => {
             if (!window.confirm(t("draft.discardConfirm"))) return;
-            await discardDraft(draft.timestamp, draft.isNew);
+            await discardDraft(draft.timestamp);
           }}
         />
       ))}

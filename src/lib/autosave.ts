@@ -1,8 +1,8 @@
 import { draftsAtom } from "../atoms/drafts";
-import { store } from "../atoms/store";
+import { machineAtom, store, syncStatusAtom } from "../atoms/store";
 import { getRepoWorker } from "../worker/client";
-import { withGitWorking } from "./git-status";
-import { pushIfOnline } from "./push";
+import { applyRepoState } from "./apply-repo-state";
+import { onlineAtom } from "./online";
 
 const DEBOUNCE_MS = 2000;
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -26,19 +26,26 @@ async function autosave(timestamp: string): Promise<void> {
   if (!draft) return;
   if (draft.content === lastSaved.get(timestamp)) return;
 
+  const machine = store.get(machineAtom);
+  if (machine.phase !== "ready") return;
+
   const worker = getRepoWorker();
-  const branch = `draft/${timestamp}`;
-  const filepath = `${timestamp}.md`;
 
   try {
-    await withGitWorking(async () => {
-      await worker.checkoutBranch(branch);
-      await worker.commitFile(filepath, draft.content, "draft: autosave");
-      lastSaved.set(timestamp, draft.content);
-      await pushIfOnline(branch);
-    });
+    store.set(syncStatusAtom, "working");
+    const result = await worker.autosaveDraft(
+      timestamp,
+      draft.content,
+      machine.user,
+      machine.hasRemote,
+      store.get(onlineAtom),
+    );
+    lastSaved.set(timestamp, draft.content);
+    applyRepoState(result.state, { skipFilenames: true });
+    store.set(syncStatusAtom, result.syncStatus);
   } catch (e) {
     console.debug("autosave failed", e);
+    store.set(syncStatusAtom, "idle");
   }
 }
 

@@ -1,16 +1,15 @@
-import { refreshFs } from "../lib/fs";
-import { withGitWorking } from "../lib/git-status";
+import { applyRepoState } from "../lib/apply-repo-state";
 import { fetchCurrentUser, fetchUserRepos } from "../lib/github";
+import { onlineAtom } from "../lib/online";
 import { getRepoWorker } from "../worker/client";
 import { draftsAtom } from "./drafts";
-import { updateSearchIndex } from "./search";
 import type { User } from "./store";
 import {
   cachedReposAtom,
   machineAtom,
-  noteListAtom,
   selectedRepoAtom,
   store,
+  syncStatusAtom,
   userAtom,
 } from "./store";
 
@@ -45,44 +44,19 @@ export async function fullSync(user: User): Promise<void> {
       }
     }
 
+    const online = store.get(onlineAtom);
+    if (!online) return;
+
     const worker = getRepoWorker();
+    const drafts = store.get(draftsAtom);
+    const draftTimestamps = drafts.map((d) => d.timestamp);
 
-    await withGitWorking(async () => {
-      // Push all draft branches non-fatally
-      const drafts = store.get(draftsAtom);
-      for (const draft of drafts) {
-        try {
-          await worker.push(user, `draft/${draft.timestamp}`);
-        } catch {
-          // Draft push failure is non-fatal
-        }
-      }
-
-      // Push main non-fatally
-      try {
-        await worker.push(user);
-      } catch {
-        // Main push failure is non-fatal
-      }
-
-      // Pull
-      try {
-        await worker.pull(user);
-      } catch {
-        return;
-      }
-
-      const filenames = await worker.readRepoFiles();
-      refreshFs();
-      const machine = store.get(machineAtom);
-      if (machine.phase === "ready") {
-        const oldFilenames = machine.filenames;
-        store.set(machineAtom, { ...machine, filenames });
-        updateSearchIndex(oldFilenames, filenames, store.get(noteListAtom));
-      }
-    });
+    store.set(syncStatusAtom, "working");
+    const result = await worker.sync(user, draftTimestamps);
+    applyRepoState(result.state);
+    store.set(syncStatusAtom, result.syncStatus);
   } catch {
-    // Network errors during sync are silently ignored
+    store.set(syncStatusAtom, "idle");
   } finally {
     syncing = false;
   }
