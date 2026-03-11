@@ -2,6 +2,7 @@ import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { t } from "../i18n";
 import { fetchUserRepos, redirectToGitHubAuth } from "../lib/github";
+import { beginRepoFlow, resetRepo } from "./repo";
 import { store } from "./store";
 
 export type AuthState = "unauthenticated" | "authenticating" | "authenticated" | "error";
@@ -40,7 +41,6 @@ export async function authenticate(user: User): Promise<void> {
       return;
     }
 
-    const { beginRepoFlow } = await import("./repo");
     await beginRepoFlow(user, repos);
   } catch (e) {
     store.set(authStateAtom, "error");
@@ -52,5 +52,5 @@ export function logout(): void {
   store.set(userAtom, null);
   store.set(authStateAtom, "unauthenticated");
   store.set(authErrorAtom, null);
-  import("./repo").then(({ resetRepo }) => resetRepo());
+  resetRepo();
 }

@@ -19,6 +19,6 @@ export async function initFromLocalRepo(dir: string): Promise<void> {
 
   store.set(filenamesAtom, result.state.filenames);
   store.set(cloneStatusAtom, "ready");
-  store.set(hasRemoteAtom, true);
+  store.set(hasRemoteAtom, false);
   store.set(authStateAtom, "authenticated");
 }

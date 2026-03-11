@@ -55,7 +55,6 @@ async function cloneAndLoad(user: User, repo: Repo): Promise<void> {
 
   try {
     const result = await worker.domainClone(url, user);
-    refreshFs();
     applyRepoState(result.state);
     store.set(repoAtom, repo);
     store.set(cloneStatusAtom, "ready");

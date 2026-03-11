@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Spinner, Stack, Text } from "./ds";
 import { init } from "./lib/init";
@@ -29,10 +30,14 @@ function useTheme() {
   }, [theme]);
 }
 
+function CenterScreen({ children }: { children: ReactNode }) {
+  return <div className="flex items-center justify-center min-h-screen bg-base">{children}</div>;
+}
+
 function LoginScreen() {
   const authError = useAtomValue(authErrorAtom);
   return (
-    <div className="flex items-center justify-center min-h-screen bg-base">
+    <CenterScreen>
       <Card>
         <Stack gap={4} align="center">
           <Text variant="h2">Soten</Text>
@@ -43,7 +48,7 @@ function LoginScreen() {
           </Button>
         </Stack>
       </Card>
-    </div>
+    </CenterScreen>
   );
 }
 
@@ -53,7 +58,7 @@ function RepoSelector() {
   if (!user) return null;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-base">
+    <CenterScreen>
       <Stack gap={4} align="center">
         <Text variant="h2">Select a repository</Text>
         <Stack gap={2}>
@@ -74,14 +79,14 @@ function RepoSelector() {
           Sign out
         </Button>
       </Stack>
-    </div>
+    </CenterScreen>
   );
 }
 
 function ErrorScreen() {
   const error = useAtomValue(authErrorAtom);
   return (
-    <div className="flex items-center justify-center min-h-screen bg-base">
+    <CenterScreen>
       <Stack gap={4} align="center">
         <Alert variant="error" title="Something went wrong">
           {error ?? "An unknown error occurred"}
@@ -90,7 +95,7 @@ function ErrorScreen() {
           Sign out and retry
         </Button>
       </Stack>
-    </div>
+    </CenterScreen>
   );
 }
 
@@ -98,7 +103,7 @@ function ReadyPlaceholder() {
   const filenames = useAtomValue(filenamesAtom);
   const repo = useAtomValue(repoAtom);
   return (
-    <div className="flex items-center justify-center min-h-screen bg-base">
+    <CenterScreen>
       <Stack gap={4} align="center">
         <Text variant="h2">{repo ? `${repo.owner}/${repo.repo}` : "Ready"}</Text>
         <Text variant="body-dim">{filenames.length} notes loaded</Text>
@@ -106,15 +111,15 @@ function ReadyPlaceholder() {
           Sign out
         </Button>
       </Stack>
-    </div>
+    </CenterScreen>
   );
 }
 
 function LoadingScreen() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-base">
+    <CenterScreen>
       <Spinner label="Loading" size="lg" />
-    </div>
+    </CenterScreen>
   );
 }
 
