@@ -1,77 +1,19 @@
-import { Outlet, useNavigate } from "@tanstack/react-router";
-import { useAtom, useAtomValue } from "jotai";
-import { useEffect } from "react";
-import { activeDraftAtom, machineAtom, send, themeAtom } from "./atoms/globals";
-import { AuthError } from "./components/AuthError";
-import { DraftTray } from "./components/DraftTray";
-import { EditorPane } from "./components/EditorPane";
-import { LoadingSpinner } from "./components/LoadingSpinner";
-import { ResizeHandle } from "./components/ResizeHandle";
-import { TopBar } from "./components/TopBar";
-import { UnauthenticatedView } from "./components/UnauthenticatedView";
-import { useLocalStorage } from "./lib/use-local-storage";
-import { useMediaQuery } from "./lib/use-media-query";
+import { useAtomValue } from "jotai";
+import { useEffect, useState } from "react";
+import { Alert, Button, Card, Spinner, Stack, Text } from "./ds";
+import { init } from "./lib/init";
+import { authErrorAtom, authStateAtom, login, logout, userAtom } from "./state/auth";
+import {
+  cachedReposAtom,
+  cloneStatusAtom,
+  filenamesAtom,
+  repoAtom,
+  selectRepo,
+} from "./state/repo";
+import { themeAtom } from "./state/ui";
 
-function ReadyLayout() {
-  const activeDraft = useAtomValue(activeDraftAtom);
-  const isWide = useMediaQuery("(min-width: 1200px)");
-  const [splitRatio, setSplitRatio] = useLocalStorage("editorSplit", 0.5);
-
-  if (!activeDraft) {
-    return (
-      <>
-        <DraftTray />
-        <div className="flex-1 overflow-hidden">
-          <Outlet />
-        </div>
-      </>
-    );
-  }
-
-  if (!isWide) {
-    return (
-      <>
-        <DraftTray />
-        <div className="flex-1 overflow-hidden">
-          <EditorPane draft={activeDraft} />
-        </div>
-      </>
-    );
-  }
-
-  const totalWidth = typeof window !== "undefined" ? window.innerWidth : 1200;
-
-  return (
-    <>
-      <DraftTray />
-      <div
-        className="flex-1 overflow-hidden grid"
-        style={{
-          gridTemplateColumns: `${splitRatio}fr 4px ${1 - splitRatio}fr`,
-        }}
-      >
-        <div className="overflow-hidden">
-          <EditorPane draft={activeDraft} />
-        </div>
-        <ResizeHandle
-          onDrag={(delta) => {
-            const ratio = Math.max(0.2, Math.min(0.8, splitRatio + delta / totalWidth));
-            setSplitRatio(ratio);
-          }}
-        />
-        <div className="overflow-hidden">
-          <Outlet />
-        </div>
-      </div>
-    </>
-  );
-}
-
-export function App() {
-  const [machine] = useAtom(machineAtom);
-  const [theme] = useAtom(themeAtom);
-  const navigate = useNavigate();
-
+function useTheme() {
+  const theme = useAtomValue(themeAtom);
   useEffect(() => {
     function apply() {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -85,25 +27,116 @@ export function App() {
       return () => mq.removeEventListener("change", apply);
     }
   }, [theme]);
+}
 
-  useEffect(() => {
-    if (machine.phase === "selectingRepo") {
-      navigate({ to: "/settings", replace: true });
-    }
-  }, [machine.phase, navigate]);
-
-  const showChrome = machine.phase !== "initializing" && machine.phase !== "unauthenticated";
-
+function LoginScreen() {
+  const authError = useAtomValue(authErrorAtom);
   return (
-    <div className="flex flex-col h-screen bg-base text-paper">
-      {showChrome && <TopBar />}
-      {machine.phase === "initializing" && <LoadingSpinner />}
-      {machine.phase === "unauthenticated" && <UnauthenticatedView authError={machine.authError} />}
-      {machine.phase === "error" && (
-        <AuthError message={machine.message} onRetry={() => void send({ type: "RETRY" })} />
-      )}
-      {(machine.phase === "fetchingRepos" || machine.phase === "cloningRepo") && <LoadingSpinner />}
-      {(machine.phase === "ready" || machine.phase === "selectingRepo") && <ReadyLayout />}
+    <div className="flex items-center justify-center min-h-screen bg-base">
+      <Card>
+        <Stack gap={4} align="center">
+          <Text variant="h2">Soten</Text>
+          <Text variant="body-dim">Markdown notes backed by GitHub</Text>
+          {authError && <Alert variant="error">{authError}</Alert>}
+          <Button variant="primary" icon="github" onClick={() => login()}>
+            Sign in with GitHub
+          </Button>
+        </Stack>
+      </Card>
     </div>
   );
+}
+
+function RepoSelector() {
+  const repos = useAtomValue(cachedReposAtom) ?? [];
+  const user = useAtomValue(userAtom);
+  if (!user) return null;
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-base">
+      <Stack gap={4} align="center">
+        <Text variant="h2">Select a repository</Text>
+        <Stack gap={2}>
+          {repos.map((fullName) => {
+            const [owner, repo] = fullName.split("/");
+            return (
+              <Card
+                key={fullName}
+                variant="interactive"
+                onClick={() => void selectRepo(owner, repo, user)}
+              >
+                <Text>{fullName}</Text>
+              </Card>
+            );
+          })}
+        </Stack>
+        <Button variant="ghost" onClick={() => logout()}>
+          Sign out
+        </Button>
+      </Stack>
+    </div>
+  );
+}
+
+function ErrorScreen() {
+  const error = useAtomValue(authErrorAtom);
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-base">
+      <Stack gap={4} align="center">
+        <Alert variant="error" title="Something went wrong">
+          {error ?? "An unknown error occurred"}
+        </Alert>
+        <Button variant="secondary" onClick={() => logout()}>
+          Sign out and retry
+        </Button>
+      </Stack>
+    </div>
+  );
+}
+
+function ReadyPlaceholder() {
+  const filenames = useAtomValue(filenamesAtom);
+  const repo = useAtomValue(repoAtom);
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-base">
+      <Stack gap={4} align="center">
+        <Text variant="h2">{repo ? `${repo.owner}/${repo.repo}` : "Ready"}</Text>
+        <Text variant="body-dim">{filenames.length} notes loaded</Text>
+        <Button variant="ghost" onClick={() => logout()}>
+          Sign out
+        </Button>
+      </Stack>
+    </div>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-base">
+      <Spinner label="Loading" size="lg" />
+    </div>
+  );
+}
+
+export function App() {
+  useTheme();
+  const [ready, setReady] = useState(false);
+  const authState = useAtomValue(authStateAtom);
+  const cloneStatus = useAtomValue(cloneStatusAtom);
+
+  useEffect(() => {
+    init().then(() => setReady(true));
+  }, []);
+
+  if (!ready) return <LoadingScreen />;
+
+  if (authState === "unauthenticated") return <LoginScreen />;
+  if (authState === "error") return <ErrorScreen />;
+  if (authState === "authenticating") return <LoadingScreen />;
+
+  // authenticated
+  if (cloneStatus === "selecting") return <RepoSelector />;
+  if (cloneStatus !== "ready") return <LoadingScreen />;
+
+  return <ReadyPlaceholder />;
 }
