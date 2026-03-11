@@ -1,4 +1,4 @@
-import { Alert, Button } from "../design";
+import { Alert, Button } from "../ds";
 import { t } from "../i18n";
 
 export function AuthError({ message, onRetry }: { message: string; onRetry?: () => void }) {

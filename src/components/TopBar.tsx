@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
 import { machineAtom, openNewDraft, syncStatusAtom } from "../atoms/globals";
-import { Button, TopBar as DesignTopBar, Icon, Link, Text } from "../design";
+import { Button, Icon, Link, Text } from "../ds";
 import { t } from "../i18n";
 import { onlineAtom } from "../lib/online";
 import { GearPopover } from "./GearPopover";
@@ -69,29 +69,23 @@ export function TopBar() {
   };
 
   return (
-    <DesignTopBar
-      left={
-        <div className="flex items-center gap-3">
-          <Link variant="nav" onClick={() => void navigate({ to: "/" })}>
-            <SotenLogo />
-            soten
-          </Link>
-          {!online && <Text variant="meta">offline</Text>}
-        </div>
-      }
-      center={
-        machine.phase === "ready" ? (
-          <Button variant="secondary" icon="plus" onClick={handleNewNote}>
-            {t("note.new")}
-          </Button>
-        ) : undefined
-      }
-      right={
-        <div className="flex items-center gap-2">
-          <SyncIndicator />
-          <GearPopover selectedRepo={selectedRepo} />
-        </div>
-      }
-    />
+    <header className="h-11 flex items-center justify-between px-4 border-b border-edge bg-base shrink-0">
+      <div className="flex items-center gap-3">
+        <Link variant="nav" onClick={() => void navigate({ to: "/" })}>
+          <SotenLogo />
+          soten
+        </Link>
+        {!online && <Text variant="meta">offline</Text>}
+      </div>
+      {machine.phase === "ready" && (
+        <Button variant="secondary" icon="plus" onClick={handleNewNote}>
+          {t("note.new")}
+        </Button>
+      )}
+      <div className="flex items-center gap-2">
+        <SyncIndicator />
+        <GearPopover selectedRepo={selectedRepo} />
+      </div>
+    </header>
   );
 }

@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
 import type { Draft } from "../atoms/drafts";
 import { draftsAtom, restoreDraft } from "../atoms/globals";
-import { Box, Button, Link, Text } from "../design";
+import { Box, Button, Link, Text } from "../ds";
 import { t } from "../i18n";
 import { discardDraft } from "../lib/draft-operations";
 

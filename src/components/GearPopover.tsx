@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { send } from "../atoms/globals";
 import type { Repo } from "../atoms/store";
-import { Button, Link, Popover, Stack, Text } from "../design";
+import { Button, Link, Stack, Text } from "../ds";
 import { t } from "../i18n";
 
 function GearIcon() {
@@ -31,48 +31,47 @@ export function GearPopover({ selectedRepo }: GearPopoverProps) {
   const navigate = useNavigate();
 
   return (
-    <Popover
-      trigger={
-        <Button variant="ghost" iconOnly aria-label="Settings" onClick={() => setOpen((v) => !v)}>
-          <GearIcon />
-        </Button>
-      }
-      open={open}
-      onOpenChange={setOpen}
-    >
-      <div className="py-1">
-        {selectedRepo && (
-          <div className="px-3 py-2 border-b border-edge">
-            <Text variant="body-dim" as="p">
-              {selectedRepo.owner}/{selectedRepo.repo}
-            </Text>
+    <div className="relative">
+      <Button variant="ghost" iconOnly aria-label="Settings" onClick={() => setOpen((v) => !v)}>
+        <GearIcon />
+      </Button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] bg-surface border border-edge rounded-md shadow-lg">
+          <div className="py-1">
+            {selectedRepo && (
+              <div className="px-3 py-2 border-b border-edge">
+                <Text variant="body-dim" as="p">
+                  {selectedRepo.owner}/{selectedRepo.repo}
+                </Text>
+              </div>
+            )}
+            <Stack gap={1} as="ul">
+              <li className="px-3 py-1">
+                <Link
+                  variant="muted"
+                  onClick={() => {
+                    setOpen(false);
+                    void navigate({ to: "/settings" });
+                  }}
+                >
+                  {t("menu.settings")}
+                </Link>
+              </li>
+              <li className="px-3 py-1">
+                <Link
+                  variant="muted"
+                  onClick={() => {
+                    setOpen(false);
+                    void send({ type: "LOGOUT" });
+                  }}
+                >
+                  {t("auth.logout")}
+                </Link>
+              </li>
+            </Stack>
           </div>
-        )}
-        <Stack gap={1} as="ul">
-          <li className="px-3 py-1">
-            <Link
-              variant="muted"
-              onClick={() => {
-                setOpen(false);
-                void navigate({ to: "/settings" });
-              }}
-            >
-              {t("menu.settings")}
-            </Link>
-          </li>
-          <li className="px-3 py-1">
-            <Link
-              variant="muted"
-              onClick={() => {
-                setOpen(false);
-                void send({ type: "LOGOUT" });
-              }}
-            >
-              {t("auth.logout")}
-            </Link>
-          </li>
-        </Stack>
-      </div>
-    </Popover>
+        </div>
+      )}
+    </div>
   );
 }

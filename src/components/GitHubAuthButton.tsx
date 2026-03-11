@@ -1,4 +1,4 @@
-import { Button, Stack } from "../design";
+import { Button, Stack } from "../ds";
 import { t } from "../i18n";
 import { redirectToGitHubAuth } from "../lib/github";
 

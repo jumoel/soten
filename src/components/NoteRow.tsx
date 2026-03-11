@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { renderedNoteAtom } from "../atoms/globals";
 import type { NoteListEntry } from "../atoms/store";
 import { prettyDate, prettyDateTime } from "../atoms/store";
-import { Button, MarkdownCard, Stack } from "../design";
+import { Button, Card, Stack, Text } from "../ds";
 import { t } from "../i18n";
 
 function formatCardDate(date: Date): string {
@@ -39,12 +39,16 @@ export function NoteRow({ note, onPin, onEdit }: NoteRowProps) {
 
   return (
     <li>
-      <MarkdownCard
-        html={html}
-        timestamp={note.date ? formatCardDate(note.date) : undefined}
-        actions={actions}
-        fullWidth
-      />
+      <Card
+        footer={
+          <div className="flex items-center justify-between">
+            {note.date && <Text variant="meta">{formatCardDate(note.date)}</Text>}
+            {actions}
+          </div>
+        }
+      >
+        <div className="prose prose-sm" dangerouslySetInnerHTML={{ __html: html }} />
+      </Card>
     </li>
   );
 }

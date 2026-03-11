@@ -1,5 +1,5 @@
 import { send } from "../atoms/globals";
-import { Box, Link, Stack, Text } from "../design";
+import { Box, Link, Stack, Text } from "../ds";
 import { t } from "../i18n";
 
 export function RepoSelector({

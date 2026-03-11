@@ -3,7 +3,7 @@ import { loadable } from "jotai/utils";
 import { useMemo } from "react";
 import { renderedNoteAtom } from "../atoms/globals";
 import type { NoteListEntry } from "../atoms/store";
-import { Button, Link, MarkdownCard, Stack, Text } from "../design";
+import { Button, Link, Stack, Text } from "../ds";
 
 type PinnedNoteProps = {
   note: NoteListEntry;
@@ -46,7 +46,7 @@ export function PinnedNote({ note, expanded, onToggle, onUnpin, onEdit }: Pinned
       </Stack>
       {expanded && html && (
         <div className="px-4 pb-3">
-          <MarkdownCard html={html} collapsed={false} fullWidth />
+          <div className="prose prose-sm" dangerouslySetInnerHTML={{ __html: html }} />
         </div>
       )}
     </li>

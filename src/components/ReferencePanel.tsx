@@ -11,7 +11,7 @@ import {
   sortAtom,
 } from "../atoms/globals";
 import { store } from "../atoms/store";
-import { Select, Text } from "../design";
+import { Text } from "../ds";
 import { t } from "../i18n";
 import { readFile } from "../lib/fs";
 import { pathToTimestamp } from "../lib/note-paths";
@@ -56,13 +56,18 @@ export function ReferencePanel() {
     <div className="flex flex-col h-full">
       <div className="sticky top-0 z-10 bg-base h-11 flex items-center gap-2 px-4 border-b border-edge">
         <SearchBar />
-        <Select
-          label={t("sort.label")}
+        <select
+          aria-label={t("sort.label")}
           value={sort === "best-match" && !query.trim() ? "newest" : sort}
-          onChange={(v) => setSort(v as SortOrder)}
-          options={sortOptions}
-          size="sm"
-        />
+          onChange={(e) => setSort(e.target.value as SortOrder)}
+          className="text-sm bg-surface border border-edge rounded px-2 py-1 text-paper"
+        >
+          {sortOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex-1 overflow-y-auto">

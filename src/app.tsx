@@ -9,7 +9,6 @@ import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ResizeHandle } from "./components/ResizeHandle";
 import { TopBar } from "./components/TopBar";
 import { UnauthenticatedView } from "./components/UnauthenticatedView";
-import { AppShell } from "./design";
 import { useLocalStorage } from "./lib/use-local-storage";
 import { useMediaQuery } from "./lib/use-media-query";
 
@@ -96,7 +95,8 @@ export function App() {
   const showChrome = machine.phase !== "initializing" && machine.phase !== "unauthenticated";
 
   return (
-    <AppShell topBar={showChrome ? <TopBar /> : undefined}>
+    <div className="flex flex-col h-screen bg-base text-paper">
+      {showChrome && <TopBar />}
       {machine.phase === "initializing" && <LoadingSpinner />}
       {machine.phase === "unauthenticated" && <UnauthenticatedView authError={machine.authError} />}
       {machine.phase === "error" && (
@@ -104,6 +104,6 @@ export function App() {
       )}
       {(machine.phase === "fetchingRepos" || machine.phase === "cloningRepo") && <LoadingSpinner />}
       {(machine.phase === "ready" || machine.phase === "selectingRepo") && <ReadyLayout />}
-    </AppShell>
+    </div>
   );
 }

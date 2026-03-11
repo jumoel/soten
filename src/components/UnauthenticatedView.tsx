@@ -1,4 +1,4 @@
-import { Alert, Stack, Text } from "../design";
+import { Alert, Stack, Text } from "../ds";
 import { t } from "../i18n";
 import { GitHubAuthButton } from "./GitHubAuthButton";
 

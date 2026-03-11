@@ -1,4 +1,4 @@
-import { Icon, Stack } from "../design";
+import { Icon, Stack } from "../ds";
 
 export function LoadingSpinner() {
   return (

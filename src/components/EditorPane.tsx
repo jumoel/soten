@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Draft } from "../atoms/drafts";
 import { minimizeDraft, updateDraftContent } from "../atoms/globals";
-import { Button, Stack, Text, TopBar } from "../design";
+import { Button, Stack, Text } from "../ds";
 import { t } from "../i18n";
 import { scheduleAutosave } from "../lib/autosave";
 import { discardDraft, saveDraft } from "../lib/draft-operations";
@@ -76,25 +76,20 @@ export function EditorPane({ draft }: EditorPaneProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar
-        as="div"
-        left={
-          <Text variant="body" as="span">
-            {title}
-          </Text>
-        }
-        right={
-          <Stack direction="horizontal" gap={1}>
-            <Button variant="ghost" size="sm" onClick={handleMinimize}>
-              {t("draft.minimize")}
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => void handleSave()}>
-              {t("draft.save")}
-            </Button>
-            {discardControls}
-          </Stack>
-        }
-      />
+      <div className="h-11 flex items-center justify-between px-4 border-b border-edge bg-base shrink-0">
+        <Text variant="body" as="span">
+          {title}
+        </Text>
+        <Stack direction="horizontal" gap={1}>
+          <Button variant="ghost" size="sm" onClick={handleMinimize}>
+            {t("draft.minimize")}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => void handleSave()}>
+            {t("draft.save")}
+          </Button>
+          {discardControls}
+        </Stack>
+      </div>
       <textarea
         className="flex-1 w-full p-4 bg-surface font-mono text-sm text-paper resize-none focus:outline-none"
         value={content}
