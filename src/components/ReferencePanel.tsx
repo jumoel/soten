@@ -1,24 +1,24 @@
-import { useAtom, useAtomValue } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
-import { SearchBar } from "./SearchBar";
-import { NoteRow } from "./NoteRow";
-import { PinnedZone } from "./PinnedZone";
-import { Text, Select } from "../design";
+import { useAtom, useAtomValue } from "jotai";
+import type { SortOrder } from "../atoms/globals";
 import {
-  searchResultsAtom,
-  searchQueryAtom,
-  sortAtom,
-  pinnedNotesAtom,
   draftsAtom,
   openExistingDraft,
+  pinnedNotesAtom,
   restoreDraft,
+  searchQueryAtom,
+  searchResultsAtom,
+  sortAtom,
 } from "../atoms/globals";
-import type { SortOrder } from "../atoms/globals";
 import { store } from "../atoms/store";
-import { readFile } from "../lib/fs";
-import { getRepoWorker } from "../worker/client";
-import { pathToTimestamp } from "../lib/note-paths";
+import { Select, Text } from "../design";
 import { t } from "../i18n";
+import { readFile } from "../lib/fs";
+import { pathToTimestamp } from "../lib/note-paths";
+import { getRepoWorker } from "../worker/client";
+import { NoteRow } from "./NoteRow";
+import { PinnedZone } from "./PinnedZone";
+import { SearchBar } from "./SearchBar";
 
 export function ReferencePanel() {
   const notes = useAtomValue(searchResultsAtom);
@@ -94,7 +94,9 @@ export function ReferencePanel() {
               <NoteRow
                 key={note.path}
                 note={note}
-                onPin={() => setPinnedPaths((ps) => (ps.includes(note.path) ? ps : [...ps, note.path]))}
+                onPin={() =>
+                  setPinnedPaths((ps) => (ps.includes(note.path) ? ps : [...ps, note.path]))
+                }
                 onEdit={() => void handleEdit(note.path)}
               />
             ))}

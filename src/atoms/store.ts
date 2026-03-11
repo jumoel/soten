@@ -1,9 +1,9 @@
-import { createStore, atom } from "jotai";
-import { atomWithStorage, atomFamily } from "jotai/utils";
-import { renderMarkdown } from "../markdown";
-import { readFile } from "../lib/fs";
-import { REPO_DIR } from "../lib/constants";
+import { atom, createStore } from "jotai";
+import { atomFamily, atomWithStorage } from "jotai/utils";
 import { t } from "../i18n";
+import { REPO_DIR } from "../lib/constants";
+import { readFile } from "../lib/fs";
+import { renderMarkdown } from "../markdown";
 
 export const store = createStore();
 
@@ -78,7 +78,7 @@ function parseTimestampFilename(stem: string): Date | null {
   if (compactMatch) {
     const [, y, mo, d, h, mi, s] = compactMatch;
     const date = new Date(Date.UTC(+y, +mo - 1, +d, +h, +mi, +(s ?? 0)));
-    if (!isNaN(date.getTime()) && date.getFullYear() >= 2000 && date.getFullYear() <= 2100) {
+    if (!Number.isNaN(date.getTime()) && date.getFullYear() >= 2000 && date.getFullYear() <= 2100) {
       return date;
     }
   }
@@ -86,7 +86,7 @@ function parseTimestampFilename(stem: string): Date | null {
   if (/^\d{10}$/.test(stem) || /^\d{13}$/.test(stem)) {
     const ms = stem.length === 10 ? +stem * 1000 : +stem;
     const date = new Date(ms);
-    if (!isNaN(date.getTime()) && date.getFullYear() >= 2000 && date.getFullYear() <= 2100) {
+    if (!Number.isNaN(date.getTime()) && date.getFullYear() >= 2000 && date.getFullYear() <= 2100) {
       return date;
     }
   }
@@ -142,7 +142,7 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
   const m = get(machineAtom);
   if (m.phase !== "ready") return [];
 
-  const prefix = REPO_DIR + "/";
+  const prefix = `${REPO_DIR}/`;
   const entries: NoteListEntry[] = [];
 
   for (const path of m.filenames) {
@@ -167,25 +167,6 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
 });
 
 export const pinnedNotesAtom = atom<string[]>([]);
-
-const NOTE_CARD_THRESHOLD = 375;
-const closingFmRe = /\n---\r?\n/;
-
-function findBodyStart(content: string): number {
-  if (!content.startsWith("---\n") && !content.startsWith("---\r\n")) return 0;
-  const closing = closingFmRe.exec(content);
-  return closing !== null ? closing.index + closing[0].length : 0;
-}
-
-function findCutPoint(body: string, threshold: number): number {
-  const headingCut = body.lastIndexOf("\n\n#", threshold);
-  if (headingCut > 0) return headingCut;
-  const paraCut = body.lastIndexOf("\n\n", threshold);
-  if (paraCut > 0) return paraCut;
-  const lineCut = body.lastIndexOf("\n", threshold);
-  if (lineCut > 0) return lineCut;
-  return threshold;
-}
 
 const cardCache = new Map<string, { html: string; isShort: boolean }>();
 

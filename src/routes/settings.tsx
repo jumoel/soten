@@ -1,9 +1,9 @@
-import { useAtom } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
+import { useAtom } from "jotai";
 import { machineAtom, send, themeAtom } from "../atoms/globals";
 import type { Theme } from "../atoms/store";
 import { RepoSelector } from "../components/RepoSelector";
-import { Text, Button, Stack } from "../design";
+import { Button, Stack, Text } from "../design";
 import { t } from "../i18n";
 
 export function SettingsPage() {

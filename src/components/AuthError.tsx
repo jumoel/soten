@@ -1,5 +1,5 @@
-import { t } from "../i18n";
 import { Alert, Button } from "../design";
+import { t } from "../i18n";
 
 export function AuthError({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (

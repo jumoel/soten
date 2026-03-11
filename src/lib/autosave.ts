@@ -1,6 +1,6 @@
-import { getRepoWorker } from "../worker/client";
-import { store } from "../atoms/store";
 import { draftsAtom } from "../atoms/drafts";
+import { store } from "../atoms/store";
+import { getRepoWorker } from "../worker/client";
 import { withGitWorking } from "./git-status";
 import { pushIfOnline } from "./push";
 

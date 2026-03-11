@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, Text, TopBar, Stack } from "../design";
-import { minimizeDraft, updateDraftContent } from "../atoms/globals";
-import { saveDraft, discardDraft } from "../lib/draft-operations";
-import { scheduleAutosave } from "../lib/autosave";
-import { t } from "../i18n";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Draft } from "../atoms/drafts";
+import { minimizeDraft, updateDraftContent } from "../atoms/globals";
+import { Button, Stack, Text, TopBar } from "../design";
+import { t } from "../i18n";
+import { scheduleAutosave } from "../lib/autosave";
+import { discardDraft, saveDraft } from "../lib/draft-operations";
 
 function extractDisplayTitle(content: string): string {
   const fmMatch = content.match(/^---\n[\s\S]*?title:\s*(.+)\n[\s\S]*?---/);

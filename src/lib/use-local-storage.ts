@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export function useLocalStorage<T>(key: string, initial: T): [T, (v: T) => void] {
   const [value, setValue] = useState<T>(() => {

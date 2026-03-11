@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, Popover, Stack, Text, Link } from "../design";
+import { useState } from "react";
 import { send } from "../atoms/globals";
-import { t } from "../i18n";
 import type { Repo } from "../atoms/store";
+import { Button, Link, Popover, Stack, Text } from "../design";
+import { t } from "../i18n";
 
 function GearIcon() {
   return (

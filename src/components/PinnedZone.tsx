@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { PinnedNote } from "./PinnedNote";
 import type { NoteListEntry } from "../atoms/store";
+import { PinnedNote } from "./PinnedNote";
 
 type PinnedZoneProps = {
   notes: NoteListEntry[];

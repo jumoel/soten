@@ -1,21 +1,21 @@
-import { fetchCurrentUser } from "../lib/github";
 import { refreshFs } from "../lib/fs";
-import { getRepoWorker } from "../worker/client";
+import { fetchCurrentUser } from "../lib/github";
 import { initOnlineListener } from "../lib/online";
+import { warmProcessor } from "../markdown";
+import { getRepoWorker } from "../worker/client";
+import { recoverDrafts } from "./draft-recovery";
+import { send } from "./machine";
+import { buildSearchIndex, initSearchSubscription } from "./search";
 import type { AppMachine } from "./store";
 import {
-  store,
+  cachedReposAtom,
   machineAtom,
   noteListAtom,
-  userAtom,
   selectedRepoAtom,
-  cachedReposAtom,
+  store,
+  userAtom,
 } from "./store";
-import { send } from "./machine";
 import { backgroundSync } from "./sync";
-import { buildSearchIndex, initSearchSubscription } from "./search";
-import { recoverDrafts } from "./draft-recovery";
-import { warmProcessor } from "../markdown";
 
 const unauthenticated: AppMachine = { phase: "unauthenticated", authError: null };
 

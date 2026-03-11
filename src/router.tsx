@@ -1,7 +1,7 @@
 import {
-  createRouter,
-  createRoute,
   createRootRoute,
+  createRoute,
+  createRouter,
   lazyRouteComponent,
 } from "@tanstack/react-router";
 import { App } from "./app.tsx";

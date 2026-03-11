@@ -1,7 +1,7 @@
-import { getRepoWorker } from "../worker/client";
-import { store } from "./store";
-import { draftsAtom } from "./drafts";
 import { REPO_DIR } from "../lib/constants";
+import { getRepoWorker } from "../worker/client";
+import { draftsAtom } from "./drafts";
+import { store } from "./store";
 
 export async function recoverDrafts(filenames: string[]): Promise<void> {
   const worker = getRepoWorker();

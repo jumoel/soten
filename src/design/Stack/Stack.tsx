@@ -1,4 +1,4 @@
-import { type ComponentPropsWithoutRef, type ElementType, type ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
 type StackGap = 1 | 2 | 3 | 4 | 6;
 type StackAlign = "start" | "center" | "end" | "stretch";

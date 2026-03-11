@@ -1,12 +1,12 @@
-import { getRepoWorker } from "../worker/client";
-import { store, machineAtom, noteListAtom } from "../atoms/store";
 import { removeDraft } from "../atoms/drafts";
+import { updateSearchIndex } from "../atoms/search";
+import { machineAtom, noteListAtom, store } from "../atoms/store";
+import { getRepoWorker } from "../worker/client";
 import { cancelAutosave } from "./autosave";
+import { REPO_DIR } from "./constants";
+import { pfs, refreshFs } from "./fs";
 import { withGitWorking } from "./git-status";
 import { pushIfOnline } from "./push";
-import { refreshFs, pfs } from "./fs";
-import { REPO_DIR } from "./constants";
-import { updateSearchIndex } from "../atoms/search";
 
 function extractTitle(content: string): string | null {
   const fmMatch = content.match(/^---\n[\s\S]*?title:\s*(.+)\n[\s\S]*?---/);

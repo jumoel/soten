@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { TopBar } from "./TopBar";
 import { Button } from "../Button/Button";
 import { SearchField } from "../SearchField/SearchField";
 import { Text } from "../Text/Text";
+import { TopBar } from "./TopBar";
 
 const meta: Meta<typeof TopBar> = {
   title: "Design/TopBar",

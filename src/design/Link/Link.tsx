@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Icon } from "../Icon/Icon";
 
 type LinkVariant = "default" | "muted" | "nav";

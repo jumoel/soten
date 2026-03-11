@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { t, setLocale, registerLocale } from "./index";
+import { beforeEach, describe, expect, it } from "vitest";
+import { registerLocale, setLocale, t } from "./index";
 
 beforeEach(() => {
   setLocale("en");

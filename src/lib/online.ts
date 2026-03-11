@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { store, machineAtom } from "../atoms/store";
+import { machineAtom, store } from "../atoms/store";
 import { fullSync } from "../atoms/sync";
 
 export const onlineAtom = atom(navigator.onLine);

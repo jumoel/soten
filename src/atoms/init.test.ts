@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../lib/github", () => ({
   fetchCurrentUser: vi.fn(),
@@ -29,9 +29,9 @@ vi.mock("../worker/client", () => {
 });
 
 import { fetchCurrentUser } from "../lib/github";
+import { init, parseAuthError, parseOAuthHash } from "./init";
 import { send } from "./machine";
-import { store, machineAtom, userAtom } from "./store";
-import { parseAuthError, parseOAuthHash, init } from "./init";
+import { machineAtom, store, userAtom } from "./store";
 
 const mockUser = {
   username: "testuser",

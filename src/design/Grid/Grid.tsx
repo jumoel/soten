@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 type GridCols = 1 | 2 | 3 | 4;
 type GridGap = 2 | 3 | 4 | 6;

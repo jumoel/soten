@@ -1,19 +1,19 @@
-import { fetchUserRepos } from "../lib/github";
-import { refreshFs } from "../lib/fs";
-import { getRepoWorker } from "../worker/client";
 import { t } from "../i18n";
-import type { User, Repo } from "./store";
+import { refreshFs } from "../lib/fs";
+import { fetchUserRepos } from "../lib/github";
+import { getRepoWorker } from "../worker/client";
+import { recoverDrafts } from "./draft-recovery";
+import { buildSearchIndex, clearSearchIndex } from "./search";
+import type { Repo, User } from "./store";
 import {
-  store,
-  machineAtom,
-  noteListAtom,
-  userAtom,
-  selectedRepoAtom,
   cachedReposAtom,
   clearCardCache,
+  machineAtom,
+  noteListAtom,
+  selectedRepoAtom,
+  store,
+  userAtom,
 } from "./store";
-import { buildSearchIndex, clearSearchIndex } from "./search";
-import { recoverDrafts } from "./draft-recovery";
 
 function resetLocalState(): void {
   clearSearchIndex();

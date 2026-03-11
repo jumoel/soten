@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { SearchField } from "../design";
+import { useEffect, useState } from "react";
 import { searchQueryAtom } from "../atoms/globals";
+import { SearchField } from "../design";
 import { t } from "../i18n";
 
 export function SearchBar() {

@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../lib/fs", () => ({
   readFile: vi.fn(),
 }));
 
-import { store, machineAtom, noteListAtom } from "./store";
 import type { AppMachine } from "./store";
+import { machineAtom, noteListAtom, store } from "./store";
 
 const baseUser = {
   username: "testuser",
@@ -28,7 +28,7 @@ beforeEach(() => {
 });
 
 function setNote(relativePath: string) {
-  const path = "/soten/" + relativePath;
+  const path = `/soten/${relativePath}`;
   store.set(machineAtom, { ...baseReady, filenames: [path] });
 }
 

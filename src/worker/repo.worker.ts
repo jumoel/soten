@@ -1,6 +1,6 @@
 import LightningFS from "@isomorphic-git/lightning-fs";
 import MiniSearch from "minisearch";
-import type { WorkerRequest, WorkerResponse, GitUser, SearchEntry } from "./protocol";
+import type { GitUser, SearchEntry, WorkerRequest, WorkerResponse } from "./protocol";
 
 const FILE_SYSTEM_NAME = "fs";
 const REPO_DIR = "/soten";

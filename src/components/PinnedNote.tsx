@@ -1,9 +1,9 @@
-import { useMemo } from "react";
 import { useAtom } from "jotai";
 import { loadable } from "jotai/utils";
-import { Button, MarkdownCard, Text, Link, Stack } from "../design";
+import { useMemo } from "react";
 import { renderedNoteAtom } from "../atoms/globals";
 import type { NoteListEntry } from "../atoms/store";
+import { Button, Link, MarkdownCard, Stack, Text } from "../design";
 
 type PinnedNoteProps = {
   note: NoteListEntry;

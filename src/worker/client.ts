@@ -1,4 +1,4 @@
-import type { WorkerResponse, SearchEntry } from "./protocol";
+import type { SearchEntry, WorkerResponse } from "./protocol";
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void };
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { MarkdownCard } from "./MarkdownCard";
 import { Button } from "../Button/Button";
+import { MarkdownCard } from "./MarkdownCard";
 
 const meta: Meta<typeof MarkdownCard> = {
   title: "Design/MarkdownCard",

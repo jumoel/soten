@@ -1,5 +1,5 @@
+import { Alert, Stack, Text } from "../design";
 import { t } from "../i18n";
-import { Alert, Text, Stack } from "../design";
 import { GitHubAuthButton } from "./GitHubAuthButton";
 
 export function UnauthenticatedView({ authError }: { authError: string | null }) {

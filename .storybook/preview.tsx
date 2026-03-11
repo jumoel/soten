@@ -1,9 +1,9 @@
+import type { Decorator, Preview } from "@storybook/react-vite";
 import { useEffect } from "react";
-import type { Preview, Decorator } from "@storybook/react-vite";
 import "../src/index.css";
 
 const withTheme: Decorator = (Story, context) => {
-  const theme = context.globals["theme"] ?? "light";
+  const theme = context.globals.theme ?? "light";
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     return () => {

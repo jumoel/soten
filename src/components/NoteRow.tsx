@@ -1,10 +1,10 @@
-import { useMemo } from "react";
 import { useAtom } from "jotai";
 import { loadable } from "jotai/utils";
-import { Button, MarkdownCard, Stack } from "../design";
+import { useMemo } from "react";
 import { renderedNoteAtom } from "../atoms/globals";
-import { prettyDate, prettyDateTime } from "../atoms/store";
 import type { NoteListEntry } from "../atoms/store";
+import { prettyDate, prettyDateTime } from "../atoms/store";
+import { Button, MarkdownCard, Stack } from "../design";
 import { t } from "../i18n";
 
 function formatCardDate(date: Date): string {

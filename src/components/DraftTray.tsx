@@ -1,10 +1,10 @@
-import { useAtomValue } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
-import { Button, Box, Link, Text } from "../design";
-import { draftsAtom, restoreDraft } from "../atoms/globals";
-import { discardDraft } from "../lib/draft-operations";
-import { t } from "../i18n";
+import { useAtomValue } from "jotai";
 import type { Draft } from "../atoms/drafts";
+import { draftsAtom, restoreDraft } from "../atoms/globals";
+import { Box, Button, Link, Text } from "../design";
+import { t } from "../i18n";
+import { discardDraft } from "../lib/draft-operations";
 
 function extractDisplayTitle(content: string): string {
   const fmMatch = content.match(/^---\n[\s\S]*?title:\s*(.+)\n[\s\S]*?---/);

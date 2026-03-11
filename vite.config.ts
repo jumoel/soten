@@ -1,10 +1,11 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import { VitePWA } from "vite-plugin-pwa";
+
 import { readdir, readFile, stat } from "node:fs/promises";
-import { join, resolve, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 async function collectFiles(dir: string, base: string): Promise<string[]> {
   const entries = await readdir(dir);

@@ -1,6 +1,6 @@
-import type { Plugin } from "unified";
 import type { Root } from "mdast";
 import type { Options as SanitizeOptions } from "rehype-sanitize";
+import type { Plugin } from "unified";
 
 let processorPromise: ReturnType<typeof buildProcessor> | null = null;
 
@@ -39,8 +39,8 @@ async function buildProcessor() {
     import("unist-util-visit"),
   ]);
 
-  const remarkFrontmatterMatter: Plugin<[], Root> = function () {
-    return function transformer(_tree, file) {
+  const remarkFrontmatterMatter: Plugin<[], Root> = () =>
+    function transformer(_tree, file) {
       matter(file);
 
       if (file.data.matter) {
@@ -48,17 +48,16 @@ async function buildProcessor() {
         delete file.data.matter;
       }
     };
-  };
 
-  const remarkWikilinks: Plugin<[], Root> = function () {
-    return function transformer(tree) {
+  const remarkWikilinks: Plugin<[], Root> = () =>
+    function transformer(tree) {
       visit(tree, "text", (node, index, parent) => {
         if (!parent || index == null) return;
         const n = node as { value: string };
         const re = /\[\[([^\]]+?)(?:\|([^\]]+?))?\]\]/g;
         const parts: unknown[] = [];
         let lastIndex = 0;
-        let match;
+        let match: RegExpExecArray | null;
 
         while ((match = re.exec(n.value)) !== null) {
           if (match.index > lastIndex) {
@@ -76,13 +75,11 @@ async function buildProcessor() {
         (parent as { children: unknown[] }).children.splice(index, 1, ...parts);
       });
     };
-  };
 
-  const remarkRemoveFrontmatter: Plugin<[], Root> = function () {
-    return function transformer(tree) {
+  const remarkRemoveFrontmatter: Plugin<[], Root> = () =>
+    function transformer(tree) {
       tree.children = tree.children.filter((node) => node.type !== "yaml");
     };
-  };
 
   const sanitizeSchema: SanitizeOptions = {
     ...defaultSchema,

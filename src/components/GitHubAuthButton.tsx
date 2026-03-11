@@ -1,6 +1,6 @@
-import { redirectToGitHubAuth } from "../lib/github";
-import { t } from "../i18n";
 import { Button, Stack } from "../design";
+import { t } from "../i18n";
+import { redirectToGitHubAuth } from "../lib/github";
 
 export function GitHubAuthButton() {
   return (

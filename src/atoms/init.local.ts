@@ -1,8 +1,8 @@
-import { getRepoWorker } from "../worker/client";
 import { REPO_DIR } from "../lib/constants";
-import { store, machineAtom, noteListAtom } from "./store";
-import { buildSearchIndex } from "./search";
+import { getRepoWorker } from "../worker/client";
 import { recoverDrafts } from "./draft-recovery";
+import { buildSearchIndex } from "./search";
+import { machineAtom, noteListAtom, store } from "./store";
 
 export async function initFromLocalRepo(dir: string): Promise<void> {
   const filesRes = await fetch(`/api/test-repo/files?dir=${encodeURIComponent(dir)}`);

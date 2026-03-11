@@ -1,4 +1,4 @@
-import { type ComponentPropsWithoutRef, type ElementType, type ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
 type TextVariant = "h1" | "h2" | "h3" | "h4" | "body" | "body-dim" | "meta" | "label";
 

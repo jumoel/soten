@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../lib/github", () => ({
   fetchUserRepos: vi.fn(),
@@ -25,12 +25,12 @@ vi.mock("../lib/fs", () => ({
   refreshFs: vi.fn(),
 }));
 
+import { refreshFs } from "../lib/fs";
 import { fetchUserRepos } from "../lib/github";
 import { getRepoWorker } from "../worker/client";
-import { refreshFs } from "../lib/fs";
 import { send } from "./machine";
-import { store, machineAtom, userAtom, selectedRepoAtom } from "./store";
 import type { AppMachine } from "./store";
+import { machineAtom, selectedRepoAtom, store, userAtom } from "./store";
 
 const worker = getRepoWorker();
 

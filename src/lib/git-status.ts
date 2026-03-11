@@ -1,5 +1,4 @@
-import { store } from "../atoms/store";
-import { gitWorkingAtom } from "../atoms/store";
+import { gitWorkingAtom, store } from "../atoms/store";
 
 let activeCount = 0;
 

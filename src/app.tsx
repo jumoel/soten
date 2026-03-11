@@ -1,17 +1,17 @@
-import { useEffect } from "react";
-import { useAtom, useAtomValue } from "jotai";
 import { Outlet, useNavigate } from "@tanstack/react-router";
-import { machineAtom, send, themeAtom, activeDraftAtom } from "./atoms/globals";
-import { UnauthenticatedView } from "./components/UnauthenticatedView";
+import { useAtom, useAtomValue } from "jotai";
+import { useEffect } from "react";
+import { activeDraftAtom, machineAtom, send, themeAtom } from "./atoms/globals";
 import { AuthError } from "./components/AuthError";
-import { TopBar } from "./components/TopBar";
-import { LoadingSpinner } from "./components/LoadingSpinner";
-import { AppShell } from "./design";
-import { EditorPane } from "./components/EditorPane";
 import { DraftTray } from "./components/DraftTray";
+import { EditorPane } from "./components/EditorPane";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ResizeHandle } from "./components/ResizeHandle";
-import { useMediaQuery } from "./lib/use-media-query";
+import { TopBar } from "./components/TopBar";
+import { UnauthenticatedView } from "./components/UnauthenticatedView";
+import { AppShell } from "./design";
 import { useLocalStorage } from "./lib/use-local-storage";
+import { useMediaQuery } from "./lib/use-media-query";
 
 function ReadyLayout() {
   const activeDraft = useAtomValue(activeDraftAtom);

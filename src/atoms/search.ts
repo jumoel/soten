@@ -1,7 +1,7 @@
 import { atom } from "jotai";
 import { getRepoWorker } from "../worker/client";
-import { store, noteListAtom } from "./store";
 import type { NoteListEntry } from "./store";
+import { noteListAtom, store } from "./store";
 
 export const searchQueryAtom = atom("");
 export const searchIndexReadyAtom = atom(false);

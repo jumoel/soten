@@ -1,16 +1,12 @@
-import { useAtomValue } from "jotai";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "../design";
-import { TopBar as DesignTopBar } from "../design";
-import { Link } from "../design";
-import { Text } from "../design";
-import { GearPopover } from "./GearPopover";
-import { onlineAtom } from "../lib/online";
-import { machineAtom, gitWorkingAtom, openNewDraft } from "../atoms/globals";
-import { getRepoWorker } from "../worker/client";
-import { withGitWorking } from "../lib/git-status";
-import { Icon } from "../design";
+import { useAtomValue } from "jotai";
+import { gitWorkingAtom, machineAtom, openNewDraft } from "../atoms/globals";
+import { Button, TopBar as DesignTopBar, Icon, Link, Text } from "../design";
 import { t } from "../i18n";
+import { withGitWorking } from "../lib/git-status";
+import { onlineAtom } from "../lib/online";
+import { getRepoWorker } from "../worker/client";
+import { GearPopover } from "./GearPopover";
 
 function SotenLogo() {
   return (

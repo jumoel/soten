@@ -1,18 +1,18 @@
-import { fetchCurrentUser, fetchUserRepos } from "../lib/github";
 import { refreshFs } from "../lib/fs";
-import { getRepoWorker } from "../worker/client";
 import { withGitWorking } from "../lib/git-status";
-import type { User } from "./store";
-import {
-  store,
-  machineAtom,
-  noteListAtom,
-  userAtom,
-  selectedRepoAtom,
-  cachedReposAtom,
-} from "./store";
+import { fetchCurrentUser, fetchUserRepos } from "../lib/github";
+import { getRepoWorker } from "../worker/client";
 import { draftsAtom } from "./drafts";
 import { updateSearchIndex } from "./search";
+import type { User } from "./store";
+import {
+  cachedReposAtom,
+  machineAtom,
+  noteListAtom,
+  selectedRepoAtom,
+  store,
+  userAtom,
+} from "./store";
 
 let syncing = false;
 

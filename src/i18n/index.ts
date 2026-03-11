@@ -1,5 +1,5 @@
-import en, { type MessageKey, type Messages } from "./en";
 import da from "./da";
+import en, { type MessageKey, type Messages } from "./en";
 
 type Translations = Record<string, string>;
 

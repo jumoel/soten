@@ -1,10 +1,10 @@
 import "@total-typescript/ts-reset";
 
+import { registerSW } from "virtual:pwa-register";
+import { RouterProvider } from "@tanstack/react-router";
+import { Provider } from "jotai";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { Provider } from "jotai";
-import { RouterProvider } from "@tanstack/react-router";
-import { registerSW } from "virtual:pwa-register";
 
 import { store } from "./atoms/globals.ts";
 import { router } from "./router.tsx";

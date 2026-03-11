@@ -1,4 +1,4 @@
-import { type ComponentPropsWithoutRef, type ElementType, type ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
 type BoxSurface = "none" | "base" | "surface" | "surface-2";
 type BoxBorder = "none" | "edge" | "edge-2";

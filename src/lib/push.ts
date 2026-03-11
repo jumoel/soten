@@ -1,5 +1,5 @@
+import { machineAtom, store } from "../atoms/store";
 import { getRepoWorker } from "../worker/client";
-import { store, machineAtom } from "../atoms/store";
 import { onlineAtom } from "./online";
 
 export async function pushIfOnline(ref?: string): Promise<void> {
