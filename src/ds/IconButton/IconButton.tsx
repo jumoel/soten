@@ -35,7 +35,7 @@ export function IconButton({
     .filter(Boolean)
     .join(" ");
 
-  const iconSize = size === "sm" ? "4" : ("4" as const);
+  const iconSize = size === "sm" ? "4" : "5";
 
   return (
     <button

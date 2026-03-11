@@ -66,6 +66,8 @@ export type IconProps = {
   "aria-hidden"?: boolean;
 };
 
+const spinStyle = { animationDuration: "0.8s" } as const;
+
 const sizeMap: Record<IconSize, number> = {
   "4": 16,
   "5": 20,
@@ -117,25 +119,35 @@ export function Icon({
 }: IconProps) {
   const px = sizeMap[size];
 
-  const inner =
-    name === "github" ? (
-      <GithubSvg size={px} />
-    ) : (
-      (() => {
-        const IconComponent = icons[name];
-        return <IconComponent size={px} />;
-      })()
+  if (name === "github") {
+    return (
+      <span
+        className={
+          spin
+            ? "inline-flex items-center justify-center animate-spin"
+            : "inline-flex items-center justify-center"
+        }
+        aria-hidden={ariaHidden}
+        style={spin ? spinStyle : undefined}
+      >
+        <GithubSvg size={px} />
+      </span>
     );
+  }
+
+  const IconComponent = icons[name];
 
   return (
     <span
-      className={["inline-flex items-center justify-center", spin ? "animate-spin" : ""]
-        .filter(Boolean)
-        .join(" ")}
+      className={
+        spin
+          ? "inline-flex items-center justify-center animate-spin"
+          : "inline-flex items-center justify-center"
+      }
       aria-hidden={ariaHidden}
-      style={spin ? { animationDuration: "0.8s" } : undefined}
+      style={spin ? spinStyle : undefined}
     >
-      {inner}
+      <IconComponent size={px} />
     </span>
   );
 }

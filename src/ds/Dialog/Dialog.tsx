@@ -35,10 +35,10 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
       }}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
+          e.preventDefault();
           onClose();
         }
       }}
-      onClose={onClose}
     >
       {title && (
         <div className="flex items-center justify-between px-6 py-4 border-b border-edge">

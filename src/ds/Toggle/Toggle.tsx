@@ -16,7 +16,7 @@ const trackOff = "bg-surface-2 border border-edge";
 const trackOn = "bg-accent";
 
 const thumbBase =
-  "pointer-events-none absolute left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-150 ease-in-out";
+  "pointer-events-none absolute left-0.5 h-4 w-4 rounded-full bg-surface shadow-sm transition-transform duration-150 ease-in-out";
 
 const disabledClasses = "opacity-50 pointer-events-none cursor-default";
 
