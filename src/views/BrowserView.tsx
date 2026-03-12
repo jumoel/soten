@@ -5,6 +5,12 @@ import { FAB } from "../components/FAB";
 import { NoteCard } from "../components/NoteCard";
 import { TopBar } from "../components/TopBar";
 import { Button, IconButton, SearchField, Select, Text } from "../ds";
+import {
+  useCalendarData,
+  useCalendarNavigation,
+  useFilteredByDay,
+  useMonthNotes,
+} from "../hooks/useCalendar";
 import { t } from "../i18n";
 import { pfs } from "../lib/fs";
 import { formatNoteDate, frontmatterEndLine } from "../lib/text";
@@ -55,25 +61,6 @@ function useNotePreviews(entries: NoteListEntry[]) {
   }, [entries]);
 
   return previews;
-}
-
-function useCalendarData(entries: NoteListEntry[], searchResults: NoteListEntry[]) {
-  return useMemo(() => {
-    const noteCounts = new Map<number, number>();
-    for (const entry of entries) {
-      if (!entry.date) continue;
-      const day = entry.date.getUTCDate();
-      noteCounts.set(day, (noteCounts.get(day) ?? 0) + 1);
-    }
-
-    const searchPaths = new Set(searchResults.map((r) => r.path));
-    const activeDays =
-      searchResults.length < entries.length
-        ? new Set(searchResults.filter((r) => r.date).map((r) => r.date!.getUTCDate()))
-        : null;
-
-    return { noteCounts, activeDays, searchPaths };
-  }, [entries, searchResults]);
 }
 
 function useSortOptions(hasQuery: boolean) {
@@ -147,30 +134,11 @@ export function BrowserView() {
   const previews = useNotePreviews(allNotes);
   const sortOptions = useSortOptions(query.trim().length > 0);
 
-  const [calYear, setCalYear] = useState(() => new Date().getFullYear());
-  const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-
-  const monthNotes = useMemo(
-    () =>
-      allNotes.filter(
-        (n) => n.date && n.date.getUTCFullYear() === calYear && n.date.getUTCMonth() === calMonth,
-      ),
-    [allNotes, calYear, calMonth],
-  );
-
+  const { calYear, calMonth, selectedDay, setSelectedDay, handleChangeMonth } =
+    useCalendarNavigation();
+  const monthNotes = useMonthNotes(allNotes, calYear, calMonth);
   const { noteCounts, activeDays } = useCalendarData(monthNotes, results);
-
-  const filteredResults = useMemo(() => {
-    if (selectedDay === null) return results;
-    return results.filter(
-      (r) =>
-        r.date &&
-        r.date.getUTCFullYear() === calYear &&
-        r.date.getUTCMonth() === calMonth &&
-        r.date.getUTCDate() === selectedDay,
-    );
-  }, [results, selectedDay, calYear, calMonth]);
+  const filteredResults = useFilteredByDay(results, selectedDay, calYear, calMonth);
 
   const pinnedSet = useMemo(() => new Set(pinnedPaths), [pinnedPaths]);
 
@@ -193,24 +161,6 @@ export function BrowserView() {
       }
     },
     [setPinned],
-  );
-
-  const handleChangeMonth = useCallback(
-    (delta: number) => {
-      let m = calMonth + delta;
-      let y = calYear;
-      if (m < 0) {
-        m = 11;
-        y--;
-      } else if (m > 11) {
-        m = 0;
-        y++;
-      }
-      setCalMonth(m);
-      setCalYear(y);
-      setSelectedDay(null);
-    },
-    [calMonth, calYear],
   );
 
   const handleNewNote = useCallback(() => {
