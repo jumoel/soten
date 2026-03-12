@@ -3,9 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarGrid } from "../components/CalendarGrid";
 import { FAB } from "../components/FAB";
 import { NoteCard } from "../components/NoteCard";
-import { SotenLogo } from "../components/SotenLogo";
-import { TopBar } from "../components/TopBar";
-import { Button, IconButton, SearchField, Select, Text } from "../ds";
+import { SearchField, Select, Text } from "../ds";
 import {
   useCalendarData,
   useCalendarNavigation,
@@ -17,11 +15,10 @@ import { pfs } from "../lib/fs";
 import { formatNoteDate, frontmatterEndLine } from "../lib/text";
 import type { NoteListEntry } from "../state/notes";
 import { noteListAtom, pinnedNotesAtom } from "../state/notes";
-import { repoAtom } from "../state/repo";
 import { browserSearch, type SortOrder, useNoteSearch } from "../state/search";
 import { store } from "../state/store";
 import { conflictsAtom } from "../state/sync";
-import { weekStartAtom } from "../state/ui";
+import { calendarOpenAtom, weekStartAtom } from "../state/ui";
 
 function useNotePreviews(entries: NoteListEntry[]) {
   const [previews, setPreviews] = useState<Map<string, string>>(new Map());
@@ -38,9 +35,9 @@ function useNotePreviews(entries: NoteListEntry[]) {
           const body = lines
             .slice(start)
             .filter((l: string) => l.trim().length > 0)
-            .slice(0, 3)
+            .slice(0, 5)
             .join(" ")
-            .slice(0, 200);
+            .slice(0, 400);
           return [entry.path, body] as const;
         }),
       );
@@ -128,7 +125,6 @@ export function BrowserView() {
   const allNotes = useAtomValue(noteListAtom);
   const pinnedPaths = useAtomValue(pinnedNotesAtom);
   const setPinned = useSetAtom(pinnedNotesAtom);
-  const repo = useAtomValue(repoAtom);
   const weekStart = useAtomValue(weekStartAtom);
   const conflicts = useAtomValue(conflictsAtom);
   const conflictPaths = useMemo(() => new Set(conflicts.map((c) => c.path)), [conflicts]);
@@ -169,51 +165,14 @@ export function BrowserView() {
     window.location.hash = `#/${ts}.md?draft=${ts}`;
   }, []);
 
-  const [calendarOpen, setCalendarOpen] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= 1200,
-  );
+  const calendarPref = useAtomValue(calendarOpenAtom);
+  const calendarOpen =
+    calendarPref !== null
+      ? calendarPref
+      : typeof window !== "undefined" && window.innerWidth >= 1200;
 
   return (
-    <div className="flex flex-col h-screen bg-base">
-      <TopBar
-        left={
-          <div className="flex items-center gap-1.5">
-            <SotenLogo />
-            <Text variant="h3" as="span" className="text-sm">
-              {repo ? `${repo.owner}/${repo.repo}` : t("app.name")}
-            </Text>
-          </div>
-        }
-        right={
-          <div className="flex items-center gap-1">
-            <IconButton
-              icon="calendar"
-              size="sm"
-              aria-label={t("calendar.toggle")}
-              onClick={() => setCalendarOpen(!calendarOpen)}
-              className={calendarOpen ? "text-accent" : ""}
-            />
-            <Button
-              variant="primary"
-              size="sm"
-              icon="plus"
-              onClick={handleNewNote}
-              className="hidden md:flex"
-            >
-              {t("note.new")}
-            </Button>
-            <IconButton
-              icon="settings"
-              size="sm"
-              aria-label={t("menu.settings")}
-              onClick={() => {
-                window.location.hash = "#/settings";
-              }}
-            />
-          </div>
-        }
-      />
-
+    <>
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex gap-6">
           {/* Calendar sidebar - side by side on desktop+, stacked on smaller */}
@@ -304,6 +263,6 @@ export function BrowserView() {
       </main>
 
       <FAB onClick={handleNewNote} />
-    </div>
+    </>
   );
 }

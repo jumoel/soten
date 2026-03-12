@@ -150,7 +150,7 @@ export function CalendarGrid({
                 type="button"
                 data-day={day}
                 className={[
-                  "relative flex flex-col items-center justify-center h-8 rounded-md text-xs transition-colors duration-150 select-none",
+                  "relative flex flex-col items-center justify-center h-8 rounded-md text-xs select-none",
                   "hover:bg-surface-2 text-paper",
                   isDimmed ? "text-muted" : "",
                 ]
@@ -205,7 +205,7 @@ export function CalendarGrid({
               key={day}
               type="button"
               data-day={day}
-              className="relative flex flex-col items-center justify-center h-8 text-xs transition-colors duration-150 select-none bg-accent text-white dark:text-black"
+              className="relative flex flex-col items-center justify-center h-8 text-xs select-none bg-accent text-white dark:text-black"
               style={{ borderRadius: `${tl}px ${tr}px ${br}px ${bl}px` }}
               aria-label={t("calendar.dayLabel", {
                 month: monthName,

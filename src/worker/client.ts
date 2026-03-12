@@ -69,7 +69,6 @@ class RepoWorkerClient {
     timestamp: string,
     content: string,
     user: { username: string; token: string },
-    hasRemote: boolean,
     isOnline: boolean,
   ): Promise<DomainResult> {
     return this.call({
@@ -77,7 +76,6 @@ class RepoWorkerClient {
       timestamp,
       content,
       user,
-      hasRemote,
       isOnline,
     }) as Promise<DomainResult>;
   }
@@ -87,7 +85,6 @@ class RepoWorkerClient {
     content: string,
     message: string,
     user: { username: string; token: string },
-    hasRemote: boolean,
     isOnline: boolean,
   ): Promise<DomainResult> {
     return this.call({
@@ -96,7 +93,6 @@ class RepoWorkerClient {
       content,
       message,
       user,
-      hasRemote,
       isOnline,
     }) as Promise<DomainResult>;
   }
@@ -104,14 +100,12 @@ class RepoWorkerClient {
   discardDraft(
     timestamp: string,
     user: { username: string; token: string },
-    hasRemote: boolean,
     isOnline: boolean,
   ): Promise<DomainResult> {
     return this.call({
       type: "discardDraft",
       timestamp,
       user,
-      hasRemote,
       isOnline,
     }) as Promise<DomainResult>;
   }

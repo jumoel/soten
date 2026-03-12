@@ -48,7 +48,7 @@ export function NoteCard({
             </Text>
           )}
           {preview && (
-            <p className="text-xs text-paper-dim leading-snug line-clamp-2 mt-0.5">{preview}</p>
+            <p className="text-xs text-paper-dim leading-snug line-clamp-4 mt-0.5">{preview}</p>
           )}
         </button>
         <div className="shrink-0 pt-1.5 pr-1.5">

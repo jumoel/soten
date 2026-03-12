@@ -10,6 +10,10 @@ export const weekStartAtom = atomWithStorage<WeekStart>("weekStart", 1, undefine
   getOnInit: true,
 });
 
+export const calendarOpenAtom = atomWithStorage<boolean | null>("calendarOpen", null, undefined, {
+  getOnInit: true,
+});
+
 // ---------------------------------------------------------------------------
 // Reference stack (editor right column)
 // ---------------------------------------------------------------------------

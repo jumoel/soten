@@ -5,7 +5,6 @@ import { BrowserMini } from "../components/BrowserMini";
 import { Overlay } from "../components/Overlay";
 import { ReferencePanel } from "../components/ReferencePanel";
 import { SplitPane } from "../components/SplitPane";
-import { TopBar } from "../components/TopBar";
 import { Alert, Badge, Button, Dialog, IconButton, Spinner, Text, Textarea } from "../ds";
 import { t } from "../i18n";
 import { REPO_DIR } from "../lib/constants";
@@ -22,7 +21,7 @@ import {
   editorTimestampAtom,
 } from "../state/editor";
 import { noteListAtom } from "../state/notes";
-import { applyRepoState, hasRemoteAtom } from "../state/repo";
+import { applyRepoState } from "../state/repo";
 import { store } from "../state/store";
 import { conflictsAtom, isOnlineAtom, syncStateAtom } from "../state/sync";
 import { referenceStackAtom } from "../state/ui";
@@ -32,7 +31,6 @@ const AUTOSAVE_DELAY_MS = 2000;
 
 function workerContext() {
   return {
-    hasRemote: store.get(hasRemoteAtom),
     online: store.get(isOnlineAtom),
   };
 }
@@ -240,6 +238,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
 
   const autosaveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const refSearchRef = useRef<HTMLInputElement>(null);
+  const editorId = "editor-textarea";
 
   const timestamp = useMemo(() => {
     if (route.view === "draft") return route.timestamp;
@@ -313,11 +312,19 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
           }
         }
       } else {
-        const filePath =
-          route.view === "note" ? `${REPO_DIR}/${route.path}` : `${REPO_DIR}/${timestamp}.md`;
         try {
-          const text = await pfs.readFile(filePath, { encoding: "utf8" });
-          if (!cancelled) {
+          // Check for an existing draft branch (autosave writes to draft/{timestamp})
+          const worker = getRepoWorker();
+          const state = await worker.getState();
+          const draft = state.drafts.find((d) => d.timestamp === timestamp);
+          if (draft && !cancelled) {
+            setContent(draft.content);
+            setSavedContent(draft.content);
+            setLoaded(true);
+          } else if (!cancelled) {
+            const filePath =
+              route.view === "note" ? `${REPO_DIR}/${route.path}` : `${REPO_DIR}/${timestamp}.md`;
+            const text = await pfs.readFile(filePath, { encoding: "utf8" });
             setContent(text);
             setSavedContent(text);
             setLoaded(true);
@@ -339,6 +346,15 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     };
   }, [timestamp, isDraft, route, setContent, setSavedContent, setTimestamp]);
 
+  // Auto-focus textarea for new drafts
+  useEffect(() => {
+    if (loaded && isDraft) {
+      requestAnimationFrame(() => {
+        document.getElementById(editorId)?.focus();
+      });
+    }
+  }, [loaded, isDraft]);
+
   // Autosave on content change (debounced)
   const doAutosave = useCallback(
     async (text: string) => {
@@ -346,12 +362,11 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
       setSaving(true);
       try {
         const worker = getRepoWorker();
-        const { hasRemote, online } = workerContext();
+        const { online } = workerContext();
         const result = await worker.autosaveDraft(
           timestamp,
           text,
           { username: user.username, token: user.token },
-          hasRemote,
           online,
         );
         await applyRepoState(result.state);
@@ -398,7 +413,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     setPublishError(null);
     try {
       const worker = getRepoWorker();
-      const { hasRemote, online } = workerContext();
+      const { online } = workerContext();
       const currentContent = store.get(editorContentAtom);
       const commitTitle = extractTitle(currentContent);
       const message =
@@ -408,7 +423,6 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
         currentContent,
         message,
         { username: user.username, token: user.token },
-        hasRemote,
         online,
       );
       await applyRepoState(result.state);
@@ -428,11 +442,10 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     setDiscardOpen(false);
     try {
       const worker = getRepoWorker();
-      const { hasRemote, online } = workerContext();
+      const { online } = workerContext();
       const result = await worker.discardDraft(
         timestamp,
         { username: user.username, token: user.token },
-        hasRemote,
         online,
       );
       await applyRepoState(result.state);
@@ -486,8 +499,9 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
   }
 
   const editorArea = (
-    <div className="flex flex-col h-full p-3">
+    <label htmlFor={editorId} className="flex flex-col h-full p-3 [&>div]:flex-1 [&>div]:min-h-0">
       <Textarea
+        id={editorId}
         value={content}
         onChange={handleContentChange}
         placeholder={t("editor.placeholder")}
@@ -495,7 +509,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
         mono
         className="flex-1 border-0 bg-transparent focus:outline-none resize-none"
       />
-    </div>
+    </label>
   );
 
   const backlinksPanel = (
@@ -507,55 +521,52 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
   );
 
   return (
-    <div className="flex flex-col h-screen bg-base">
-      <TopBar
-        left={
+    <>
+      <div className="flex items-center h-9 px-3 border-b border-edge bg-surface shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
           <IconButton
             icon="chevron-left"
             size="sm"
             aria-label={t("nav.back")}
             onClick={handleBack}
           />
-        }
-        center={
-          <Text variant="h3" as="span" className="text-sm truncate max-w-48">
+          <Text variant="h4" as="span" className="text-xs truncate max-w-48">
             {title}
           </Text>
-        }
-        right={
-          <div className="flex items-center gap-2">
-            <SyncIndicator />
-            {breakpoint === "tablet" && (
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-2">
+          <SyncIndicator />
+          {breakpoint === "tablet" && (
+            <IconButton
+              icon="panel-right"
+              size="sm"
+              aria-label={t("editor.openReferences")}
+              onClick={() => setOverlayOpen(true)}
+            />
+          )}
+          {isDraft && (
+            <>
               <IconButton
-                icon="panel-right"
+                icon="trash"
                 size="sm"
-                aria-label={t("editor.openReferences")}
-                onClick={() => setOverlayOpen(true)}
+                aria-label={t("editor.discardDraft")}
+                onClick={() => setDiscardOpen(true)}
               />
-            )}
-            {isDraft && (
-              <>
-                <IconButton
-                  icon="trash"
-                  size="sm"
-                  aria-label={t("editor.discardDraft")}
-                  onClick={() => setDiscardOpen(true)}
-                />
-                <Button
-                  variant="primary"
-                  size="sm"
-                  icon="upload"
-                  onClick={handlePublish}
-                  loading={publishing}
-                  disabled={!dirty && !content.trim()}
-                >
-                  {t("editor.publish")}
-                </Button>
-              </>
-            )}
-          </div>
-        }
-      />
+              <Button
+                variant="primary"
+                size="sm"
+                icon="check"
+                onClick={handlePublish}
+                loading={publishing}
+                disabled={!dirty && !content.trim()}
+              >
+                {t("editor.publish")}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
 
       {publishError && (
         <div className="px-3 py-2">
@@ -675,6 +686,6 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
           </div>
         </div>
       </Dialog>
-    </div>
+    </>
   );
 }

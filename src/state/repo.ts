@@ -17,7 +17,6 @@ export const cachedReposAtom = atomWithStorage<string[] | null>("cachedRepos", n
 });
 export const cloneStatusAtom = atom<CloneStatus>("idle");
 export const filenamesAtom = atom<string[]>([]);
-export const hasRemoteAtom = atom(true);
 
 export async function beginRepoFlow(user: User, repos: string[]): Promise<void> {
   store.set(cachedReposAtom, repos);
@@ -58,7 +57,6 @@ async function cloneAndLoad(user: User, repo: Repo): Promise<void> {
     await applyRepoState(result.state);
     store.set(repoAtom, repo);
     store.set(cloneStatusAtom, "ready");
-    store.set(hasRemoteAtom, true);
     store.set(authStateAtom, "authenticated");
   } catch (e) {
     store.set(authStateAtom, "error");

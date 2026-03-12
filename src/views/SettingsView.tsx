@@ -1,6 +1,5 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
-import { TopBar } from "../components/TopBar";
 import { Button, Card, Divider, IconButton, Select, Text } from "../ds";
 import { t } from "../i18n";
 import { FILE_SYSTEM_NAME, fs } from "../lib/fs";
@@ -85,24 +84,21 @@ export function SettingsView() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-base">
-      <TopBar
-        left={
-          <IconButton
-            icon="chevron-left"
-            size="sm"
-            aria-label={t("nav.back")}
-            onClick={() => {
-              window.location.hash = "#/";
-            }}
-          />
-        }
-        center={
-          <Text variant="h3" as="span" className="text-sm">
-            {t("menu.settings")}
-          </Text>
-        }
-      />
+    <>
+      <div className="flex items-center h-9 px-3 border-b border-edge bg-surface shrink-0">
+        <IconButton
+          icon="chevron-left"
+          size="sm"
+          aria-label={t("nav.back")}
+          onClick={() => {
+            window.location.hash = "#/";
+          }}
+        />
+        <Text variant="h4" as="span" className="text-xs flex-1 text-center">
+          {t("menu.settings")}
+        </Text>
+        <div className="w-8" />
+      </div>
 
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-lg px-4 sm:px-6 py-6 flex flex-col gap-6">
@@ -144,6 +140,6 @@ export function SettingsView() {
           </div>
         </div>
       </main>
-    </div>
+    </>
   );
 }

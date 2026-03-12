@@ -2,7 +2,7 @@ import { atom } from "jotai";
 import { getRepoWorker } from "../worker/client";
 import type { ConflictEntry } from "../worker/protocol";
 import { userAtom } from "./auth";
-import { applyRepoState, hasRemoteAtom } from "./repo";
+import { applyRepoState } from "./repo";
 import { store } from "./store";
 
 export type SyncState = "idle" | "syncing" | "error" | "offline";
@@ -25,8 +25,6 @@ export async function doSync(): Promise<void> {
   if (!user) return;
   const online = store.get(isOnlineAtom);
   if (!online) return;
-  const hasRemote = store.get(hasRemoteAtom);
-  if (!hasRemote) return;
 
   syncing = true;
   store.set(syncStateAtom, "syncing");

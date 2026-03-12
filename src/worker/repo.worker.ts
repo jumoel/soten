@@ -293,7 +293,6 @@ async function autosaveDraftHandler(
   timestamp: string,
   content: string,
   user: { username: string; token: string },
-  hasRemote: boolean,
   isOnline: boolean,
 ): Promise<DomainResult> {
   const { git } = await getGit();
@@ -332,7 +331,7 @@ async function autosaveDraftHandler(
   });
 
   let syncStatus: SyncStatus = "local-only";
-  if (hasRemote && isOnline) {
+  if (isOnline) {
     try {
       await push(user, branch);
       syncStatus = "synced";
@@ -349,7 +348,6 @@ async function publishDraftHandler(
   content: string,
   message: string,
   user: { username: string; token: string },
-  hasRemote: boolean,
   isOnline: boolean,
 ): Promise<DomainResult> {
   const { git } = await getGit();
@@ -416,7 +414,7 @@ async function publishDraftHandler(
 
   // Push main + push branch deletion if online
   let syncStatus: SyncStatus = "local-only";
-  if (hasRemote && isOnline) {
+  if (isOnline) {
     let allPushed = true;
     try {
       await push(user, "main");
@@ -437,7 +435,6 @@ async function publishDraftHandler(
 async function discardDraftHandler(
   timestamp: string,
   user: { username: string; token: string },
-  hasRemote: boolean,
   isOnline: boolean,
 ): Promise<DomainResult> {
   const filepath = `${timestamp}.md`;
@@ -469,7 +466,7 @@ async function discardDraftHandler(
 
   // Push branch deletion if online
   let syncStatus: SyncStatus = "local-only";
-  if (hasRemote && isOnline) {
+  if (isOnline) {
     try {
       await push(user, `:refs/heads/${branch}`);
       syncStatus = "synced";
@@ -639,13 +636,7 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
             corsProxy = msg.value;
             break;
           case "autosaveDraft":
-            result = await autosaveDraftHandler(
-              msg.timestamp,
-              msg.content,
-              msg.user,
-              msg.hasRemote,
-              msg.isOnline,
-            );
+            result = await autosaveDraftHandler(msg.timestamp, msg.content, msg.user, msg.isOnline);
             break;
           case "publishDraft":
             result = await publishDraftHandler(
@@ -653,17 +644,11 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
               msg.content,
               msg.message,
               msg.user,
-              msg.hasRemote,
               msg.isOnline,
             );
             break;
           case "discardDraft":
-            result = await discardDraftHandler(
-              msg.timestamp,
-              msg.user,
-              msg.hasRemote,
-              msg.isOnline,
-            );
+            result = await discardDraftHandler(msg.timestamp, msg.user, msg.isOnline);
             break;
           case "sync":
             result = await syncHandler(msg.user, msg.draftTimestamps);

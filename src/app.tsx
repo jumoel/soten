@@ -1,13 +1,15 @@
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
-import { Alert, Button, Card, Spinner, Stack, Text } from "./ds";
+import { useCallback, useEffect, useState } from "react";
+import { SotenLogo } from "./components/SotenLogo";
+import { TopBar } from "./components/TopBar";
+import { Alert, Button, Card, IconButton, Spinner, Stack, Text } from "./ds";
 import { t } from "./i18n";
 import { init } from "./lib/init";
 import { routeAtom } from "./lib/router";
 import { authErrorAtom, authStateAtom, login, logout, userAtom } from "./state/auth";
-import { cachedReposAtom, cloneStatusAtom, selectRepo } from "./state/repo";
-import { themeAtom } from "./state/ui";
+import { cachedReposAtom, cloneStatusAtom, repoAtom, selectRepo } from "./state/repo";
+import { calendarOpenAtom, themeAtom } from "./state/ui";
 import { BrowserView } from "./views/BrowserView";
 import { EditorView } from "./views/EditorView";
 import { SettingsView } from "./views/SettingsView";
@@ -98,19 +100,84 @@ function ErrorScreen() {
   );
 }
 
+function MainTopBar() {
+  const repo = useAtomValue(repoAtom);
+  const calendarPref = useAtomValue(calendarOpenAtom);
+  const setCalendarPref = useSetAtom(calendarOpenAtom);
+  const calendarOpen =
+    calendarPref !== null
+      ? calendarPref
+      : typeof window !== "undefined" && window.innerWidth >= 1200;
+
+  const handleNewNote = useCallback(() => {
+    const ts = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
+    window.location.hash = `#/${ts}.md?draft=${ts}`;
+  }, []);
+
+  return (
+    <TopBar
+      left={
+        <div className="flex items-center gap-1.5">
+          <SotenLogo />
+          <Text variant="h3" as="span" className="text-sm">
+            {repo ? `${repo.owner}/${repo.repo}` : t("app.name")}
+          </Text>
+        </div>
+      }
+      right={
+        <div className="flex items-center gap-1">
+          <IconButton
+            icon="calendar"
+            size="sm"
+            aria-label={t("calendar.toggle")}
+            onClick={() => setCalendarPref(!calendarOpen)}
+            className={calendarOpen ? "text-accent" : ""}
+          />
+          <Button
+            variant="primary"
+            size="sm"
+            icon="plus"
+            onClick={handleNewNote}
+            className="hidden md:flex"
+          >
+            {t("note.new")}
+          </Button>
+          <IconButton
+            icon="settings"
+            size="sm"
+            aria-label={t("menu.settings")}
+            onClick={() => {
+              window.location.hash = "#/settings";
+            }}
+          />
+        </div>
+      }
+    />
+  );
+}
+
 function AuthenticatedApp() {
   const route = useAtomValue(routeAtom);
 
+  let content: ReactNode;
   switch (route.view) {
     case "settings":
-      return <SettingsView />;
+      content = <SettingsView />;
+      break;
     case "note":
-      return <EditorView route={route} />;
     case "draft":
-      return <EditorView route={route} />;
+      content = <EditorView route={route} />;
+      break;
     default:
-      return <BrowserView />;
+      content = <BrowserView />;
   }
+
+  return (
+    <div className="flex flex-col h-screen bg-base">
+      <MainTopBar />
+      {content}
+    </div>
+  );
 }
 
 function LoadingScreen() {

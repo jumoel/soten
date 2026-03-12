@@ -1,5 +1,5 @@
 import { authStateAtom, userAtom } from "../state/auth";
-import { applyRepoState, cloneStatusAtom, hasRemoteAtom } from "../state/repo";
+import { applyRepoState, cloneStatusAtom } from "../state/repo";
 import { store } from "../state/store";
 import { getRepoWorker } from "../worker/client";
 
@@ -7,7 +7,6 @@ export async function initFromLocalRepo(dir: string): Promise<void> {
   // Show the app shell immediately while the clone runs in the background.
   store.set(userAtom, { username: "local", token: "", installationId: "", email: "local@soten" });
   store.set(authStateAtom, "authenticated");
-  store.set(hasRemoteAtom, false);
   store.set(cloneStatusAtom, "cloning");
 
   const worker = getRepoWorker();

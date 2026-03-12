@@ -39,7 +39,6 @@ export type WorkerRequest =
       timestamp: string;
       content: string;
       user: { username: string; token: string };
-      hasRemote: boolean;
       isOnline: boolean;
     }
   | {
@@ -49,7 +48,6 @@ export type WorkerRequest =
       content: string;
       message: string;
       user: { username: string; token: string };
-      hasRemote: boolean;
       isOnline: boolean;
     }
   | {
@@ -57,7 +55,6 @@ export type WorkerRequest =
       type: "discardDraft";
       timestamp: string;
       user: { username: string; token: string };
-      hasRemote: boolean;
       isOnline: boolean;
     }
   | {
