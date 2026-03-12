@@ -156,3 +156,12 @@ Editor view reference panel gets more space: desktop ratio changed from 60/40 to
 inner ratio from 65/35 to 55/45.
 
 ![Side-by-side browser layout](docs/build-log/2026-03-12-browser-side-by-side.png)
+
+### 2026-03-12 — Fresh load performance and calendar drag-to-select range
+
+Fresh load performance improved ~40% by skipping a costly cold IndexedDB probe on first clone
+and deferring the main-thread LightningFS lock. The app shell now renders immediately while the
+clone runs in the background. Calendar supports drag-to-select date ranges - endpoint days get
+full accent highlight, interior days get a lighter tint. Note list filters to the selected range.
+
+![Calendar with drag-selected range 9-13](docs/build-log/2026-03-12-calendar-range.png)

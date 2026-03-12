@@ -135,11 +135,11 @@ export function BrowserView() {
   const previews = useNotePreviews(allNotes);
   const sortOptions = useSortOptions(query.trim().length > 0);
 
-  const { calYear, calMonth, selectedDay, setSelectedDay, handleChangeMonth } =
+  const { calYear, calMonth, selectedRange, setSelectedRange, handleChangeMonth } =
     useCalendarNavigation();
   const monthNotes = useMonthNotes(allNotes, calYear, calMonth);
   const { noteCounts, activeDays } = useCalendarData(monthNotes, results);
-  const filteredResults = useFilteredByDay(results, selectedDay, calYear, calMonth);
+  const filteredResults = useFilteredByDay(results, selectedRange, calYear, calMonth);
 
   const pinnedSet = useMemo(() => new Set(pinnedPaths), [pinnedPaths]);
 
@@ -225,8 +225,8 @@ export function BrowserView() {
                 weekStart={weekStart}
                 noteCounts={noteCounts}
                 activeDays={query.trim() ? activeDays : null}
-                selectedDay={selectedDay}
-                onSelectDay={setSelectedDay}
+                selectedRange={selectedRange}
+                onSelectRange={setSelectedRange}
                 onChangeMonth={handleChangeMonth}
               />
             </div>
@@ -242,8 +242,8 @@ export function BrowserView() {
                   weekStart={weekStart}
                   noteCounts={noteCounts}
                   activeDays={query.trim() ? activeDays : null}
-                  selectedDay={selectedDay}
-                  onSelectDay={setSelectedDay}
+                  selectedRange={selectedRange}
+                  onSelectRange={setSelectedRange}
                   onChangeMonth={handleChangeMonth}
                 />
               </div>

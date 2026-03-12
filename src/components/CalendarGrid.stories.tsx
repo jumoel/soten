@@ -13,7 +13,7 @@ type Story = StoryObj<typeof CalendarGrid>;
 function CalendarDemo() {
   const [year, setYear] = useState(2025);
   const [month, setMonth] = useState(2);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedRange, setSelectedRange] = useState<[number, number] | null>(null);
 
   const noteCounts = new Map([
     [1, 1],
@@ -38,7 +38,7 @@ function CalendarDemo() {
     }
     setMonth(m);
     setYear(y);
-    setSelectedDay(null);
+    setSelectedRange(null);
   };
 
   return (
@@ -49,8 +49,8 @@ function CalendarDemo() {
         weekStart={1}
         noteCounts={noteCounts}
         activeDays={null}
-        selectedDay={selectedDay}
-        onSelectDay={setSelectedDay}
+        selectedRange={selectedRange}
+        onSelectRange={setSelectedRange}
         onChangeMonth={handleChangeMonth}
       />
     </div>
@@ -78,8 +78,8 @@ export const WithSearchFilter: Story = {
           ])
         }
         activeDays={new Set([3, 15])}
-        selectedDay={null}
-        onSelectDay={() => {}}
+        selectedRange={null}
+        onSelectRange={() => {}}
         onChangeMonth={() => {}}
       />
     </div>
@@ -95,8 +95,8 @@ export const Empty: Story = {
         weekStart={1}
         noteCounts={new Map()}
         activeDays={null}
-        selectedDay={null}
-        onSelectDay={() => {}}
+        selectedRange={null}
+        onSelectRange={() => {}}
         onChangeMonth={() => {}}
       />
     </div>

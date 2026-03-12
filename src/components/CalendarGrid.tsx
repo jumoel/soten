@@ -1,3 +1,4 @@
+import { useCallback, useRef } from "react";
 import { IconButton, Text } from "../ds";
 import { t } from "../i18n";
 
@@ -7,8 +8,8 @@ export type CalendarGridProps = {
   weekStart: number;
   noteCounts: Map<number, number>;
   activeDays: Set<number> | null;
-  selectedDay: number | null;
-  onSelectDay: (day: number | null) => void;
+  selectedRange: [number, number] | null;
+  onSelectRange: (range: [number, number] | null) => void;
   onChangeMonth: (delta: number) => void;
 };
 
@@ -31,14 +32,22 @@ function densityClass(count: number): string {
   return "w-2 h-2";
 }
 
+function dayFromPoint(x: number, y: number): number | null {
+  const el = document.elementFromPoint(x, y);
+  if (!el) return null;
+  const btn = el.closest("[data-day]");
+  if (!btn) return null;
+  return Number((btn as HTMLElement).dataset.day);
+}
+
 export function CalendarGrid({
   year,
   month,
   weekStart,
   noteCounts,
   activeDays,
-  selectedDay,
-  onSelectDay,
+  selectedRange,
+  onSelectRange,
   onChangeMonth,
 }: CalendarGridProps) {
   const jsFirstDay = new Date(year, month, 1).getDay(); // 0=Sun
@@ -47,9 +56,47 @@ export function CalendarGrid({
   const monthName = monthFormatter.format(new Date(year, month));
   const labels = rotatedDayLabels(weekStart);
 
+  const dragStartRef = useRef<number | null>(null);
+  const rangeRef = useRef(selectedRange);
+  rangeRef.current = selectedRange;
+
   const cells: (number | null)[] = [];
   for (let i = 0; i < offset; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      const day = dayFromPoint(e.clientX, e.clientY);
+      if (day === null) return;
+
+      // Click on already-selected single day deselects
+      const cur = rangeRef.current;
+      if (cur && cur[0] === day && cur[1] === day) {
+        onSelectRange(null);
+        dragStartRef.current = null;
+        return;
+      }
+
+      dragStartRef.current = day;
+      onSelectRange([day, day]);
+    },
+    [onSelectRange],
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (dragStartRef.current === null) return;
+      const day = dayFromPoint(e.clientX, e.clientY);
+      if (day === null) return;
+      const start = dragStartRef.current;
+      onSelectRange([Math.min(start, day), Math.max(start, day)]);
+    },
+    [onSelectRange],
+  );
+
+  const handlePointerUp = useCallback(() => {
+    dragStartRef.current = null;
+  }, []);
 
   return (
     <div className="flex flex-col gap-1">
@@ -71,7 +118,13 @@ export function CalendarGrid({
         />
       </div>
 
-      <div className="grid grid-cols-7 gap-px">
+      <div
+        className="grid grid-cols-7 gap-px"
+        style={{ touchAction: "none" }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
         {labels.map((label, i) => (
           <div
             key={`${label}-${String(i)}`}
@@ -87,7 +140,10 @@ export function CalendarGrid({
           }
 
           const count = noteCounts.get(day) ?? 0;
-          const isSelected = selectedDay === day;
+          const inRange =
+            selectedRange !== null && day >= selectedRange[0] && day <= selectedRange[1];
+          const isEndpoint = inRange && (day === selectedRange![0] || day === selectedRange![1]);
+          const isSingleDay = selectedRange !== null && selectedRange[0] === selectedRange[1];
           const isDimmed = activeDays !== null && !activeDays.has(day);
           const dot = densityClass(count);
 
@@ -95,13 +151,15 @@ export function CalendarGrid({
             <button
               key={day}
               type="button"
-              onClick={() => onSelectDay(isSelected ? null : day)}
+              data-day={day}
               className={[
-                "relative flex flex-col items-center justify-center h-8 rounded-md text-xs transition-colors duration-150",
-                isSelected
+                "relative flex flex-col items-center justify-center h-8 rounded-md text-xs transition-colors duration-150 select-none",
+                isEndpoint || (inRange && isSingleDay)
                   ? "bg-accent text-white dark:text-black"
-                  : "hover:bg-surface-2 text-paper",
-                isDimmed && !isSelected ? "text-muted" : "",
+                  : inRange
+                    ? "bg-accent/20 text-paper"
+                    : "hover:bg-surface-2 text-paper",
+                isDimmed && !inRange ? "text-muted" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -110,7 +168,7 @@ export function CalendarGrid({
                 day: String(day),
                 count,
               })}
-              aria-pressed={isSelected}
+              aria-pressed={inRange}
             >
               <span>{day}</span>
               {count > 0 && (
@@ -118,8 +176,8 @@ export function CalendarGrid({
                   className={[
                     "absolute bottom-0.5 rounded-full",
                     dot,
-                    isSelected ? "bg-white dark:bg-black" : "bg-accent",
-                    isDimmed && !isSelected ? "bg-muted" : "",
+                    isEndpoint || (inRange && isSingleDay) ? "bg-white dark:bg-black" : "bg-accent",
+                    isDimmed && !inRange ? "bg-muted" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}

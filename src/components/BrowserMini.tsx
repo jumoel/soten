@@ -23,11 +23,11 @@ export function BrowserMini({ onOpenNote }: BrowserMiniProps) {
   const allNotes = useAtomValue(noteListAtom);
   const weekStart = useAtomValue(weekStartAtom);
 
-  const { calYear, calMonth, selectedDay, setSelectedDay, handleChangeMonth } =
+  const { calYear, calMonth, selectedRange, setSelectedRange, handleChangeMonth } =
     useCalendarNavigation();
   const monthNotes = useMonthNotes(allNotes, calYear, calMonth);
   const { noteCounts, activeDays } = useCalendarData(monthNotes, results);
-  const filteredResults = useFilteredByDay(results, selectedDay, calYear, calMonth);
+  const filteredResults = useFilteredByDay(results, selectedRange, calYear, calMonth);
 
   return (
     <div className="flex flex-col h-full">
@@ -48,8 +48,8 @@ export function BrowserMini({ onOpenNote }: BrowserMiniProps) {
           weekStart={weekStart}
           noteCounts={noteCounts}
           activeDays={query.trim() ? activeDays : null}
-          selectedDay={selectedDay}
-          onSelectDay={setSelectedDay}
+          selectedRange={selectedRange}
+          onSelectRange={setSelectedRange}
           onChangeMonth={handleChangeMonth}
         />
       </div>

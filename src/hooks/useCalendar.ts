@@ -4,7 +4,7 @@ import type { NoteListEntry } from "../state/notes";
 export function useCalendarNavigation() {
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedRange, setSelectedRange] = useState<[number, number] | null>(null);
 
   const handleChangeMonth = useCallback(
     (delta: number) => {
@@ -19,12 +19,12 @@ export function useCalendarNavigation() {
       }
       setCalMonth(m);
       setCalYear(y);
-      setSelectedDay(null);
+      setSelectedRange(null);
     },
     [calMonth, calYear],
   );
 
-  return { calYear, calMonth, selectedDay, setSelectedDay, handleChangeMonth };
+  return { calYear, calMonth, selectedRange, setSelectedRange, handleChangeMonth };
 }
 
 export function useMonthNotes(allNotes: NoteListEntry[], calYear: number, calMonth: number) {
@@ -57,18 +57,20 @@ export function useCalendarData(entries: NoteListEntry[], searchResults: NoteLis
 
 export function useFilteredByDay(
   results: NoteListEntry[],
-  selectedDay: number | null,
+  selectedRange: [number, number] | null,
   calYear: number,
   calMonth: number,
 ) {
   return useMemo(() => {
-    if (selectedDay === null) return results;
+    if (selectedRange === null) return results;
+    const [min, max] = selectedRange;
     return results.filter(
       (r) =>
         r.date &&
         r.date.getUTCFullYear() === calYear &&
         r.date.getUTCMonth() === calMonth &&
-        r.date.getUTCDate() === selectedDay,
+        r.date.getUTCDate() >= min &&
+        r.date.getUTCDate() <= max,
     );
-  }, [results, selectedDay, calYear, calMonth]);
+  }, [results, selectedRange, calYear, calMonth]);
 }
