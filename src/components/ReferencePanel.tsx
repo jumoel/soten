@@ -8,6 +8,7 @@ import type { NoteListEntry } from "../state/notes";
 import { noteListAtom } from "../state/notes";
 import { referenceSearch, useNoteSearch } from "../state/search";
 import { type ReferenceMode, referenceStackAtom } from "../state/ui";
+import type { ConflictEntry } from "../worker/protocol";
 import { NoteCardCondensed } from "./NoteCardCondensed";
 import { ReferenceCard } from "./ReferenceCard";
 
@@ -50,9 +51,12 @@ export type ReferencePanelProps = {
   currentPath?: string;
   /** Ref callback to focus the search field (Cmd+K). */
   searchRef?: React.RefObject<HTMLInputElement | null>;
+  /** Active conflict for the current note. */
+  conflict?: ConflictEntry;
 };
 
-export function ReferencePanel({ currentPath, searchRef }: ReferencePanelProps) {
+export function ReferencePanel({ currentPath, searchRef, conflict }: ReferencePanelProps) {
+  const [conflictMode, setConflictMode] = useState<ReferenceMode>("excerpt");
   const { query, search, results } = useNoteSearch(referenceSearch);
   const allNotes = useAtomValue(noteListAtom);
   const stack = useAtomValue(referenceStackAtom);
@@ -110,6 +114,19 @@ export function ReferencePanel({ currentPath, searchRef }: ReferencePanelProps) 
       </div>
 
       <div className="flex-1 overflow-auto px-3 pb-3">
+        {conflict && (
+          <div className="mb-3">
+            <ReferenceCard
+              title={t("reference.conflict")}
+              date={null}
+              content={conflict.remoteContent}
+              mode={conflictMode}
+              onChangeMode={setConflictMode}
+              onDismiss={() => {}}
+            />
+          </div>
+        )}
+
         {query.trim() && (
           <div className="flex flex-col gap-0.5 mb-3">
             {filteredResults.length === 0 ? (

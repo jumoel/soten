@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { getRepoWorker } from "../worker/client";
+import type { ConflictEntry } from "../worker/protocol";
 import { userAtom } from "./auth";
 import { applyRepoState, hasRemoteAtom } from "./repo";
 import { store } from "./store";
@@ -10,6 +11,7 @@ export const syncStateAtom = atom<SyncState>("idle");
 export const isOnlineAtom = atom(typeof navigator !== "undefined" ? navigator.onLine : true);
 export const lastSyncAtom = atom<number | null>(null);
 export const syncErrorAtom = atom<string | null>(null);
+export const conflictsAtom = atom<ConflictEntry[]>([]);
 
 /** Guard to prevent concurrent sync operations. */
 let syncing = false;

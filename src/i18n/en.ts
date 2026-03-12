@@ -24,6 +24,7 @@ const en = {
   "note.edit": "Edit",
   "note.draft": "draft",
   "note.pinned": "pinned",
+  "note.conflict": "conflict",
 
   "settings.theme": "Theme",
   "settings.theme.light": "Light",

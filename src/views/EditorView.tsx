@@ -23,7 +23,7 @@ import {
 import { noteListAtom } from "../state/notes";
 import { applyRepoState, hasRemoteAtom } from "../state/repo";
 import { store } from "../state/store";
-import { isOnlineAtom, syncStateAtom } from "../state/sync";
+import { conflictsAtom, isOnlineAtom, syncStateAtom } from "../state/sync";
 import { referenceStackAtom } from "../state/ui";
 import { getRepoWorker } from "../worker/client";
 
@@ -222,6 +222,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
   const setLastSaved = useSetAtom(editorLastSavedAtom);
   const dirty = useAtomValue(editorDirtyAtom);
   const setReferenceStack = useSetAtom(referenceStackAtom);
+  const conflicts = useAtomValue(conflictsAtom);
 
   const breakpoint = useBreakpoint();
 
@@ -247,6 +248,12 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     if (route.view === "note") return `${REPO_DIR}/${route.path}`;
     return `${REPO_DIR}/${timestamp}.md`;
   }, [route, timestamp]);
+
+  const currentConflict = useMemo(
+    () => conflicts.find((c) => currentPath.endsWith(c.path)),
+    [conflicts, currentPath],
+  );
+  const [showConflictMobile, setShowConflictMobile] = useState(false);
 
   // Clear reference stack when switching notes
   const prevTimestamp = useRef(timestamp);
@@ -489,7 +496,9 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     <BacklinksPanel backlinks={backlinks} onClickBacklink={handleBacklinkClick} />
   );
 
-  const referencePanel = <ReferencePanel currentPath={currentPath} searchRef={refSearchRef} />;
+  const referencePanel = (
+    <ReferencePanel currentPath={currentPath} searchRef={refSearchRef} conflict={currentConflict} />
+  );
 
   return (
     <div className="flex flex-col h-screen bg-base">
@@ -545,6 +554,29 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
       {publishError && (
         <div className="px-3 py-2">
           <Alert variant="error">{t("editor.publishFailed", { error: publishError })}</Alert>
+        </div>
+      )}
+
+      {/* Mobile conflict alert */}
+      {currentConflict && breakpoint === "mobile" && (
+        <div className="px-3 py-2">
+          <Alert variant="warning">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm">{t("reference.conflict")}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowConflictMobile(!showConflictMobile)}
+              >
+                {showConflictMobile ? t("reference.collapse") : t("reference.expand")}
+              </Button>
+            </div>
+            {showConflictMobile && (
+              <pre className="mt-2 text-xs overflow-auto max-h-48 whitespace-pre-wrap">
+                {currentConflict.remoteContent}
+              </pre>
+            )}
+          </Alert>
         </div>
       )}
 

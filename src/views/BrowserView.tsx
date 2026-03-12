@@ -13,6 +13,7 @@ import { noteListAtom, pinnedNotesAtom } from "../state/notes";
 import { repoAtom } from "../state/repo";
 import { browserSearch, type SortOrder, useNoteSearch } from "../state/search";
 import { store } from "../state/store";
+import { conflictsAtom } from "../state/sync";
 import { weekStartAtom } from "../state/ui";
 
 function useNotePreviews(entries: NoteListEntry[]) {
@@ -88,10 +89,12 @@ function PinnedSection({
   entries,
   onUnpin,
   previews,
+  conflictPaths,
 }: {
   entries: NoteListEntry[];
   onUnpin: (path: string) => void;
   previews: Map<string, string>;
+  conflictPaths: Set<string>;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -119,6 +122,7 @@ function PinnedSection({
               preview={previews.get(entry.path) ?? ""}
               isPinned={true}
               isDraft={false}
+              hasConflict={conflictPaths.has(entry.path)}
               onPin={() => onUnpin(entry.path)}
               onOpen={() => {
                 window.location.hash = `#/${entry.relativePath}`;
@@ -138,6 +142,8 @@ export function BrowserView() {
   const setPinned = useSetAtom(pinnedNotesAtom);
   const repo = useAtomValue(repoAtom);
   const weekStart = useAtomValue(weekStartAtom);
+  const conflicts = useAtomValue(conflictsAtom);
+  const conflictPaths = useMemo(() => new Set(conflicts.map((c) => c.path)), [conflicts]);
   const previews = useNotePreviews(allNotes);
   const sortOptions = useSortOptions(query.trim().length > 0);
 
@@ -269,7 +275,12 @@ export function BrowserView() {
             <Select value={sort} onChange={setSort} options={sortOptions} label={t("sort.label")} />
           </div>
 
-          <PinnedSection entries={pinnedEntries} onUnpin={togglePin} previews={previews} />
+          <PinnedSection
+            entries={pinnedEntries}
+            onUnpin={togglePin}
+            previews={previews}
+            conflictPaths={conflictPaths}
+          />
 
           {unpinnedEntries.length === 0 && pinnedEntries.length === 0 ? (
             <div className="py-8 text-center">
@@ -287,6 +298,7 @@ export function BrowserView() {
                   preview={previews.get(entry.path) ?? ""}
                   isPinned={false}
                   isDraft={false}
+                  hasConflict={conflictPaths.has(entry.path)}
                   onPin={() => togglePin(entry.path)}
                   onOpen={() => {
                     window.location.hash = `#/${entry.relativePath}`;

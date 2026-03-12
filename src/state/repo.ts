@@ -75,12 +75,13 @@ export async function applyRepoState(state: RepoState): Promise<void> {
   const { buildSearchIndex } = await import("./search");
   await buildSearchIndex(store.get(noteListAtom));
 
-  // Update draft timestamps for sync
-  const { draftTimestampsAtom } = await import("./sync");
+  // Update draft timestamps and conflicts for sync
+  const { draftTimestampsAtom, conflictsAtom } = await import("./sync");
   store.set(
     draftTimestampsAtom,
     state.drafts.map((d) => d.timestamp),
   );
+  store.set(conflictsAtom, state.conflicts);
 }
 
 export function resetRepo(): void {

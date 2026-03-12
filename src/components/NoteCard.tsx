@@ -7,6 +7,7 @@ export type NoteCardProps = {
   preview: string;
   isPinned: boolean;
   isDraft: boolean;
+  hasConflict?: boolean;
   onPin: () => void;
   onOpen: () => void;
 };
@@ -17,6 +18,7 @@ export function NoteCard({
   preview,
   isPinned,
   isDraft,
+  hasConflict,
   onPin,
   onOpen,
 }: NoteCardProps) {
@@ -33,6 +35,7 @@ export function NoteCard({
             {title}
           </Text>
           <div className="flex items-center gap-1 shrink-0">
+            {hasConflict && <Badge variant="error">{t("note.conflict")}</Badge>}
             {isDraft && <Badge variant="warning">{t("note.draft")}</Badge>}
             {isPinned && <Badge variant="accent">{t("note.pinned")}</Badge>}
           </div>

@@ -228,10 +228,70 @@ async function listDraftBranches(): Promise<Array<{ timestamp: string; content: 
 // gatherState
 // ---------------------------------------------------------------------------
 
+// Module-level conflict state (persists across calls, cleared on successful pull)
+let detectedConflicts: Array<{ path: string; remoteContent: string }> = [];
+
+async function detectConflicts(user: {
+  username: string;
+  token: string;
+}): Promise<Array<{ path: string; remoteContent: string }>> {
+  const { git, http } = await getGit();
+  try {
+    // Fetch without merging to get remote state
+    await git.fetch({
+      fs,
+      http,
+      dir: REPO_DIR,
+      corsProxy,
+      singleBranch: true,
+      onAuth: () => ({ username: user.username, password: user.token }),
+    });
+
+    const localOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: "main" });
+    let remoteOid: string;
+    try {
+      remoteOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: "refs/remotes/origin/main" });
+    } catch {
+      return []; // No remote tracking branch
+    }
+
+    if (localOid === remoteOid) return [];
+
+    const { commit: localCommit } = await git.readCommit({ fs, dir: REPO_DIR, oid: localOid });
+    const { commit: remoteCommit } = await git.readCommit({ fs, dir: REPO_DIR, oid: remoteOid });
+    const { tree: localEntries } = await git.readTree({ fs, dir: REPO_DIR, oid: localCommit.tree });
+    const { tree: remoteEntries } = await git.readTree({
+      fs,
+      dir: REPO_DIR,
+      oid: remoteCommit.tree,
+    });
+
+    const localMap = new Map(localEntries.map((e) => [e.path, e.oid]));
+    const remoteMap = new Map(remoteEntries.map((e) => [e.path, e.oid]));
+
+    const conflicts: Array<{ path: string; remoteContent: string }> = [];
+    for (const [path, remoteOidVal] of remoteMap) {
+      const localOidVal = localMap.get(path);
+      // File exists in both but differs
+      if (localOidVal && localOidVal !== remoteOidVal) {
+        try {
+          const { blob } = await git.readBlob({ fs, dir: REPO_DIR, oid: remoteOidVal });
+          conflicts.push({ path, remoteContent: new TextDecoder().decode(blob) });
+        } catch {
+          // Skip unreadable blobs
+        }
+      }
+    }
+    return conflicts;
+  } catch {
+    return [];
+  }
+}
+
 async function gatherState(opts?: { skipFilenames?: boolean }): Promise<RepoState> {
   const filenames = opts?.skipFilenames ? [] : await readRepoFiles();
   const drafts = await listDraftBranches();
-  return { filenames, drafts };
+  return { filenames, drafts, conflicts: detectedConflicts };
 }
 
 // ---------------------------------------------------------------------------
@@ -452,11 +512,13 @@ async function syncHandler(
     allPushed = false;
   }
 
-  // Pull (non-fatal)
+  // Pull (non-fatal). If it fails (non-fast-forward), detect conflicts.
   try {
     await pull(user);
+    detectedConflicts = []; // Successful pull clears conflicts
   } catch {
     allPushed = false;
+    detectedConflicts = await detectConflicts(user);
   }
 
   const syncStatus: SyncStatus = allPushed ? "synced" : "local-only";

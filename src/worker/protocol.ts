@@ -3,9 +3,15 @@ export type GitUser = { username: string; token: string; email: string };
 export type SearchEntry = { path: string; title: string };
 export type SearchResult = { path: string; score: number };
 
+export type ConflictEntry = {
+  path: string;
+  remoteContent: string;
+};
+
 export type RepoState = {
   filenames: string[];
   drafts: Array<{ timestamp: string; content: string }>;
+  conflicts: ConflictEntry[];
 };
 
 export type SyncStatus = "synced" | "local-only";
