@@ -147,3 +147,12 @@ reference panel on the right. Nested vertical SplitPanes with pointer-capture dr
 users resize all three columns. Shared calendar hooks extracted from BrowserView and BrowserMini
 into `src/hooks/useCalendar.ts` to eliminate duplication. Cmd+K focuses reference search on
 both desktop and ultra-wide breakpoints.
+
+### 2026-03-12 — Side-by-side calendar in browser view, larger reference panel
+
+Browser view now shows the calendar as a sticky sidebar alongside the note grid on xl+ screens
+(1280px+), stacked above on smaller screens. Calendar defaults to open on desktop-sized windows.
+Editor view reference panel gets more space: desktop ratio changed from 60/40 to 50/50, ultra-wide
+inner ratio from 65/35 to 55/45.
+
+![Side-by-side browser layout](docs/build-log/2026-03-12-browser-side-by-side.png)

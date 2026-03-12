@@ -617,7 +617,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
         {breakpoint === "desktop" && (
           <SplitPane
             direction="vertical"
-            initialRatio={0.6}
+            initialRatio={0.5}
             minSize={300}
             top={<SplitPane top={editorArea} bottom={backlinksPanel} />}
             bottom={referencePanel}
@@ -640,7 +640,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
             bottom={
               <SplitPane
                 direction="vertical"
-                initialRatio={0.65}
+                initialRatio={0.55}
                 minSize={300}
                 top={<SplitPane top={editorArea} bottom={backlinksPanel} />}
                 bottom={referencePanel}

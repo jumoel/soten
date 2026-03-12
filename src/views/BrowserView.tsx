@@ -169,7 +169,9 @@ export function BrowserView() {
     window.location.hash = `#/${ts}.md?draft=${ts}`;
   }, []);
 
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1200,
+  );
 
   return (
     <div className="flex flex-col h-screen bg-base">
@@ -213,65 +215,91 @@ export function BrowserView() {
       />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 py-4 flex flex-col gap-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex gap-6">
+          {/* Calendar sidebar - side by side on desktop+, stacked on smaller */}
           {calendarOpen && (
-            <CalendarGrid
-              year={calYear}
-              month={calMonth}
-              weekStart={weekStart}
-              noteCounts={noteCounts}
-              activeDays={query.trim() ? activeDays : null}
-              selectedDay={selectedDay}
-              onSelectDay={setSelectedDay}
-              onChangeMonth={handleChangeMonth}
-            />
-          )}
-
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <SearchField
-                value={query}
-                onChange={search}
-                placeholder={t("search.placeholder")}
-                label={t("search.label")}
-                clearLabel={t("search.clear")}
+            <div className="hidden xl:block shrink-0 w-72 sticky top-4 self-start">
+              <CalendarGrid
+                year={calYear}
+                month={calMonth}
+                weekStart={weekStart}
+                noteCounts={noteCounts}
+                activeDays={query.trim() ? activeDays : null}
+                selectedDay={selectedDay}
+                onSelectDay={setSelectedDay}
+                onChangeMonth={handleChangeMonth}
               />
             </div>
-            <Select value={sort} onChange={setSort} options={sortOptions} label={t("sort.label")} />
-          </div>
-
-          <PinnedSection
-            entries={pinnedEntries}
-            onUnpin={togglePin}
-            previews={previews}
-            conflictPaths={conflictPaths}
-          />
-
-          {unpinnedEntries.length === 0 && pinnedEntries.length === 0 ? (
-            <div className="py-8 text-center">
-              <Text variant="body-dim">
-                {query.trim() ? t("notes.noResults", { query }) : t("notes.empty")}
-              </Text>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {unpinnedEntries.map((entry) => (
-                <NoteCard
-                  key={entry.path}
-                  title={entry.title}
-                  date={formatNoteDate(entry.date)}
-                  preview={previews.get(entry.path) ?? ""}
-                  isPinned={false}
-                  isDraft={false}
-                  hasConflict={conflictPaths.has(entry.path)}
-                  onPin={() => togglePin(entry.path)}
-                  onOpen={() => {
-                    window.location.hash = `#/${entry.relativePath}`;
-                  }}
-                />
-              ))}
-            </div>
           )}
+
+          <div className="flex-1 min-w-0 flex flex-col gap-4">
+            {/* Calendar stacked on mobile/tablet */}
+            {calendarOpen && (
+              <div className="xl:hidden">
+                <CalendarGrid
+                  year={calYear}
+                  month={calMonth}
+                  weekStart={weekStart}
+                  noteCounts={noteCounts}
+                  activeDays={query.trim() ? activeDays : null}
+                  selectedDay={selectedDay}
+                  onSelectDay={setSelectedDay}
+                  onChangeMonth={handleChangeMonth}
+                />
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <SearchField
+                  value={query}
+                  onChange={search}
+                  placeholder={t("search.placeholder")}
+                  label={t("search.label")}
+                  clearLabel={t("search.clear")}
+                />
+              </div>
+              <Select
+                value={sort}
+                onChange={setSort}
+                options={sortOptions}
+                label={t("sort.label")}
+              />
+            </div>
+
+            <PinnedSection
+              entries={pinnedEntries}
+              onUnpin={togglePin}
+              previews={previews}
+              conflictPaths={conflictPaths}
+            />
+
+            {unpinnedEntries.length === 0 && pinnedEntries.length === 0 ? (
+              <div className="py-8 text-center">
+                <Text variant="body-dim">
+                  {query.trim() ? t("notes.noResults", { query }) : t("notes.empty")}
+                </Text>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                {unpinnedEntries.map((entry) => (
+                  <NoteCard
+                    key={entry.path}
+                    title={entry.title}
+                    date={formatNoteDate(entry.date)}
+                    preview={previews.get(entry.path) ?? ""}
+                    isPinned={false}
+                    isDraft={false}
+                    hasConflict={conflictPaths.has(entry.path)}
+                    onPin={() => togglePin(entry.path)}
+                    onOpen={() => {
+                      window.location.hash = `#/${entry.relativePath}`;
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
