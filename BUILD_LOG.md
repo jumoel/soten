@@ -126,3 +126,15 @@ draggable horizontal divider between editor and backlinks on tablet+. Mobile get
 layout. SyncIndicator shows save/sync/offline status. Editor atoms in `src/state/editor.ts`
 track content, saved state, and dirty flag. Sync listeners in `src/state/sync.ts` handle
 online/offline events, visibility changes, and periodic 5-minute sync.
+
+### 2026-03-12 — Reference stack, overlay, vertical split pane, and conflict resolution
+
+Desktop editor gains a two-column layout with a vertical SplitPane: editor+backlinks on the
+left, reference search+card stack on the right. Tablet uses a slide-in Overlay for the same
+reference panel. New components: NoteCardCondensed (compact search result), ReferenceCard
+(collapsed/excerpt/expanded modes with rendered markdown), Overlay (right-edge slide-in with
+swipe-to-dismiss), ReferencePanel (search + card stack). Backlink clicks route per breakpoint:
+desktop adds to stack, tablet opens overlay, mobile navigates. Cmd+K focuses the reference
+search on desktop and opens the overlay on tablet. Conflict detection compares local vs remote
+trees when sync pull fails, showing the remote version as a ReferenceCard (desktop/tablet) or
+an expandable Alert (mobile). Conflict badges appear on NoteCards in the browser view.
