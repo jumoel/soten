@@ -1,6 +1,7 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BacklinkCard } from "../components/BacklinkCard";
+import { BrowserMini } from "../components/BrowserMini";
 import { Overlay } from "../components/Overlay";
 import { ReferencePanel } from "../components/ReferencePanel";
 import { SplitPane } from "../components/SplitPane";
@@ -116,29 +117,34 @@ function useBacklinks(currentTitle: string): BacklinkEntry[] {
 // Breakpoint hook
 // ---------------------------------------------------------------------------
 
-type Breakpoint = "mobile" | "tablet" | "desktop";
+type Breakpoint = "mobile" | "tablet" | "desktop" | "ultrawide";
 
 function useBreakpoint(): Breakpoint {
   const [bp, setBp] = useState<Breakpoint>(() => {
     if (typeof window === "undefined") return "mobile";
+    if (window.innerWidth >= 1920) return "ultrawide";
     if (window.innerWidth >= 1200) return "desktop";
     if (window.innerWidth >= 768) return "tablet";
     return "mobile";
   });
 
   useEffect(() => {
+    const ultrawide = window.matchMedia("(min-width: 1920px)");
     const desktop = window.matchMedia("(min-width: 1200px)");
     const tablet = window.matchMedia("(min-width: 768px)");
 
     function update() {
-      if (desktop.matches) setBp("desktop");
+      if (ultrawide.matches) setBp("ultrawide");
+      else if (desktop.matches) setBp("desktop");
       else if (tablet.matches) setBp("tablet");
       else setBp("mobile");
     }
 
+    ultrawide.addEventListener("change", update);
     desktop.addEventListener("change", update);
     tablet.addEventListener("change", update);
     return () => {
+      ultrawide.removeEventListener("change", update);
       desktop.removeEventListener("change", update);
       tablet.removeEventListener("change", update);
     };
@@ -269,7 +275,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        if (breakpoint === "desktop") {
+        if (breakpoint === "desktop" || breakpoint === "ultrawide") {
           refSearchRef.current?.focus();
         } else if (breakpoint === "tablet") {
           setOverlayOpen(true);
@@ -615,6 +621,31 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
             minSize={300}
             top={<SplitPane top={editorArea} bottom={backlinksPanel} />}
             bottom={referencePanel}
+          />
+        )}
+
+        {/* Ultra-wide: three columns (browser | editor+backlinks | references) */}
+        {breakpoint === "ultrawide" && (
+          <SplitPane
+            direction="vertical"
+            initialRatio={0.2}
+            minSize={250}
+            top={
+              <BrowserMini
+                onOpenNote={(relativePath) => {
+                  window.location.hash = `#/${relativePath}`;
+                }}
+              />
+            }
+            bottom={
+              <SplitPane
+                direction="vertical"
+                initialRatio={0.65}
+                minSize={300}
+                top={<SplitPane top={editorArea} bottom={backlinksPanel} />}
+                bottom={referencePanel}
+              />
+            }
           />
         )}
       </main>
