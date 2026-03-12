@@ -25,6 +25,13 @@ import { getRepoWorker } from "../worker/client";
 
 const AUTOSAVE_DELAY_MS = 2000;
 
+function workerContext() {
+  return {
+    hasRemote: store.get(hasRemoteAtom),
+    online: store.get(isOnlineAtom),
+  };
+}
+
 function extractTitle(content: string): string {
   // Try YAML frontmatter title: field
   if (content.startsWith("---\n") || content.startsWith("---\r\n")) {
@@ -66,35 +73,36 @@ function useBacklinks(currentTitle: string): BacklinkEntry[] {
     const pattern = `[[${currentTitle}]]`;
 
     async function scan() {
-      const results: BacklinkEntry[] = [];
-      for (const note of notes) {
-        try {
+      const settled = await Promise.allSettled(
+        notes.map(async (note) => {
           const content = await pfs.readFile(note.path, { encoding: "utf8" });
-          if (content.includes(pattern)) {
-            const lines = content.split("\n");
-            let start = 0;
-            if (lines[0]?.startsWith("---")) {
-              const end = lines.indexOf("---", 1);
-              if (end > 0) start = end + 1;
-            }
-            const snippet = lines
-              .slice(start)
-              .filter((l: string) => l.trim().length > 0)
-              .slice(0, 2)
-              .join(" ")
-              .slice(0, 150);
-            results.push({
-              path: note.path,
-              relativePath: note.relativePath,
-              title: note.title,
-              snippet,
-            });
+          if (!content.includes(pattern)) return null;
+          const lines = content.split("\n");
+          let start = 0;
+          if (lines[0]?.startsWith("---")) {
+            const end = lines.indexOf("---", 1);
+            if (end > 0) start = end + 1;
           }
-        } catch {
-          // Skip unreadable files
-        }
+          const snippet = lines
+            .slice(start)
+            .filter((l: string) => l.trim().length > 0)
+            .slice(0, 2)
+            .join(" ")
+            .slice(0, 150);
+          return {
+            path: note.path,
+            relativePath: note.relativePath,
+            title: note.title,
+            snippet,
+          };
+        }),
+      );
+      if (cancelled) return;
+      const results: BacklinkEntry[] = [];
+      for (const r of settled) {
+        if (r.status === "fulfilled" && r.value) results.push(r.value);
       }
-      if (!cancelled) setBacklinks(results);
+      setBacklinks(results);
     }
 
     scan();
@@ -190,7 +198,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     return route.draft ?? route.path.replace(/\.md$/, "");
   }, [route]);
 
-  const isDraft = route.view === "draft" || !!("draft" in route && route.draft);
+  const isDraft = route.view === "draft" || (route.view === "note" && !!route.draft);
   const title = extractTitle(content);
   const backlinks = useBacklinks(title);
 
@@ -254,8 +262,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
       setSaving(true);
       try {
         const worker = getRepoWorker();
-        const hasRemote = store.get(hasRemoteAtom);
-        const online = store.get(isOnlineAtom);
+        const { hasRemote, online } = workerContext();
         const result = await worker.autosaveDraft(
           timestamp,
           text,
@@ -308,8 +315,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     setPublishError(null);
     try {
       const worker = getRepoWorker();
-      const hasRemote = store.get(hasRemoteAtom);
-      const online = store.get(isOnlineAtom);
+      const { hasRemote, online } = workerContext();
       const currentContent = store.get(editorContentAtom);
       const commitTitle = extractTitle(currentContent);
       const message =
@@ -340,8 +346,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     setDiscardOpen(false);
     try {
       const worker = getRepoWorker();
-      const hasRemote = store.get(hasRemoteAtom);
-      const online = store.get(isOnlineAtom);
+      const { hasRemote, online } = workerContext();
       const result = await worker.discardDraft(
         timestamp,
         { username: user.username, token: user.token },
@@ -376,18 +381,15 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
   }
 
   const editorArea = (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 p-3">
-        <Textarea
-          value={content}
-          onChange={handleContentChange}
-          placeholder={t("editor.placeholder")}
-          label={title}
-          rows={999}
-          mono
-          className="h-full min-h-full border-0 bg-transparent focus:outline-none resize-none"
-        />
-      </div>
+    <div className="flex flex-col h-full p-3">
+      <Textarea
+        value={content}
+        onChange={handleContentChange}
+        placeholder={t("editor.placeholder")}
+        label={title}
+        mono
+        className="flex-1 border-0 bg-transparent focus:outline-none resize-none"
+      />
     </div>
   );
 

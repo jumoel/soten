@@ -18,7 +18,7 @@ export function SplitPane({ top, bottom, initialRatio = 0.65, minHeight = 80 }: 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     dragging.current = true;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }, []);
 
   const handlePointerMove = useCallback(
