@@ -9,6 +9,7 @@ import { authErrorAtom, authStateAtom, login, logout, userAtom } from "./state/a
 import { cachedReposAtom, cloneStatusAtom, selectRepo } from "./state/repo";
 import { themeAtom } from "./state/ui";
 import { BrowserView } from "./views/BrowserView";
+import { EditorView } from "./views/EditorView";
 import { SettingsView } from "./views/SettingsView";
 
 function useTheme() {
@@ -104,22 +105,9 @@ function AuthenticatedApp() {
     case "settings":
       return <SettingsView />;
     case "note":
-      // Editor comes in Phase 3 - placeholder for now
-      return (
-        <CenterScreen>
-          <Stack gap={4} align="center">
-            <Text variant="h2">{route.path}</Text>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                window.location.hash = "#/";
-              }}
-            >
-              {t("nav.back")}
-            </Button>
-          </Stack>
-        </CenterScreen>
-      );
+      return <EditorView route={route} />;
+    case "draft":
+      return <EditorView route={route} />;
     default:
       return <BrowserView />;
   }

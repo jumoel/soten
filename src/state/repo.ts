@@ -67,11 +67,20 @@ async function cloneAndLoad(user: User, repo: Repo): Promise<void> {
 }
 
 export async function applyRepoState(state: RepoState): Promise<void> {
-  store.set(filenamesAtom, state.filenames);
+  if (state.filenames.length > 0) {
+    store.set(filenamesAtom, state.filenames);
+  }
   refreshFs();
   const { noteListAtom } = await import("./notes");
   const { buildSearchIndex } = await import("./search");
   await buildSearchIndex(store.get(noteListAtom));
+
+  // Update draft timestamps for sync
+  const { draftTimestampsAtom } = await import("./sync");
+  store.set(
+    draftTimestampsAtom,
+    state.drafts.map((d) => d.timestamp),
+  );
 }
 
 export function resetRepo(): void {

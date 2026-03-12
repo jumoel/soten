@@ -27,6 +27,8 @@ export function parseAuthError(): string | null {
 
 export async function init(): Promise<void> {
   initRouter();
+  const { initSyncListeners } = await import("../state/sync");
+  initSyncListeners();
 
   if (import.meta.env.DEV) {
     const localRepo = new URLSearchParams(window.location.search).get("localRepo");
