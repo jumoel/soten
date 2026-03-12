@@ -25,7 +25,15 @@ export function parseAuthError(): string | null {
   return params.get("auth_error");
 }
 
-export async function init(): Promise<void> {
+let initPromise: Promise<void> | null = null;
+
+export function init(): Promise<void> {
+  if (initPromise) return initPromise;
+  initPromise = doInit();
+  return initPromise;
+}
+
+async function doInit(): Promise<void> {
   initRouter();
   const { initSyncListeners } = await import("../state/sync");
   initSyncListeners();
