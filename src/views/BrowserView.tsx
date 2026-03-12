@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarGrid } from "../components/CalendarGrid";
 import { FAB } from "../components/FAB";
 import { NoteCard } from "../components/NoteCard";
+import { SotenLogo } from "../components/SotenLogo";
 import { TopBar } from "../components/TopBar";
 import { Button, IconButton, SearchField, Select, Text } from "../ds";
 import {
@@ -168,16 +169,28 @@ export function BrowserView() {
     window.location.hash = `#/${ts}.md?draft=${ts}`;
   }, []);
 
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
   return (
     <div className="flex flex-col h-screen bg-base">
       <TopBar
         left={
-          <Text variant="h3" as="span" className="text-sm">
-            {repo ? `${repo.owner}/${repo.repo}` : t("app.name")}
-          </Text>
+          <div className="flex items-center gap-1.5">
+            <SotenLogo />
+            <Text variant="h3" as="span" className="text-sm">
+              {repo ? `${repo.owner}/${repo.repo}` : t("app.name")}
+            </Text>
+          </div>
         }
         right={
           <div className="flex items-center gap-1">
+            <IconButton
+              icon="calendar"
+              size="sm"
+              aria-label={t("calendar.toggle")}
+              onClick={() => setCalendarOpen(!calendarOpen)}
+              className={calendarOpen ? "text-accent" : ""}
+            />
             <Button
               variant="primary"
               size="sm"
@@ -201,16 +214,18 @@ export function BrowserView() {
 
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 py-4 flex flex-col gap-4">
-          <CalendarGrid
-            year={calYear}
-            month={calMonth}
-            weekStart={weekStart}
-            noteCounts={noteCounts}
-            activeDays={query.trim() ? activeDays : null}
-            selectedDay={selectedDay}
-            onSelectDay={setSelectedDay}
-            onChangeMonth={handleChangeMonth}
-          />
+          {calendarOpen && (
+            <CalendarGrid
+              year={calYear}
+              month={calMonth}
+              weekStart={weekStart}
+              noteCounts={noteCounts}
+              activeDays={query.trim() ? activeDays : null}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+              onChangeMonth={handleChangeMonth}
+            />
+          )}
 
           <div className="flex items-center gap-2">
             <div className="flex-1">

@@ -1,5 +1,6 @@
 import {
   AlertTriangleIcon,
+  CalendarIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -65,7 +66,8 @@ export type IconName =
   | "grip-horizontal"
   | "maximize"
   | "minimize"
-  | "panel-right";
+  | "panel-right"
+  | "calendar";
 
 type IconSize = "4" | "5" | "6";
 
@@ -116,6 +118,7 @@ const icons: Record<Exclude<IconName, "github">, LucideIcon> = {
   maximize: MaximizeIcon,
   minimize: MinimizeIcon,
   "panel-right": PanelRightIcon,
+  calendar: CalendarIcon,
 };
 
 function GithubSvg({ size }: { size: number }) {

@@ -1,4 +1,4 @@
-import { authStateAtom } from "../state/auth";
+import { authStateAtom, userAtom } from "../state/auth";
 import { applyRepoState, cloneStatusAtom, hasRemoteAtom } from "../state/repo";
 import { store } from "../state/store";
 import { getRepoWorker } from "../worker/client";
@@ -17,5 +17,6 @@ export async function initFromLocalRepo(dir: string): Promise<void> {
   await applyRepoState(result.state);
   store.set(cloneStatusAtom, "ready");
   store.set(hasRemoteAtom, false);
+  store.set(userAtom, { username: "local", token: "", installationId: "", email: "local@soten" });
   store.set(authStateAtom, "authenticated");
 }

@@ -1,5 +1,5 @@
 const en = {
-  "app.name": "Soten",
+  "app.name": "soten",
   "app.tagline": "Notes written with markdown, backed by git.",
 
   "auth.loginWithGithub": "Sign in with GitHub",
@@ -60,6 +60,7 @@ const en = {
   "sort.oldest": "Oldest",
   "sort.bestMatch": "Best match",
 
+  "calendar.toggle": "Toggle calendar",
   "calendar.previousMonth": "Previous month",
   "calendar.nextMonth": "Next month",
   "calendar.dayLabel": "{month} {day}, {count} notes",
