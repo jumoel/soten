@@ -81,6 +81,20 @@ const en = {
   "editor.publishFailed": "Failed to publish: {error}",
   "editor.backlinks": "Backlinks",
   "editor.noBacklinks": "No backlinks yet.",
+  "editor.references": "References",
+  "editor.openReferences": "Open references",
+
+  "reference.add": "Add {title} to references",
+  "reference.dismiss": "Remove from references",
+  "reference.expand": "Expand",
+  "reference.collapse": "Collapse",
+  "reference.toggleMode": "Toggle reference view mode",
+  "reference.close": "Close references",
+  "reference.searchPlaceholder": "Search notes to reference\u2026",
+  "reference.searchLabel": "Reference search",
+  "reference.searchClear": "Clear reference search",
+  "reference.empty": "Search for notes to add as references.",
+  "reference.conflict": "Remote version - resolve by editing and publishing",
 
   loading: "Loading",
 

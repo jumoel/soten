@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { forwardRef, useId } from "react";
 import { Icon } from "../Icon/Icon";
 
 export type SearchFieldProps = {
@@ -12,16 +12,19 @@ export type SearchFieldProps = {
   className?: string;
 };
 
-export function SearchField({
-  value,
-  onChange,
-  placeholder,
-  label,
-  clearLabel = "Clear search",
-  labelVisible = false,
-  id,
-  className,
-}: SearchFieldProps) {
+export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(function SearchField(
+  {
+    value,
+    onChange,
+    placeholder,
+    label,
+    clearLabel = "Clear search",
+    labelVisible = false,
+    id,
+    className,
+  },
+  ref,
+) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
@@ -48,6 +51,7 @@ export function SearchField({
           <Icon name="search" size="4" />
         </span>
         <input
+          ref={ref}
           id={inputId}
           type="search"
           value={value}
@@ -68,4 +72,4 @@ export function SearchField({
       </div>
     </div>
   );
-}
+});

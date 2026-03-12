@@ -1,6 +1,8 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BacklinkCard } from "../components/BacklinkCard";
+import { Overlay } from "../components/Overlay";
+import { ReferencePanel } from "../components/ReferencePanel";
 import { SplitPane } from "../components/SplitPane";
 import { TopBar } from "../components/TopBar";
 import { Alert, Badge, Button, Dialog, IconButton, Spinner, Text, Textarea } from "../ds";
@@ -21,6 +23,7 @@ import { noteListAtom } from "../state/notes";
 import { applyRepoState, hasRemoteAtom } from "../state/repo";
 import { store } from "../state/store";
 import { isOnlineAtom, syncStateAtom } from "../state/sync";
+import { referenceStackAtom } from "../state/ui";
 import { getRepoWorker } from "../worker/client";
 
 const AUTOSAVE_DELAY_MS = 2000;
@@ -33,7 +36,6 @@ function workerContext() {
 }
 
 function extractTitle(content: string): string {
-  // Try YAML frontmatter title: field
   if (content.startsWith("---\n") || content.startsWith("---\r\n")) {
     const endIdx = content.indexOf("\n---", 4);
     if (endIdx > 0) {
@@ -42,7 +44,6 @@ function extractTitle(content: string): string {
       if (match?.[1]) return match[1].trim().replace(/^["']|["']$/g, "");
     }
   }
-  // Try first # heading
   const headingMatch = content.match(/^#{1,6}\s+(.+)$/m);
   if (headingMatch?.[1]) return headingMatch[1].trim();
   return t("editor.untitled");
@@ -115,6 +116,41 @@ function useBacklinks(currentTitle: string): BacklinkEntry[] {
 }
 
 // ---------------------------------------------------------------------------
+// Breakpoint hook
+// ---------------------------------------------------------------------------
+
+type Breakpoint = "mobile" | "tablet" | "desktop";
+
+function useBreakpoint(): Breakpoint {
+  const [bp, setBp] = useState<Breakpoint>(() => {
+    if (typeof window === "undefined") return "mobile";
+    if (window.innerWidth >= 1200) return "desktop";
+    if (window.innerWidth >= 768) return "tablet";
+    return "mobile";
+  });
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1200px)");
+    const tablet = window.matchMedia("(min-width: 768px)");
+
+    function update() {
+      if (desktop.matches) setBp("desktop");
+      else if (tablet.matches) setBp("tablet");
+      else setBp("mobile");
+    }
+
+    desktop.addEventListener("change", update);
+    tablet.addEventListener("change", update);
+    return () => {
+      desktop.removeEventListener("change", update);
+      tablet.removeEventListener("change", update);
+    };
+  }, []);
+
+  return bp;
+}
+
+// ---------------------------------------------------------------------------
 // Sync status indicator
 // ---------------------------------------------------------------------------
 
@@ -143,7 +179,13 @@ function SyncIndicator() {
 // Backlinks panel
 // ---------------------------------------------------------------------------
 
-function BacklinksPanel({ backlinks }: { backlinks: BacklinkEntry[] }) {
+function BacklinksPanel({
+  backlinks,
+  onClickBacklink,
+}: {
+  backlinks: BacklinkEntry[];
+  onClickBacklink: (bl: BacklinkEntry) => void;
+}) {
   return (
     <div className="flex flex-col gap-2 p-3">
       <Text variant="meta" as="span" className="text-xs">
@@ -160,9 +202,7 @@ function BacklinksPanel({ backlinks }: { backlinks: BacklinkEntry[] }) {
               key={bl.path}
               title={bl.title}
               snippet={bl.snippet}
-              onClick={() => {
-                window.location.hash = `#/${bl.relativePath}`;
-              }}
+              onClick={() => onClickBacklink(bl)}
             />
           ))}
         </div>
@@ -184,15 +224,19 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
   const setSaving = useSetAtom(editorSavingAtom);
   const setLastSaved = useSetAtom(editorLastSavedAtom);
   const dirty = useAtomValue(editorDirtyAtom);
+  const setReferenceStack = useSetAtom(referenceStackAtom);
+
+  const breakpoint = useBreakpoint();
 
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
 
   const autosaveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const refSearchRef = useRef<HTMLInputElement>(null);
 
-  // Determine the timestamp for this editor session
   const timestamp = useMemo(() => {
     if (route.view === "draft") return route.timestamp;
     return route.draft ?? route.path.replace(/\.md$/, "");
@@ -202,6 +246,38 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
   const title = extractTitle(content);
   const backlinks = useBacklinks(title);
 
+  const currentPath = useMemo(() => {
+    if (route.view === "note") return `${REPO_DIR}/${route.path}`;
+    return `${REPO_DIR}/${timestamp}.md`;
+  }, [route, timestamp]);
+
+  // Clear reference stack when switching notes
+  const prevTimestamp = useRef(timestamp);
+  useEffect(() => {
+    if (prevTimestamp.current !== timestamp) {
+      prevTimestamp.current = timestamp;
+      setReferenceStack([]);
+    }
+  }, [setReferenceStack, timestamp]);
+
+  // Cmd+K to focus reference search
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        if (breakpoint === "desktop") {
+          refSearchRef.current?.focus();
+        } else if (breakpoint === "tablet") {
+          setOverlayOpen(true);
+          // Focus after overlay renders
+          requestAnimationFrame(() => refSearchRef.current?.focus());
+        }
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [breakpoint]);
+
   // Load initial content
   useEffect(() => {
     setTimestamp(timestamp);
@@ -209,7 +285,6 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
 
     async function load() {
       if (isDraft) {
-        // For drafts, try reading from the draft branch via worker
         try {
           const worker = getRepoWorker();
           const state = await worker.getState();
@@ -228,7 +303,6 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
           }
         }
       } else {
-        // For existing notes, read from filesystem
         const filePath =
           route.view === "note" ? `${REPO_DIR}/${route.path}` : `${REPO_DIR}/${timestamp}.md`;
         try {
@@ -299,7 +373,6 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
       if (autosaveTimer.current) {
         clearTimeout(autosaveTimer.current);
       }
-      // Fire immediate save if dirty
       const currentContent = store.get(editorContentAtom);
       const savedContent = store.get(editorSavedContentAtom);
       if (currentContent !== savedContent) {
@@ -331,7 +404,6 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
       await applyRepoState(result.state);
       setSavedContent(currentContent);
       setLastSaved(Date.now());
-      // Navigate to the published note
       window.location.hash = `#/${timestamp}.md`;
     } catch (e) {
       setPublishError(e instanceof Error ? e.message : String(e));
@@ -361,7 +433,7 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     }
   }, [user, timestamp]);
 
-  // Back handler - save before navigating
+  // Back handler
   const handleBack = useCallback(() => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     const currentContent = store.get(editorContentAtom);
@@ -371,6 +443,30 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     }
     window.location.hash = "#/";
   }, [doAutosave]);
+
+  // Backlink click: breakpoint-aware
+  const handleBacklinkClick = useCallback(
+    (bl: BacklinkEntry) => {
+      if (breakpoint === "desktop") {
+        // Add to reference stack
+        setReferenceStack((prev) => {
+          if (prev.some((e) => e.path === bl.path)) return prev;
+          return [...prev, { path: bl.path, mode: "excerpt" as const }];
+        });
+      } else if (breakpoint === "tablet") {
+        // Open in overlay, add to stack
+        setReferenceStack((prev) => {
+          if (prev.some((e) => e.path === bl.path)) return prev;
+          return [...prev, { path: bl.path, mode: "excerpt" as const }];
+        });
+        setOverlayOpen(true);
+      } else {
+        // Mobile: navigate
+        window.location.hash = `#/${bl.relativePath}`;
+      }
+    },
+    [breakpoint, setReferenceStack],
+  );
 
   if (!loaded) {
     return (
@@ -393,7 +489,11 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
     </div>
   );
 
-  const backlinksPanel = <BacklinksPanel backlinks={backlinks} />;
+  const backlinksPanel = (
+    <BacklinksPanel backlinks={backlinks} onClickBacklink={handleBacklinkClick} />
+  );
+
+  const referencePanel = <ReferencePanel currentPath={currentPath} searchRef={refSearchRef} />;
 
   return (
     <div className="flex flex-col h-screen bg-base">
@@ -414,6 +514,14 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
         right={
           <div className="flex items-center gap-2">
             <SyncIndicator />
+            {breakpoint === "tablet" && (
+              <IconButton
+                icon="panel-right"
+                size="sm"
+                aria-label={t("editor.openReferences")}
+                onClick={() => setOverlayOpen(true)}
+              />
+            )}
             {isDraft && (
               <>
                 <IconButton
@@ -446,17 +554,41 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
 
       <main className="flex-1 overflow-hidden">
         {/* Mobile: stacked layout */}
-        <div className="md:hidden flex flex-col h-full">
-          <div className="flex-1 overflow-auto">{editorArea}</div>
-          {backlinks.length > 0 && (
-            <div className="border-t border-edge max-h-48 overflow-auto">{backlinksPanel}</div>
-          )}
-        </div>
+        {breakpoint === "mobile" && (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-auto">{editorArea}</div>
+            {backlinks.length > 0 && (
+              <div className="border-t border-edge max-h-48 overflow-auto">{backlinksPanel}</div>
+            )}
+          </div>
+        )}
 
-        {/* Tablet+: split pane */}
-        <div className="hidden md:flex flex-col h-full">
-          <SplitPane top={editorArea} bottom={backlinksPanel} />
-        </div>
+        {/* Tablet: editor + backlinks, overlay for references */}
+        {breakpoint === "tablet" && (
+          <>
+            <div className="flex flex-col h-full">
+              <SplitPane top={editorArea} bottom={backlinksPanel} />
+            </div>
+            <Overlay
+              open={overlayOpen}
+              onClose={() => setOverlayOpen(false)}
+              title={t("editor.references")}
+            >
+              {referencePanel}
+            </Overlay>
+          </>
+        )}
+
+        {/* Desktop: two columns with vertical split */}
+        {breakpoint === "desktop" && (
+          <SplitPane
+            direction="vertical"
+            initialRatio={0.6}
+            minSize={300}
+            top={<SplitPane top={editorArea} bottom={backlinksPanel} />}
+            bottom={referencePanel}
+          />
+        )}
       </main>
 
       <Dialog

@@ -3,16 +3,21 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
+  ChevronRightIcon,
   ChevronUpIcon,
   ClockIcon,
   ExternalLinkIcon,
   FileTextIcon,
+  GripHorizontalIcon,
   GripVerticalIcon,
   InfoIcon,
   Loader2Icon,
   LogOutIcon,
   type LucideIcon,
+  MaximizeIcon,
+  MinimizeIcon,
   MoonIcon,
+  PanelRightIcon,
   PencilIcon,
   PinIcon,
   PlusIcon,
@@ -55,7 +60,12 @@ export type IconName =
   | "log-out"
   | "refresh-cw"
   | "wifi-off"
-  | "upload";
+  | "upload"
+  | "chevron-right"
+  | "grip-horizontal"
+  | "maximize"
+  | "minimize"
+  | "panel-right";
 
 type IconSize = "4" | "5" | "6";
 
@@ -101,6 +111,11 @@ const icons: Record<Exclude<IconName, "github">, LucideIcon> = {
   "refresh-cw": RefreshCwIcon,
   "wifi-off": WifiOffIcon,
   upload: UploadIcon,
+  "chevron-right": ChevronRightIcon,
+  "grip-horizontal": GripHorizontalIcon,
+  maximize: MaximizeIcon,
+  minimize: MinimizeIcon,
+  "panel-right": PanelRightIcon,
 };
 
 function GithubSvg({ size }: { size: number }) {

@@ -47,3 +47,54 @@ export const CustomRatio: Story = {
     </div>
   ),
 };
+
+export const Vertical: Story = {
+  render: () => (
+    <div className="h-96 border border-edge rounded-md">
+      <SplitPane
+        direction="vertical"
+        initialRatio={0.6}
+        top={
+          <div className="p-4 bg-base h-full">
+            <p className="text-sm text-paper">Left pane (editor)</p>
+          </div>
+        }
+        bottom={
+          <div className="p-4 bg-base h-full">
+            <p className="text-sm text-paper">Right pane (references)</p>
+          </div>
+        }
+      />
+    </div>
+  ),
+};
+
+export const NestedSplitPanes: Story = {
+  render: () => (
+    <div className="h-96 border border-edge rounded-md">
+      <SplitPane
+        direction="vertical"
+        initialRatio={0.6}
+        top={
+          <SplitPane
+            top={
+              <div className="p-4 bg-base h-full">
+                <p className="text-sm text-paper">Editor (top-left)</p>
+              </div>
+            }
+            bottom={
+              <div className="p-4 bg-base h-full">
+                <p className="text-sm text-paper">Backlinks (bottom-left)</p>
+              </div>
+            }
+          />
+        }
+        bottom={
+          <div className="p-4 bg-base h-full">
+            <p className="text-sm text-paper">References (right)</p>
+          </div>
+        }
+      />
+    </div>
+  ),
+};
