@@ -102,3 +102,27 @@ domain-organized Jotai atoms in `src/state/` (auth, repo, ui) where write atoms 
 effects directly instead of a central dispatch system. Removed @tanstack/react-router in favor
 of a hash-based router in `src/lib/router.ts`. Minimal auth shell handles login, OAuth callback,
 repo selection, clone, and ready state using only design system primitives.
+
+### 2026-03-11 — Browser view with calendar, search, and note cards
+
+Built the BrowserView with a three-panel layout: calendar grid (left), note list (center), and
+search (top). Notes display as cards with title, date, and preview snippet. Calendar highlights
+days with notes. Search uses the worker's MiniSearch index with relevance scoring. Pin/unpin
+support via localStorage. All strings go through the i18n system.
+
+### 2026-03-11 — Review fixes: Select component, i18n coverage, configurable week start
+
+Created a proper ds/Select component to replace raw HTML selects. Added i18n coverage for all
+remaining hardcoded strings. Made calendar week start day configurable (Monday default) via
+settings. Added a unified `npm run dev` script that runs both Vite and Wrangler with color-coded
+interleaved logging.
+
+### 2026-03-12 — Editor view with auto-save, publish, backlinks, and offline support
+
+Added the full note editor with a monospace textarea and 2-second debounced autosave to draft
+branches. Publish and discard draft workflows with confirmation dialog. Backlinks panel scans all
+notes for `[[title]]` wikilinks and shows matched notes as cards. SplitPane component provides a
+draggable horizontal divider between editor and backlinks on tablet+. Mobile gets a stacked
+layout. SyncIndicator shows save/sync/offline status. Editor atoms in `src/state/editor.ts`
+track content, saved state, and dirty flag. Sync listeners in `src/state/sync.ts` handle
+online/offline events, visibility changes, and periodic 5-minute sync.
