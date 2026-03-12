@@ -30,7 +30,7 @@ npm run dev:proxy   # Wrangler Pages dev server (Cloudflare Workers, port 8788)
 
 Vite proxies `/api` requests to port 8788 in development.
 
-When starting the dev server from Claude Code, always use the Bash tool with `run_in_background: true` for `npm run dev` (and `npm run dev:proxy` if needed). These are long-running processes that should not block the conversation.
+When starting the dev server from Claude Code, always use the Bash tool with `run_in_background: true` for `npm run dev` (and `npm run dev:proxy` if needed). These are long-running processes that should not block the conversation. Never use shell `&` for backgrounding - always use the Bash tool's `run_in_background` parameter instead.
 
 ## Quality Checks
 

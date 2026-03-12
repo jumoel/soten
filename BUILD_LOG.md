@@ -165,3 +165,12 @@ clone runs in the background. Calendar supports drag-to-select date ranges - end
 full accent highlight, interior days get a lighter tint. Note list filters to the selected range.
 
 ![Calendar with drag-selected range 9-13](docs/build-log/2026-03-12-calendar-range.png)
+
+### 2026-03-12 — Connected blob shape for calendar range selection
+
+Range selection now renders as a single connected blob instead of separate highlights per day.
+Per-corner border-radius adapts to the shape: outer edges round outward, interior edges are
+square so cells merge, and concave inside corners at row transitions use radial-gradient fills
+for smooth L-shaped bends.
+
+![Connected blob spanning Mar 8-15](docs/build-log/2026-03-12-calendar-blob.png)

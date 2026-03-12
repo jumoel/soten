@@ -16,7 +16,6 @@ export type CalendarGridProps = {
 const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "long" });
 const dayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "narrow" });
 
-// All 7 day labels starting from Sunday (index 0). Jan 4 1970 is a Sunday.
 const ALL_DAY_LABELS = Array.from({ length: 7 }, (_, i) =>
   dayFormatter.format(new Date(1970, 0, 4 + i)),
 );
@@ -40,6 +39,8 @@ function dayFromPoint(x: number, y: number): number | null {
   return Number((btn as HTMLElement).dataset.day);
 }
 
+const R = 6; // border-radius in px, matches Tailwind's rounded-md
+
 export function CalendarGrid({
   year,
   month,
@@ -50,7 +51,7 @@ export function CalendarGrid({
   onSelectRange,
   onChangeMonth,
 }: CalendarGridProps) {
-  const jsFirstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const jsFirstDay = new Date(year, month, 1).getDay();
   const offset = (jsFirstDay - weekStart + 7) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const monthName = monthFormatter.format(new Date(year, month));
@@ -68,15 +69,12 @@ export function CalendarGrid({
     (e: React.PointerEvent) => {
       const day = dayFromPoint(e.clientX, e.clientY);
       if (day === null) return;
-
-      // Click on already-selected single day deselects
       const cur = rangeRef.current;
       if (cur && cur[0] === day && cur[1] === day) {
         onSelectRange(null);
         dragStartRef.current = null;
         return;
       }
-
       dragStartRef.current = day;
       onSelectRange([day, day]);
     },
@@ -119,7 +117,7 @@ export function CalendarGrid({
       </div>
 
       <div
-        className="grid grid-cols-7 gap-px"
+        className="grid grid-cols-7"
         style={{ touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -140,47 +138,136 @@ export function CalendarGrid({
           }
 
           const count = noteCounts.get(day) ?? 0;
-          const inRange =
-            selectedRange !== null && day >= selectedRange[0] && day <= selectedRange[1];
-          const isEndpoint = inRange && (day === selectedRange![0] || day === selectedRange![1]);
-          const isSingleDay = selectedRange !== null && selectedRange[0] === selectedRange[1];
+          const [min, max] = selectedRange ?? [0, -1];
+          const inRange = day >= min && day <= max;
           const isDimmed = activeDays !== null && !activeDays.has(day);
           const dot = densityClass(count);
+
+          if (!inRange) {
+            return (
+              <button
+                key={day}
+                type="button"
+                data-day={day}
+                className={[
+                  "relative flex flex-col items-center justify-center h-8 rounded-md text-xs transition-colors duration-150 select-none",
+                  "hover:bg-surface-2 text-paper",
+                  isDimmed ? "text-muted" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-label={t("calendar.dayLabel", {
+                  month: monthName,
+                  day: String(day),
+                  count,
+                })}
+                aria-pressed={false}
+              >
+                <span>{day}</span>
+                {count > 0 && (
+                  <span
+                    className={[
+                      "absolute bottom-0.5 rounded-full",
+                      dot,
+                      "bg-accent",
+                      isDimmed ? "bg-muted" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  />
+                )}
+              </button>
+            );
+          }
+
+          // In-range cell: compute per-corner rounding for connected blob
+          const col = i % 7;
+          const hasLeft = col > 0 && day - 1 >= min;
+          const hasRight = col < 6 && day + 1 <= max;
+          const hasAbove = day - 7 >= 1 && day - 7 >= min;
+          const hasBelow = day + 7 <= daysInMonth && day + 7 <= max;
+
+          // Convex (outer) corners: round when no neighbor in that direction
+          const tl = !hasLeft && !hasAbove ? R : 0;
+          const tr = !hasRight && !hasAbove ? R : 0;
+          const bl = !hasLeft && !hasBelow ? R : 0;
+          const br = !hasRight && !hasBelow ? R : 0;
+
+          // Concave (inside) corners: two adjacent neighbors in range but diagonal is not.
+          // Each fill element extends into the empty gap with accent color + border-radius.
+          const concaveTL = hasAbove && hasLeft && !(day - 8 >= min && day - 8 <= max);
+          const concaveTR = hasAbove && hasRight && !(day - 6 >= min && day - 6 <= max);
+          const concaveBL = hasBelow && hasLeft && !(day + 8 >= min && day + 8 <= max);
+          const concaveBR = hasBelow && hasRight && !(day + 6 >= min && day + 6 <= max);
 
           return (
             <button
               key={day}
               type="button"
               data-day={day}
-              className={[
-                "relative flex flex-col items-center justify-center h-8 rounded-md text-xs transition-colors duration-150 select-none",
-                isEndpoint || (inRange && isSingleDay)
-                  ? "bg-accent text-white dark:text-black"
-                  : inRange
-                    ? "bg-accent/20 text-paper"
-                    : "hover:bg-surface-2 text-paper",
-                isDimmed && !inRange ? "text-muted" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
+              className="relative flex flex-col items-center justify-center h-8 text-xs transition-colors duration-150 select-none bg-accent text-white dark:text-black"
+              style={{ borderRadius: `${tl}px ${tr}px ${br}px ${bl}px` }}
               aria-label={t("calendar.dayLabel", {
                 month: monthName,
                 day: String(day),
                 count,
               })}
-              aria-pressed={inRange}
+              aria-pressed={true}
             >
               <span>{day}</span>
               {count > 0 && (
                 <span
-                  className={[
-                    "absolute bottom-0.5 rounded-full",
-                    dot,
-                    isEndpoint || (inRange && isSingleDay) ? "bg-white dark:bg-black" : "bg-accent",
-                    isDimmed && !inRange ? "bg-muted" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                  className={["absolute bottom-0.5 rounded-full bg-white dark:bg-black", dot].join(
+                    " ",
+                  )}
+                />
+              )}
+              {concaveTL && (
+                <span
+                  className="absolute"
+                  style={{
+                    top: -R,
+                    left: -R,
+                    width: R,
+                    height: R,
+                    background: `radial-gradient(circle at 0 0, transparent ${R}px, var(--color-accent) ${R}px)`,
+                  }}
+                />
+              )}
+              {concaveTR && (
+                <span
+                  className="absolute"
+                  style={{
+                    top: -R,
+                    right: -R,
+                    width: R,
+                    height: R,
+                    background: `radial-gradient(circle at 100% 0, transparent ${R}px, var(--color-accent) ${R}px)`,
+                  }}
+                />
+              )}
+              {concaveBL && (
+                <span
+                  className="absolute"
+                  style={{
+                    bottom: -R,
+                    left: -R,
+                    width: R,
+                    height: R,
+                    background: `radial-gradient(circle at 0 100%, transparent ${R}px, var(--color-accent) ${R}px)`,
+                  }}
+                />
+              )}
+              {concaveBR && (
+                <span
+                  className="absolute"
+                  style={{
+                    bottom: -R,
+                    right: -R,
+                    width: R,
+                    height: R,
+                    background: `radial-gradient(circle at 100% 100%, transparent ${R}px, var(--color-accent) ${R}px)`,
+                  }}
                 />
               )}
             </button>
