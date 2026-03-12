@@ -2,6 +2,7 @@ import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Spinner, Stack, Text } from "./ds";
+import { t } from "./i18n";
 import { init } from "./lib/init";
 import { routeAtom } from "./lib/router";
 import { authErrorAtom, authStateAtom, login, logout, userAtom } from "./state/auth";
@@ -37,11 +38,11 @@ function LoginScreen() {
     <CenterScreen>
       <Card>
         <Stack gap={4} align="center">
-          <Text variant="h2">Soten</Text>
-          <Text variant="body-dim">Markdown notes backed by GitHub</Text>
+          <Text variant="h2">{t("app.name")}</Text>
+          <Text variant="body-dim">{t("app.tagline")}</Text>
           {authError && <Alert variant="error">{authError}</Alert>}
           <Button variant="primary" icon="github" onClick={() => login()}>
-            Sign in with GitHub
+            {t("auth.loginWithGithub")}
           </Button>
         </Stack>
       </Card>
@@ -57,7 +58,7 @@ function RepoSelector() {
   return (
     <CenterScreen>
       <Stack gap={4} align="center">
-        <Text variant="h2">Select a repository</Text>
+        <Text variant="h2">{t("repo.selectRepository")}</Text>
         <Stack gap={2}>
           {repos.map((fullName) => {
             const [owner, repo] = fullName.split("/");
@@ -73,7 +74,7 @@ function RepoSelector() {
           })}
         </Stack>
         <Button variant="ghost" onClick={() => logout()}>
-          Sign out
+          {t("auth.logout")}
         </Button>
       </Stack>
     </CenterScreen>
@@ -85,11 +86,11 @@ function ErrorScreen() {
   return (
     <CenterScreen>
       <Stack gap={4} align="center">
-        <Alert variant="error" title="Something went wrong">
-          {error ?? "An unknown error occurred"}
+        <Alert variant="error" title={t("error.somethingWentWrong")}>
+          {error ?? t("error.unknown")}
         </Alert>
         <Button variant="secondary" onClick={() => logout()}>
-          Sign out and retry
+          {t("auth.logoutAndRetry")}
         </Button>
       </Stack>
     </CenterScreen>
@@ -107,14 +108,14 @@ function AuthenticatedApp() {
       return (
         <CenterScreen>
           <Stack gap={4} align="center">
-            <Text variant="h2">Note: {route.path}</Text>
+            <Text variant="h2">{route.path}</Text>
             <Button
               variant="ghost"
               onClick={() => {
                 window.location.hash = "#/";
               }}
             >
-              Back
+              {t("nav.back")}
             </Button>
           </Stack>
         </CenterScreen>
@@ -127,7 +128,7 @@ function AuthenticatedApp() {
 function LoadingScreen() {
   return (
     <CenterScreen>
-      <Spinner label="Loading" size="lg" />
+      <Spinner label={t("loading")} size="lg" />
     </CenterScreen>
   );
 }

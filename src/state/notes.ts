@@ -44,28 +44,20 @@ function parseTimestampFilename(stem: string): Date | null {
   return null;
 }
 
-function noteDate(relativePath: string): Date | null {
-  const filename = relativePath.split("/").pop() ?? relativePath;
-  const dateMatch = filename.match(dateFileRe);
-  if (dateMatch) return new Date(Date.UTC(+dateMatch[1], +dateMatch[2] - 1, +dateMatch[3]));
-  const stem = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
-  return parseTimestampFilename(stem);
-}
-
-function noteTitle(relativePath: string): string {
+function parseNoteMeta(relativePath: string): { title: string; date: Date | null } {
   const filename = relativePath.split("/").pop() ?? relativePath;
   const dateMatch = filename.match(dateFileRe);
   if (dateMatch) {
     const date = new Date(Date.UTC(+dateMatch[1], +dateMatch[2] - 1, +dateMatch[3]));
-    return prettyDate.format(date);
+    return { title: prettyDate.format(date), date };
   }
   const stem = filename.endsWith(".md") ? filename.slice(0, -3) : filename;
   const tsDate = parseTimestampFilename(stem);
-  if (tsDate) return prettyTime.format(tsDate);
-  return stem;
+  if (tsDate) return { title: prettyTime.format(tsDate), date: tsDate };
+  return { title: stem, date: null };
 }
 
-export const noteListAtom = atom<NoteListEntry[]>((get) => {
+const rawNoteListAtom = atom((get) => {
   const filenames = get(filenamesAtom);
   const prefix = `${REPO_DIR}/`;
   const entries: NoteListEntry[] = [];
@@ -74,8 +66,7 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
     const relativePath = path.startsWith(prefix) ? path.slice(prefix.length) : path;
     if (relativePath.startsWith("uploads/")) continue;
     if (!relativePath.endsWith(".md")) continue;
-    const title = noteTitle(relativePath);
-    const date = noteDate(relativePath);
+    const { title, date } = parseNoteMeta(relativePath);
     entries.push({ path, relativePath, title, date });
   }
 
@@ -86,6 +77,21 @@ export const noteListAtom = atom<NoteListEntry[]>((get) => {
     return b.relativePath.localeCompare(a.relativePath);
   });
 
+  return entries;
+});
+
+// Structurally stable: only emits a new reference when paths actually change
+let prevPaths: string[] = [];
+let prevEntries: NoteListEntry[] = [];
+
+export const noteListAtom = atom<NoteListEntry[]>((get) => {
+  const entries = get(rawNoteListAtom);
+  const paths = entries.map((e) => e.path);
+  if (paths.length === prevPaths.length && paths.every((p, i) => p === prevPaths[i])) {
+    return prevEntries;
+  }
+  prevPaths = paths;
+  prevEntries = entries;
   return entries;
 });
 

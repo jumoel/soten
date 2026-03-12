@@ -46,6 +46,7 @@ function CalendarDemo() {
       <CalendarGrid
         year={year}
         month={month}
+        weekStart={1}
         noteCounts={noteCounts}
         activeDays={null}
         selectedDay={selectedDay}
@@ -66,6 +67,7 @@ export const WithSearchFilter: Story = {
       <CalendarGrid
         year={2025}
         month={2}
+        weekStart={1}
         noteCounts={
           new Map([
             [1, 1],
@@ -90,6 +92,7 @@ export const Empty: Story = {
       <CalendarGrid
         year={2025}
         month={2}
+        weekStart={1}
         noteCounts={new Map()}
         activeDays={null}
         selectedDay={null}

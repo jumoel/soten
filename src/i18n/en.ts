@@ -1,12 +1,14 @@
 const en = {
+  "app.name": "Soten",
   "app.tagline": "Notes written with markdown, backed by git.",
 
-  "auth.loginWithGithub": "Login with GitHub",
+  "auth.loginWithGithub": "Sign in with GitHub",
   "auth.loginFailed": "Login failed",
   "auth.tryAgain": "Try again",
   "auth.logout": "Log out",
+  "auth.logoutAndRetry": "Sign out and retry",
 
-  "repo.selectRepository": "Select a repository:",
+  "repo.selectRepository": "Select a repository",
   "repo.manageAccess": "Manage repository access on GitHub",
 
   "menu.settings": "Settings",
@@ -16,9 +18,12 @@ const en = {
   "note.dayPrefix": "Day: {date}",
   "note.unnamedWithStem": "Unnamed note \u00B7 {stem}",
   "note.new": "New note",
-  "note.pin": "Pin",
-  "note.unpin": "Unpin",
+  "note.open": "Open {title}",
+  "note.pin": "Pin note",
+  "note.unpin": "Unpin note",
   "note.edit": "Edit",
+  "note.draft": "draft",
+  "note.pinned": "pinned",
 
   "settings.theme": "Theme",
   "settings.theme.light": "Light",
@@ -26,9 +31,15 @@ const en = {
   "settings.theme.system": "System",
   "settings.repository": "Repository",
   "settings.switchRepo": "Switch",
+  "settings.weekStart": "Week starts on",
+  "settings.weekStart.sunday": "Sunday",
+  "settings.weekStart.monday": "Monday",
+  "settings.weekStart.saturday": "Saturday",
   "settings.wipeLocalData": "Wipe local data",
 
   "search.placeholder": "Search\u2026",
+  "search.label": "Search notes",
+  "search.clear": "Clear search",
 
   "draft.save": "Save",
   "draft.discard": "Discard",
@@ -48,6 +59,14 @@ const en = {
   "sort.oldest": "Oldest",
   "sort.bestMatch": "Best match",
 
+  "calendar.previousMonth": "Previous month",
+  "calendar.nextMonth": "Next month",
+  "calendar.dayLabel": "{month} {day}, {count} notes",
+
+  loading: "Loading",
+
+  "error.somethingWentWrong": "Something went wrong",
+  "error.unknown": "An unknown error occurred",
   "error.fetchReposFailed": "Failed to fetch repos",
   "error.noRepos": "No repos found",
 } as const;

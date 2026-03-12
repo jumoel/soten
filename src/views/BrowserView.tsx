@@ -4,7 +4,7 @@ import { CalendarGrid } from "../components/CalendarGrid";
 import { FAB } from "../components/FAB";
 import { NoteCard } from "../components/NoteCard";
 import { TopBar } from "../components/TopBar";
-import { Button, IconButton, SearchField, Text } from "../ds";
+import { Button, IconButton, SearchField, Select, Text } from "../ds";
 import { t } from "../i18n";
 import { pfs } from "../lib/fs";
 import type { NoteListEntry } from "../state/notes";
@@ -12,6 +12,7 @@ import { noteListAtom, pinnedNotesAtom } from "../state/notes";
 import { repoAtom } from "../state/repo";
 import { browserSearch, type SortOrder, useNoteSearch } from "../state/search";
 import { store } from "../state/store";
+import { weekStartAtom } from "../state/ui";
 
 const prettyCardDate = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
@@ -30,12 +31,10 @@ function useNotePreviews(entries: NoteListEntry[]) {
 
   useEffect(() => {
     let cancelled = false;
-    const map = new Map<string, string>();
 
     async function load() {
-      for (const entry of entries.slice(0, 50)) {
-        if (cancelled) return;
-        try {
+      const results = await Promise.allSettled(
+        entries.slice(0, 50).map(async (entry) => {
           const content = await pfs.readFile(entry.path, { encoding: "utf8" });
           const lines = content.split("\n");
           let start = 0;
@@ -49,12 +48,18 @@ function useNotePreviews(entries: NoteListEntry[]) {
             .slice(0, 3)
             .join(" ")
             .slice(0, 200);
-          map.set(entry.path, body);
-        } catch {
-          // skip
+          return [entry.path, body] as const;
+        }),
+      );
+
+      if (cancelled) return;
+      const map = new Map<string, string>();
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          map.set(result.value[0], result.value[1]);
         }
       }
-      if (!cancelled) setPreviews(new Map(map));
+      setPreviews(map);
     }
 
     load();
@@ -85,27 +90,13 @@ function useCalendarData(entries: NoteListEntry[], searchResults: NoteListEntry[
   }, [entries, searchResults]);
 }
 
-function SortSelect({
-  value,
-  onChange,
-  hasQuery,
-}: {
-  value: SortOrder;
-  onChange: (v: SortOrder) => void;
-  hasQuery: boolean;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value as SortOrder)}
-      aria-label={t("sort.label")}
-      className="rounded-md border border-edge bg-surface py-1.5 px-2 text-sm text-paper focus:outline-2 focus:outline-accent focus:border-transparent"
-    >
-      <option value="newest">{t("sort.newest")}</option>
-      <option value="oldest">{t("sort.oldest")}</option>
-      {hasQuery && <option value="best-match">{t("sort.bestMatch")}</option>}
-    </select>
-  );
+function useSortOptions(hasQuery: boolean) {
+  const base = [
+    { value: "newest" as SortOrder, label: t("sort.newest") },
+    { value: "oldest" as SortOrder, label: t("sort.oldest") },
+  ];
+  if (hasQuery) base.push({ value: "best-match" as SortOrder, label: t("sort.bestMatch") });
+  return base;
 }
 
 function PinnedSection({
@@ -161,11 +152,12 @@ export function BrowserView() {
   const pinnedPaths = useAtomValue(pinnedNotesAtom);
   const setPinned = useSetAtom(pinnedNotesAtom);
   const repo = useAtomValue(repoAtom);
+  const weekStart = useAtomValue(weekStartAtom);
   const previews = useNotePreviews(allNotes);
+  const sortOptions = useSortOptions(query.trim().length > 0);
 
-  const now = new Date();
-  const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calMonth, setCalMonth] = useState(now.getMonth());
+  const [calYear, setCalYear] = useState(() => new Date().getFullYear());
+  const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   const monthNotes = useMemo(
@@ -240,7 +232,7 @@ export function BrowserView() {
       <TopBar
         left={
           <Text variant="h3" as="span" className="text-sm">
-            {repo ? `${repo.owner}/${repo.repo}` : "Soten"}
+            {repo ? `${repo.owner}/${repo.repo}` : t("app.name")}
           </Text>
         }
         right={
@@ -271,6 +263,7 @@ export function BrowserView() {
           <CalendarGrid
             year={calYear}
             month={calMonth}
+            weekStart={weekStart}
             noteCounts={noteCounts}
             activeDays={query.trim() ? activeDays : null}
             selectedDay={selectedDay}
@@ -284,10 +277,11 @@ export function BrowserView() {
                 value={query}
                 onChange={search}
                 placeholder={t("search.placeholder")}
-                label="Search notes"
+                label={t("search.label")}
+                clearLabel={t("search.clear")}
               />
             </div>
-            <SortSelect value={sort} onChange={setSort} hasQuery={query.trim().length > 0} />
+            <Select value={sort} onChange={setSort} options={sortOptions} label={t("sort.label")} />
           </div>
 
           <PinnedSection entries={pinnedEntries} onUnpin={togglePin} previews={previews} />

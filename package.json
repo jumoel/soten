@@ -5,7 +5,8 @@
   "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "node scripts/dev.js",
+    "dev:vite": "vite dev",
     "dev:proxy": "wrangler pages dev",
     "build": "vite build",
     "preview": "vite preview",

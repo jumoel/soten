@@ -1,17 +1,23 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { TopBar } from "../components/TopBar";
-import { Button, Card, Divider, IconButton, Text } from "../ds";
+import { Button, Card, Divider, IconButton, Select, Text } from "../ds";
 import { t } from "../i18n";
 import { FILE_SYSTEM_NAME, fs } from "../lib/fs";
 import { logout } from "../state/auth";
 import { repoAtom, resetRepo } from "../state/repo";
-import { type Theme, themeAtom } from "../state/ui";
+import { type Theme, themeAtom, type WeekStart, weekStartAtom } from "../state/ui";
 
 const themes: Array<{ value: Theme; label: string; icon: "sun" | "moon" | "settings" }> = [
   { value: "light", label: t("settings.theme.light"), icon: "sun" },
   { value: "dark", label: t("settings.theme.dark"), icon: "moon" },
   { value: "system", label: t("settings.theme.system"), icon: "settings" },
+];
+
+const weekStartOptions: Array<{ value: string; label: string }> = [
+  { value: "0", label: t("settings.weekStart.sunday") },
+  { value: "1", label: t("settings.weekStart.monday") },
+  { value: "6", label: t("settings.weekStart.saturday") },
 ];
 
 function ThemeSelector() {
@@ -36,6 +42,23 @@ function ThemeSelector() {
           </Button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function WeekStartSelector() {
+  const weekStart = useAtomValue(weekStartAtom);
+  const setWeekStart = useSetAtom(weekStartAtom);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Select
+        value={String(weekStart)}
+        onChange={(v) => setWeekStart(Number(v) as WeekStart)}
+        options={weekStartOptions}
+        label={t("settings.weekStart")}
+        labelVisible
+      />
     </div>
   );
 }
@@ -84,6 +107,8 @@ export function SettingsView() {
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-lg px-4 sm:px-6 py-6 flex flex-col gap-6">
           <ThemeSelector />
+
+          <WeekStartSelector />
 
           <Divider />
 

@@ -7,10 +7,17 @@ export type DialogProps = {
   open: boolean;
   onClose: () => void;
   title?: string;
+  closeLabel?: string;
   children: ReactNode;
 };
 
-export function Dialog({ open, onClose, title, children }: DialogProps) {
+export function Dialog({
+  open,
+  onClose,
+  title,
+  closeLabel = "Close dialog",
+  children,
+}: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -47,7 +54,7 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
             type="button"
             onClick={onClose}
             className="text-paper-dim hover:bg-surface-2 rounded-md p-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            aria-label="Close dialog"
+            aria-label={closeLabel}
           >
             <Icon name="close" size="4" />
           </button>

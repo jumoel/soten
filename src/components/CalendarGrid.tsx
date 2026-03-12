@@ -1,8 +1,10 @@
 import { IconButton, Text } from "../ds";
+import { t } from "../i18n";
 
 export type CalendarGridProps = {
   year: number;
   month: number;
+  weekStart: number;
   noteCounts: Map<number, number>;
   activeDays: Set<number> | null;
   selectedDay: number | null;
@@ -10,22 +12,17 @@ export type CalendarGridProps = {
   onChangeMonth: (delta: number) => void;
 };
 
-const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "long" });
+const dayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "narrow" });
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+// All 7 day labels starting from Sunday (index 0). Jan 4 1970 is a Sunday.
+const ALL_DAY_LABELS = Array.from({ length: 7 }, (_, i) =>
+  dayFormatter.format(new Date(1970, 0, 4 + i)),
+);
+
+function rotatedDayLabels(weekStart: number): string[] {
+  return [...ALL_DAY_LABELS.slice(weekStart), ...ALL_DAY_LABELS.slice(0, weekStart)];
+}
 
 function densityClass(count: number): string {
   if (count === 0) return "";
@@ -37,17 +34,21 @@ function densityClass(count: number): string {
 export function CalendarGrid({
   year,
   month,
+  weekStart,
   noteCounts,
   activeDays,
   selectedDay,
   onSelectDay,
   onChangeMonth,
 }: CalendarGridProps) {
-  const firstDay = new Date(year, month, 1).getDay();
+  const jsFirstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const offset = (jsFirstDay - weekStart + 7) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthName = monthFormatter.format(new Date(year, month));
+  const labels = rotatedDayLabels(weekStart);
 
   const cells: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let i = 0; i < offset; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
   return (
@@ -56,23 +57,26 @@ export function CalendarGrid({
         <IconButton
           icon="chevron-left"
           size="sm"
-          aria-label="Previous month"
+          aria-label={t("calendar.previousMonth")}
           onClick={() => onChangeMonth(-1)}
         />
         <Text variant="h4" as="span" className="text-sm">
-          {MONTH_NAMES[month]} {year}
+          {monthName} {year}
         </Text>
         <IconButton
           icon="chevron-down"
           size="sm"
-          aria-label="Next month"
+          aria-label={t("calendar.nextMonth")}
           onClick={() => onChangeMonth(1)}
         />
       </div>
 
       <div className="grid grid-cols-7 gap-px">
-        {DAY_LABELS.map((label) => (
-          <div key={label} className="text-center text-xs font-medium text-muted py-1 select-none">
+        {labels.map((label, i) => (
+          <div
+            key={`${label}-${String(i)}`}
+            className="text-center text-xs font-medium text-muted py-1 select-none"
+          >
             {label}
           </div>
         ))}
@@ -101,7 +105,11 @@ export function CalendarGrid({
               ]
                 .filter(Boolean)
                 .join(" ")}
-              aria-label={`${MONTH_NAMES[month]} ${String(day)}, ${count} notes`}
+              aria-label={t("calendar.dayLabel", {
+                month: monthName,
+                day: String(day),
+                count,
+              })}
               aria-pressed={isSelected}
             >
               <span>{day}</span>

@@ -3,7 +3,7 @@ import { useCallback, useRef } from "react";
 import { getRepoWorker } from "../worker/client";
 import type { SearchResult } from "../worker/protocol";
 import type { NoteListEntry } from "./notes";
-import { noteListAtom, pinnedNotesAtom } from "./notes";
+import { noteListAtom } from "./notes";
 import { store } from "./store";
 
 export type SortOrder = "newest" | "oldest" | "best-match";
@@ -37,7 +37,6 @@ export function createSearchAtoms() {
     const query = get(queryAtom);
     const notes = get(noteListAtom);
     const sort = get(sortAtom);
-    const pinned = new Set(get(pinnedNotesAtom));
     const matches = get(matchesAtom);
 
     let filtered: NoteListEntry[];
@@ -60,12 +59,6 @@ export function createSearchAtoms() {
         if (!a.date && b.date) return 1;
         return dir * a.relativePath.localeCompare(b.relativePath);
       });
-    }
-
-    if (pinned.size > 0) {
-      const pinnedEntries = filtered.filter((n) => pinned.has(n.path));
-      const unpinned = filtered.filter((n) => !pinned.has(n.path));
-      return [...pinnedEntries, ...unpinned];
     }
 
     return filtered;
@@ -91,7 +84,7 @@ export function useNoteSearch(atoms: ReturnType<typeof createSearchAtoms>) {
       if (timerRef.current) clearTimeout(timerRef.current);
 
       if (!value.trim()) {
-        store.set(atoms.matchesAtom, []);
+        setMatches([]);
         return;
       }
 
@@ -105,7 +98,7 @@ export function useNoteSearch(atoms: ReturnType<typeof createSearchAtoms>) {
           });
       }, 200);
     },
-    [setQuery, setMatches, atoms.matchesAtom, atoms.queryAtom],
+    [setQuery, setMatches, atoms.queryAtom],
   );
 
   return { query, search, sort, setSort, results };

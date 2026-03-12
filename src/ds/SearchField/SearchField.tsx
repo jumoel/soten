@@ -6,6 +6,7 @@ export type SearchFieldProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   label: string;
+  clearLabel?: string;
   labelVisible?: boolean;
   id?: string;
   className?: string;
@@ -16,6 +17,7 @@ export function SearchField({
   onChange,
   placeholder,
   label,
+  clearLabel = "Clear search",
   labelVisible = false,
   id,
   className,
@@ -57,7 +59,7 @@ export function SearchField({
           <button
             type="button"
             onClick={() => onChange("")}
-            aria-label="Clear search"
+            aria-label={clearLabel}
             className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <Icon name="close" size="4" />

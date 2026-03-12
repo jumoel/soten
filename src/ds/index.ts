@@ -32,6 +32,8 @@ export type { LinkProps } from "./Link/Link";
 export { Link } from "./Link/Link";
 export type { SearchFieldProps } from "./SearchField/SearchField";
 export { SearchField } from "./SearchField/SearchField";
+export type { SelectOption, SelectProps } from "./Select/Select";
+export { Select } from "./Select/Select";
 export type { SpacerProps } from "./Spacer/Spacer";
 export { Spacer } from "./Spacer/Spacer";
 export type { SpinnerProps } from "./Spinner/Spinner";
