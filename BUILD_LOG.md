@@ -138,3 +138,12 @@ desktop adds to stack, tablet opens overlay, mobile navigates. Cmd+K focuses the
 search on desktop and opens the overlay on tablet. Conflict detection compares local vs remote
 trees when sync pull fails, showing the remote version as a ReferenceCard (desktop/tablet) or
 an expandable Alert (mobile). Conflict badges appear on NoteCards in the browser view.
+
+### 2026-03-12 — Ultra-wide three-column layout
+
+At 1920px+ the editor view gains a third column: a condensed note browser (BrowserMini) on the
+left with its own independent search and calendar, the editor+backlinks in the center, and the
+reference panel on the right. Nested vertical SplitPanes with pointer-capture drag handles let
+users resize all three columns. Shared calendar hooks extracted from BrowserView and BrowserMini
+into `src/hooks/useCalendar.ts` to eliminate duplication. Cmd+K focuses reference search on
+both desktop and ultra-wide breakpoints.
