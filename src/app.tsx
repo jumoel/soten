@@ -139,7 +139,7 @@ export function App() {
 
   // authenticated
   if (cloneStatus === "selecting") return <RepoSelector />;
-  if (cloneStatus !== "ready") return <LoadingScreen />;
+  if (cloneStatus !== "ready" && cloneStatus !== "cloning") return <LoadingScreen />;
 
   return <AuthenticatedApp />;
 }

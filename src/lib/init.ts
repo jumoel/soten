@@ -42,7 +42,10 @@ async function doInit(): Promise<void> {
     const localRepo = new URLSearchParams(window.location.search).get("localRepo");
     if (localRepo) {
       const { initFromLocalRepo } = await import("./init-local");
-      await initFromLocalRepo(localRepo);
+      // Fire and forget: initFromLocalRepo sets auth atoms synchronously so the
+      // app shell renders immediately. The clone runs in the background and
+      // updates cloneStatusAtom to "ready" when done.
+      void initFromLocalRepo(localRepo);
       return;
     }
   }

@@ -64,7 +64,7 @@ export function CalendarGrid({
           {monthName} {year}
         </Text>
         <IconButton
-          icon="chevron-down"
+          icon="chevron-right"
           size="sm"
           aria-label={t("calendar.nextMonth")}
           onClick={() => onChangeMonth(1)}

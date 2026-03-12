@@ -105,15 +105,6 @@ async function push(user: { username: string; token: string }, ref?: string): Pr
   });
 }
 
-async function isInitialized(): Promise<boolean> {
-  try {
-    const files = await pfs.readdir(REPO_DIR);
-    return files.includes(".git");
-  } catch {
-    return false;
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Filesystem
 // ---------------------------------------------------------------------------
@@ -525,16 +516,22 @@ async function syncHandler(
   return { state: await gatherState(), syncStatus };
 }
 
+/** Tracks whether we've ever successfully cloned in this worker session. */
+let repoReady = false;
+
 async function domainCloneHandler(url: string, user: GitUser): Promise<DomainResult> {
-  if (await isInitialized()) {
+  if (repoReady) {
+    // Warm path: repo already exists in IDB from a previous clone in this session.
     try {
       await pull(user);
     } catch {
-      await fs.promises.init(FILE_SYSTEM_NAME, { wipe: true });
       await clone(url, user);
     }
   } else {
+    // Cold path: skip the expensive IDB probe and clone directly.
+    // clone() calls fs.promises.init({ wipe: true }) which handles any stale state.
     await clone(url, user);
+    repoReady = true;
   }
 
   return { state: await gatherState(), syncStatus: "synced" };
