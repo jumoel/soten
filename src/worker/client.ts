@@ -1,4 +1,11 @@
-import type { DomainResult, GitUser, RepoState, SearchEntry, WorkerResponse } from "./protocol";
+import type {
+  DomainResult,
+  GitUser,
+  RepoState,
+  SearchEntry,
+  SearchResult,
+  WorkerResponse,
+} from "./protocol";
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void };
 
@@ -46,8 +53,8 @@ class RepoWorkerClient {
     }) as Promise<void>;
   }
 
-  search(query: string): Promise<string[]> {
-    return this.call({ type: "search", query }) as Promise<string[]>;
+  search(query: string): Promise<SearchResult[]> {
+    return this.call({ type: "search", query }) as Promise<SearchResult[]>;
   }
 
   clearSearchIndex(): Promise<void> {

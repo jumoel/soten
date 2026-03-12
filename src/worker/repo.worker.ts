@@ -5,6 +5,7 @@ import type {
   GitUser,
   RepoState,
   SearchEntry,
+  SearchResult,
   SyncStatus,
   WorkerRequest,
   WorkerResponse,
@@ -538,11 +539,11 @@ async function updateSearchIndex(
   }
 }
 
-function search(query: string): string[] {
+function search(query: string): SearchResult[] {
   if (!searchIndex) return [];
   return searchIndex
     .search(query, { prefix: true, fuzzy: 0.2, boost: { title: 2 } })
-    .map((r) => r.id);
+    .map((r) => ({ path: r.id, score: r.score }));
 }
 
 function clearSearchIndex(): void {

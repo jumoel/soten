@@ -24,6 +24,9 @@ const en = {
   "settings.theme.light": "Light",
   "settings.theme.dark": "Dark",
   "settings.theme.system": "System",
+  "settings.repository": "Repository",
+  "settings.switchRepo": "Switch",
+  "settings.wipeLocalData": "Wipe local data",
 
   "search.placeholder": "Search\u2026",
 
@@ -38,6 +41,7 @@ const en = {
 
   "notes.empty": "No notes yet. Click + New note to get started.",
   "notes.noResults": "No notes matching \u2018{query}\u2019.",
+  "notes.pinned": "Pinned",
 
   "sort.label": "Sort",
   "sort.newest": "Newest",

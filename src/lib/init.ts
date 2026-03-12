@@ -70,6 +70,9 @@ export async function init(): Promise<void> {
         store.set(filenamesAtom, repoState.filenames);
         store.set(cloneStatusAtom, "ready");
         store.set(authStateAtom, "authenticated");
+        const { noteListAtom } = await import("../state/notes");
+        const { buildSearchIndex } = await import("../state/search");
+        await buildSearchIndex(store.get(noteListAtom));
         return;
       }
     } catch {

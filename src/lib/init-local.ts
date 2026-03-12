@@ -1,8 +1,7 @@
 import { authStateAtom } from "../state/auth";
-import { cloneStatusAtom, filenamesAtom, hasRemoteAtom } from "../state/repo";
+import { applyRepoState, cloneStatusAtom, hasRemoteAtom } from "../state/repo";
 import { store } from "../state/store";
 import { getRepoWorker } from "../worker/client";
-import { refreshFs } from "./fs";
 
 export async function initFromLocalRepo(dir: string): Promise<void> {
   const worker = getRepoWorker();
@@ -15,9 +14,7 @@ export async function initFromLocalRepo(dir: string): Promise<void> {
     email: "local@soten",
   });
 
-  refreshFs();
-
-  store.set(filenamesAtom, result.state.filenames);
+  await applyRepoState(result.state);
   store.set(cloneStatusAtom, "ready");
   store.set(hasRemoteAtom, false);
   store.set(authStateAtom, "authenticated");

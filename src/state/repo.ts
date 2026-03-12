@@ -55,7 +55,7 @@ async function cloneAndLoad(user: User, repo: Repo): Promise<void> {
 
   try {
     const result = await worker.domainClone(url, user);
-    applyRepoState(result.state);
+    await applyRepoState(result.state);
     store.set(repoAtom, repo);
     store.set(cloneStatusAtom, "ready");
     store.set(hasRemoteAtom, true);
@@ -66,9 +66,12 @@ async function cloneAndLoad(user: User, repo: Repo): Promise<void> {
   }
 }
 
-export function applyRepoState(state: RepoState): void {
+export async function applyRepoState(state: RepoState): Promise<void> {
   store.set(filenamesAtom, state.filenames);
   refreshFs();
+  const { noteListAtom } = await import("./notes");
+  const { buildSearchIndex } = await import("./search");
+  await buildSearchIndex(store.get(noteListAtom));
 }
 
 export function resetRepo(): void {

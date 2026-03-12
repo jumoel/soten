@@ -3,15 +3,12 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Spinner, Stack, Text } from "./ds";
 import { init } from "./lib/init";
+import { routeAtom } from "./lib/router";
 import { authErrorAtom, authStateAtom, login, logout, userAtom } from "./state/auth";
-import {
-  cachedReposAtom,
-  cloneStatusAtom,
-  filenamesAtom,
-  repoAtom,
-  selectRepo,
-} from "./state/repo";
+import { cachedReposAtom, cloneStatusAtom, selectRepo } from "./state/repo";
 import { themeAtom } from "./state/ui";
+import { BrowserView } from "./views/BrowserView";
+import { SettingsView } from "./views/SettingsView";
 
 function useTheme() {
   const theme = useAtomValue(themeAtom);
@@ -99,20 +96,32 @@ function ErrorScreen() {
   );
 }
 
-function ReadyPlaceholder() {
-  const filenames = useAtomValue(filenamesAtom);
-  const repo = useAtomValue(repoAtom);
-  return (
-    <CenterScreen>
-      <Stack gap={4} align="center">
-        <Text variant="h2">{repo ? `${repo.owner}/${repo.repo}` : "Ready"}</Text>
-        <Text variant="body-dim">{filenames.length} notes loaded</Text>
-        <Button variant="ghost" onClick={() => logout()}>
-          Sign out
-        </Button>
-      </Stack>
-    </CenterScreen>
-  );
+function AuthenticatedApp() {
+  const route = useAtomValue(routeAtom);
+
+  switch (route.view) {
+    case "settings":
+      return <SettingsView />;
+    case "note":
+      // Editor comes in Phase 3 - placeholder for now
+      return (
+        <CenterScreen>
+          <Stack gap={4} align="center">
+            <Text variant="h2">Note: {route.path}</Text>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                window.location.hash = "#/";
+              }}
+            >
+              Back
+            </Button>
+          </Stack>
+        </CenterScreen>
+      );
+    default:
+      return <BrowserView />;
+  }
 }
 
 function LoadingScreen() {
@@ -143,5 +152,5 @@ export function App() {
   if (cloneStatus === "selecting") return <RepoSelector />;
   if (cloneStatus !== "ready") return <LoadingScreen />;
 
-  return <ReadyPlaceholder />;
+  return <AuthenticatedApp />;
 }
