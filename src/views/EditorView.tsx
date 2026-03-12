@@ -10,6 +10,7 @@ import { t } from "../i18n";
 import { REPO_DIR } from "../lib/constants";
 import { pfs } from "../lib/fs";
 import type { Route } from "../lib/router";
+import { frontmatterEndLine } from "../lib/text";
 import { userAtom } from "../state/auth";
 import {
   editorContentAtom,
@@ -79,11 +80,7 @@ function useBacklinks(currentTitle: string): BacklinkEntry[] {
           const content = await pfs.readFile(note.path, { encoding: "utf8" });
           if (!content.includes(pattern)) return null;
           const lines = content.split("\n");
-          let start = 0;
-          if (lines[0]?.startsWith("---")) {
-            const end = lines.indexOf("---", 1);
-            if (end > 0) start = end + 1;
-          }
+          const start = frontmatterEndLine(lines);
           const snippet = lines
             .slice(start)
             .filter((l: string) => l.trim().length > 0)
@@ -445,27 +442,26 @@ export function EditorView({ route }: { route: Extract<Route, { view: "note" | "
   }, [doAutosave]);
 
   // Backlink click: breakpoint-aware
+  const addToReferenceStack = useCallback(
+    (path: string) => {
+      setReferenceStack((prev) => {
+        if (prev.some((e) => e.path === path)) return prev;
+        return [...prev, { path, mode: "excerpt" as const }];
+      });
+    },
+    [setReferenceStack],
+  );
+
   const handleBacklinkClick = useCallback(
     (bl: BacklinkEntry) => {
-      if (breakpoint === "desktop") {
-        // Add to reference stack
-        setReferenceStack((prev) => {
-          if (prev.some((e) => e.path === bl.path)) return prev;
-          return [...prev, { path: bl.path, mode: "excerpt" as const }];
-        });
-      } else if (breakpoint === "tablet") {
-        // Open in overlay, add to stack
-        setReferenceStack((prev) => {
-          if (prev.some((e) => e.path === bl.path)) return prev;
-          return [...prev, { path: bl.path, mode: "excerpt" as const }];
-        });
-        setOverlayOpen(true);
-      } else {
-        // Mobile: navigate
+      if (breakpoint === "mobile") {
         window.location.hash = `#/${bl.relativePath}`;
+      } else {
+        addToReferenceStack(bl.path);
+        if (breakpoint === "tablet") setOverlayOpen(true);
       }
     },
-    [breakpoint, setReferenceStack],
+    [breakpoint, addToReferenceStack],
   );
 
   if (!loaded) {

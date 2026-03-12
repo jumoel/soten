@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import type { ReferenceMode } from "./ReferenceCard";
+import type { ReferenceMode } from "../state/ui";
 import { ReferenceCard } from "./ReferenceCard";
 
 const meta: Meta<typeof ReferenceCard> = {

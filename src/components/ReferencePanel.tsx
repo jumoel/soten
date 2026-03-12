@@ -1,8 +1,9 @@
 import { useAtomValue, useSetAtom } from "jotai";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchField, Text } from "../ds";
 import { t } from "../i18n";
 import { pfs } from "../lib/fs";
+import { formatNoteDate } from "../lib/text";
 import type { NoteListEntry } from "../state/notes";
 import { noteListAtom } from "../state/notes";
 import { referenceSearch, useNoteSearch } from "../state/search";
@@ -10,24 +11,14 @@ import { type ReferenceMode, referenceStackAtom } from "../state/ui";
 import { NoteCardCondensed } from "./NoteCardCondensed";
 import { ReferenceCard } from "./ReferenceCard";
 
-const prettyDate = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-});
-
-function formatDate(date: Date | null): string | null {
-  if (!date) return null;
-  return prettyDate.format(date);
-}
-
 function useNoteContents(paths: string[]) {
   const [contents, setContents] = useState<Map<string, string>>(new Map());
+  const contentsRef = useRef(contents);
+  contentsRef.current = contents;
 
   useEffect(() => {
     let cancelled = false;
-    const missing = paths.filter((p) => !contents.has(p));
+    const missing = paths.filter((p) => !contentsRef.current.has(p));
     if (missing.length === 0) return;
 
     Promise.allSettled(
@@ -49,7 +40,7 @@ function useNoteContents(paths: string[]) {
     return () => {
       cancelled = true;
     };
-  }, [paths, contents]);
+  }, [paths]);
 
   return contents;
 }
@@ -76,7 +67,6 @@ export function ReferencePanel({ currentPath, searchRef }: ReferencePanelProps) 
   const stackPaths = useMemo(() => stack.map((e) => e.path), [stack]);
   const contents = useNoteContents(stackPaths);
 
-  // Filter search results: exclude current note and already-stacked notes
   const filteredResults = useMemo(() => {
     const stackSet = new Set(stackPaths);
     return results.filter((r) => r.path !== currentPath && !stackSet.has(r.path));
@@ -120,7 +110,6 @@ export function ReferencePanel({ currentPath, searchRef }: ReferencePanelProps) 
       </div>
 
       <div className="flex-1 overflow-auto px-3 pb-3">
-        {/* Search results */}
         {query.trim() && (
           <div className="flex flex-col gap-0.5 mb-3">
             {filteredResults.length === 0 ? (
@@ -132,7 +121,7 @@ export function ReferencePanel({ currentPath, searchRef }: ReferencePanelProps) 
                 <NoteCardCondensed
                   key={entry.path}
                   title={entry.title}
-                  date={formatDate(entry.date)}
+                  date={formatNoteDate(entry.date)}
                   onOpen={() => {
                     addToStack(entry.path);
                   }}
@@ -143,7 +132,6 @@ export function ReferencePanel({ currentPath, searchRef }: ReferencePanelProps) 
           </div>
         )}
 
-        {/* Reference stack */}
         {stack.length === 0 && !query.trim() ? (
           <Text variant="body-dim" className="text-xs px-2 py-4 text-center">
             {t("reference.empty")}
@@ -156,7 +144,7 @@ export function ReferencePanel({ currentPath, searchRef }: ReferencePanelProps) 
                 <ReferenceCard
                   key={entry.path}
                   title={note?.title ?? entry.path}
-                  date={note?.date ? formatDate(note.date) : null}
+                  date={note?.date ? formatNoteDate(note.date) : null}
                   content={contents.get(entry.path) ?? ""}
                   mode={entry.mode}
                   onChangeMode={(mode) => changeMode(entry.path, mode)}

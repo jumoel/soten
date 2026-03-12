@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { IconButton, Text } from "../ds";
 import { t } from "../i18n";
+import { frontmatterEndLine } from "../lib/text";
 import { renderMarkdown } from "../markdown";
-
-export type ReferenceMode = "collapsed" | "excerpt" | "expanded";
+import type { ReferenceMode } from "../state/ui";
+import { MarkdownContent } from "./MarkdownContent";
 
 export type ReferenceCardProps = {
   title: string;
@@ -14,10 +15,25 @@ export type ReferenceCardProps = {
   onDismiss: () => void;
 };
 
+function nextMode(current: ReferenceMode): ReferenceMode {
+  switch (current) {
+    case "collapsed":
+      return "excerpt";
+    case "excerpt":
+      return "expanded";
+    case "expanded":
+      return "collapsed";
+  }
+}
+
 function useRenderedMarkdown(content: string) {
   const [html, setHtml] = useState("");
 
   useEffect(() => {
+    if (!content) {
+      setHtml("");
+      return;
+    }
     let cancelled = false;
     renderMarkdown(content).then((result) => {
       if (!cancelled) setHtml(result.html);
@@ -32,11 +48,7 @@ function useRenderedMarkdown(content: string) {
 
 function excerptContent(content: string, lines: number): string {
   const allLines = content.split("\n");
-  let start = 0;
-  if (allLines[0]?.startsWith("---")) {
-    const end = allLines.indexOf("---", 1);
-    if (end > 0) start = end + 1;
-  }
+  const start = frontmatterEndLine(allLines);
   return allLines.slice(start, start + lines).join("\n");
 }
 
@@ -48,19 +60,16 @@ export function ReferenceCard({
   onChangeMode,
   onDismiss,
 }: ReferenceCardProps) {
-  const displayContent = mode === "excerpt" ? excerptContent(content, 10) : content;
-  const html = useRenderedMarkdown(mode === "collapsed" ? "" : displayContent);
+  const displayContent =
+    mode === "collapsed" ? "" : mode === "excerpt" ? excerptContent(content, 10) : content;
+  const html = useRenderedMarkdown(displayContent);
 
   return (
     <div className="bg-surface border border-edge rounded-md overflow-hidden">
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-edge">
         <button
           type="button"
-          onClick={() =>
-            onChangeMode(
-              mode === "collapsed" ? "excerpt" : mode === "excerpt" ? "expanded" : "collapsed",
-            )
-          }
+          onClick={() => onChangeMode(nextMode(mode))}
           className="flex-1 min-w-0 text-left flex items-center gap-2"
           aria-label={t("reference.toggleMode")}
         >
@@ -100,12 +109,14 @@ export function ReferenceCard({
       </div>
       {mode !== "collapsed" && (
         <div
-          className={[
-            "px-3 py-2 prose prose-sm max-w-none text-paper",
-            mode === "expanded" ? "max-h-96 overflow-auto" : "max-h-48 overflow-hidden",
-          ].join(" ")}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+          className={
+            mode === "expanded"
+              ? "px-3 py-2 max-h-96 overflow-auto"
+              : "px-3 py-2 max-h-48 overflow-hidden"
+          }
+        >
+          <MarkdownContent html={html} />
+        </div>
       )}
     </div>
   );

@@ -7,24 +7,13 @@ import { TopBar } from "../components/TopBar";
 import { Button, IconButton, SearchField, Select, Text } from "../ds";
 import { t } from "../i18n";
 import { pfs } from "../lib/fs";
+import { formatNoteDate, frontmatterEndLine } from "../lib/text";
 import type { NoteListEntry } from "../state/notes";
 import { noteListAtom, pinnedNotesAtom } from "../state/notes";
 import { repoAtom } from "../state/repo";
 import { browserSearch, type SortOrder, useNoteSearch } from "../state/search";
 import { store } from "../state/store";
 import { weekStartAtom } from "../state/ui";
-
-const prettyCardDate = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-});
-
-function formatCardDate(date: Date | null): string | null {
-  if (!date) return null;
-  return prettyCardDate.format(date);
-}
 
 function useNotePreviews(entries: NoteListEntry[]) {
   const [previews, setPreviews] = useState<Map<string, string>>(new Map());
@@ -37,11 +26,7 @@ function useNotePreviews(entries: NoteListEntry[]) {
         entries.slice(0, 50).map(async (entry) => {
           const content = await pfs.readFile(entry.path, { encoding: "utf8" });
           const lines = content.split("\n");
-          let start = 0;
-          if (lines[0]?.startsWith("---")) {
-            const end = lines.indexOf("---", 1);
-            if (end > 0) start = end + 1;
-          }
+          const start = frontmatterEndLine(lines);
           const body = lines
             .slice(start)
             .filter((l: string) => l.trim().length > 0)
@@ -130,7 +115,7 @@ function PinnedSection({
             <NoteCard
               key={entry.path}
               title={entry.title}
-              date={formatCardDate(entry.date)}
+              date={formatNoteDate(entry.date)}
               preview={previews.get(entry.path) ?? ""}
               isPinned={true}
               isDraft={false}
@@ -298,7 +283,7 @@ export function BrowserView() {
                 <NoteCard
                   key={entry.path}
                   title={entry.title}
-                  date={formatCardDate(entry.date)}
+                  date={formatNoteDate(entry.date)}
                   preview={previews.get(entry.path) ?? ""}
                   isPinned={false}
                   isDraft={false}

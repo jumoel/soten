@@ -10,7 +10,6 @@ export type OverlayProps = {
 };
 
 export function Overlay({ open, onClose, title, children }: OverlayProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number | null>(null);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -50,7 +49,6 @@ export function Overlay({ open, onClose, title, children }: OverlayProps) {
       />
       {/* Panel */}
       <div
-        ref={panelRef}
         className="relative w-80 max-w-[85vw] bg-base border-l border-edge shadow-lg flex flex-col animate-slide-in-right"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
