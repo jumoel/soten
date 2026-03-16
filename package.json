@@ -19,10 +19,10 @@
   "dependencies": {
     "@isomorphic-git/lightning-fs": "^4.6.2",
     "@tailwindcss/vite": "^4.1.11",
-    "@tanstack/react-router": "^1.163.3",
+    "@tanstack/react-router": "^1.167.3",
     "@total-typescript/ts-reset": "^0.6.1",
     "buffer": "^6.0.3",
-    "isomorphic-git": "^1.32.2",
+    "isomorphic-git": "^1.37.4",
     "jotai": "^2.12.5",
     "lucide-react": "^0.577.0",
     "minisearch": "^7.2.0",
