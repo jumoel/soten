@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const DIR = "/Users/julian.ellehauge/personal/test-repo";
+const DIR = process.env.TEST_REPO_DIR || "../test-repo";
 mkdirSync(DIR, { recursive: true });
 
 const START = 1772700000;

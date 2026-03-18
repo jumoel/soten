@@ -34,17 +34,22 @@ When starting the dev server from Claude Code, always use the Bash tool with `ru
 
 ## Quality Checks
 
-There is no test framework. Quality is enforced via:
-
 ```sh
-npm run lint    # ESLint
-npm run style   # Prettier (format check only, does not write)
-npm run types   # TypeScript type check (tsc --noEmit)
-npm run build   # Vite production build
+npm run lint      # Biome linter
+npm run style     # Biome formatter (check only, does not write)
+npm run types     # TypeScript type check (tsc --noEmit)
+npm run build     # Vite production build
+npm run test      # Vitest unit tests
+npm run test:e2e  # Playwright e2e tests (requires dev server running)
 ```
 
-All four checks run in CI on every push. **All checks must pass before committing or pushing.**
+All checks run in CI on every push. **All checks must pass before committing or pushing.**
 Run them locally before every commit.
+
+### Testing
+
+- **Unit tests** use Vitest with jsdom environment. Test files live next to their source or in standard test locations.
+- **E2e tests** use Playwright. Test files live in `e2e/`. They run against the dev server with `?localRepo=../test-repo`.
 
 ## Architecture
 
@@ -98,8 +103,8 @@ A `hashchange` listener drives navigation.
 
 ### Code Style
 
-- Prettier print width: **100 characters**
-- ESLint uses the flat config format (`eslint.config.mjs`)
+- Biome line width: **100 characters**
+- Biome handles both linting and formatting (config in `biome.json`)
 - Do not add unnecessary comments or JSDoc — the codebase is intentionally lean
 
 ### UI Design
