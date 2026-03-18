@@ -68,13 +68,14 @@ test.describe("Edit note", () => {
     await page.getByRole("button", { name: "New note" }).click();
     await expect(page.locator("#open-note-textarea")).toBeVisible({ timeout: 5_000 });
 
-    // Type some content
+    // Type some content and wait for autosave to flush (2s debounce + buffer)
     await page.locator("#open-note-textarea").fill("# Test Note\n\nHello world.");
+    await page.waitForTimeout(3_000);
 
-    // Click Save
+    // Click Save (publishes the draft)
     await page.getByRole("button", { name: "Save" }).click();
 
-    // The "Saving..." indicator should appear (publish in progress)
-    await expect(page.getByText("Saving")).toBeVisible({ timeout: 3_000 });
+    // After publish completes, edit mode exits — textarea disappears
+    await expect(page.locator("#open-note-textarea")).not.toBeVisible({ timeout: 10_000 });
   });
 });
