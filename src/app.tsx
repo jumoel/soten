@@ -3,15 +3,16 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { SotenLogo } from "./components/SotenLogo";
 import { TopBar } from "./components/TopBar";
-import { Alert, Button, Card, IconButton, Spinner, Stack, Text } from "./ds";
+import { Alert, Button, Card, Spinner, Stack, Text } from "./ds";
 import { t } from "./i18n";
 import { init } from "./lib/init";
 import { routeAtom } from "./lib/router";
 import { authErrorAtom, authStateAtom, login, logout, userAtom } from "./state/auth";
+import { editorSavingAtom } from "./state/editor";
 import { cachedReposAtom, cloneStatusAtom, repoAtom, selectRepo } from "./state/repo";
+import { syncStateAtom } from "./state/sync";
 import { calendarOpenAtom, themeAtom } from "./state/ui";
-import { BrowserView } from "./views/BrowserView";
-import { EditorView } from "./views/EditorView";
+import { CardColumnView } from "./views/CardColumnView";
 import { SettingsView } from "./views/SettingsView";
 
 function useTheme() {
@@ -102,6 +103,9 @@ function ErrorScreen() {
 
 function MainTopBar() {
   const repo = useAtomValue(repoAtom);
+  const syncing = useAtomValue(syncStateAtom) === "syncing";
+  const saving = useAtomValue(editorSavingAtom);
+  const showSyncSpinner = syncing || saving;
   const calendarPref = useAtomValue(calendarOpenAtom);
   const setCalendarPref = useSetAtom(calendarOpenAtom);
   const calendarOpen =
@@ -118,21 +122,27 @@ function MainTopBar() {
     <TopBar
       left={
         <div className="flex items-center gap-1.5">
-          <SotenLogo />
-          <Text variant="h3" as="span" className="text-sm">
-            {repo ? `${repo.owner}/${repo.repo}` : t("app.name")}
-          </Text>
+          <a href="#/" className="flex items-center gap-1.5 hover:opacity-80">
+            <SotenLogo />
+            <Text variant="h3" as="span" className="text-sm">
+              {repo ? `${repo.owner}/${repo.repo}` : t("app.name")}
+            </Text>
+          </a>
+          {showSyncSpinner && <Spinner size="sm" label={t("editor.saving")} />}
         </div>
       }
       right={
-        <div className="flex items-center gap-1">
-          <IconButton
-            icon="calendar"
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            active={calendarOpen}
             size="sm"
-            aria-label={t("calendar.toggle")}
+            icon="calendar"
             onClick={() => setCalendarPref(!calendarOpen)}
-            className={calendarOpen ? "text-accent" : ""}
-          />
+            aria-label={t("calendar.toggle")}
+          >
+            {t("calendar.toggle")}
+          </Button>
           <Button
             variant="primary"
             size="sm"
@@ -142,14 +152,17 @@ function MainTopBar() {
           >
             {t("note.new")}
           </Button>
-          <IconButton
-            icon="settings"
+          <Button
+            variant="ghost"
             size="sm"
-            aria-label={t("menu.settings")}
+            icon="settings"
             onClick={() => {
               window.location.hash = "#/settings";
             }}
-          />
+            aria-label={t("menu.settings")}
+          >
+            {t("menu.settings")}
+          </Button>
         </div>
       }
     />
@@ -164,12 +177,8 @@ function AuthenticatedApp() {
     case "settings":
       content = <SettingsView />;
       break;
-    case "note":
-    case "draft":
-      content = <EditorView route={route} />;
-      break;
     default:
-      content = <BrowserView />;
+      content = <CardColumnView />;
   }
 
   return (

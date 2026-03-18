@@ -121,6 +121,21 @@ class RepoWorkerClient {
     return this.call({ type: "domainClone", url, user }) as Promise<DomainResult>;
   }
 
+  deleteNote(
+    filepath: string,
+    message: string,
+    user: { username: string; token: string },
+    isOnline: boolean,
+  ): Promise<DomainResult> {
+    return this.call({
+      type: "deleteNote",
+      filepath,
+      message,
+      user,
+      isOnline,
+    }) as Promise<DomainResult>;
+  }
+
   getState(): Promise<RepoState> {
     return this.call({ type: "getState" }) as Promise<RepoState>;
   }

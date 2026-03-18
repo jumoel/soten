@@ -11,11 +11,11 @@ export type IconButtonProps = {
 };
 
 const baseClasses =
-  "inline-flex items-center justify-center rounded-md border border-edge text-paper-dim hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+  "inline-flex items-center justify-center rounded-lg border border-edge text-paper hover:bg-surface-2 active:bg-surface-2 transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 const sizeClasses: Record<"sm" | "md", string> = {
-  md: "min-h-[32px] min-w-[32px] p-1.5",
-  sm: "min-h-[28px] min-w-[28px] p-1 text-sm",
+  md: "min-h-11 min-w-11 p-2",
+  sm: "min-h-9 min-w-9 p-1.5",
 };
 
 const disabledClasses = "text-muted pointer-events-none cursor-default";

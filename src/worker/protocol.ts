@@ -69,6 +69,14 @@ export type WorkerRequest =
       url: string;
       user: GitUser;
     }
+  | {
+      id: number;
+      type: "deleteNote";
+      filepath: string;
+      message: string;
+      user: { username: string; token: string };
+      isOnline: boolean;
+    }
   | { id: number; type: "getState" };
 
 export type WorkerResponse =

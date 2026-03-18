@@ -8,8 +8,8 @@ export type BadgeProps = {
 };
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-surface-2 text-paper-dim border border-edge",
-  accent: "bg-accent/10 text-accent border border-accent/20",
+  default: "bg-surface-2 text-paper border border-edge",
+  accent: "bg-accent text-white dark:text-black border border-accent-hover",
   warning: "bg-warning-surface text-warning-text border border-warning-edge",
   error: "bg-error-surface text-error-text border border-error-edge",
 };

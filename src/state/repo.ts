@@ -80,6 +80,10 @@ export async function applyRepoState(state: RepoState): Promise<void> {
     state.drafts.map((d) => d.timestamp),
   );
   store.set(conflictsAtom, state.conflicts);
+
+  // Build backlinks index
+  const { buildBacklinksIndex } = await import("./backlinks");
+  await buildBacklinksIndex(state.filenames);
 }
 
 export function resetRepo(): void {

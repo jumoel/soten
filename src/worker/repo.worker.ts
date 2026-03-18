@@ -478,6 +478,43 @@ async function discardDraftHandler(
   return { state: await gatherState(), syncStatus };
 }
 
+async function deleteNoteHandler(
+  filepath: string,
+  message: string,
+  user: { username: string; token: string },
+  isOnline: boolean,
+): Promise<DomainResult> {
+  const { git } = await getGit();
+
+  // Remove the file and commit on main
+  try {
+    await pfs.unlink(`${REPO_DIR}/${filepath}`);
+  } catch {
+    // File may already be gone
+  }
+
+  await git.remove({ fs, dir: REPO_DIR, filepath });
+  await git.commit({
+    fs,
+    dir: REPO_DIR,
+    message,
+    author: { name: "soten", email: "soten@local" },
+  });
+
+  // Push if online
+  let syncStatus: SyncStatus = "local-only";
+  if (isOnline) {
+    try {
+      await push(user, "main");
+      syncStatus = "synced";
+    } catch {
+      // Push failed, stays local
+    }
+  }
+
+  return { state: await gatherState(), syncStatus };
+}
+
 async function syncHandler(
   user: { username: string; token: string },
   draftTimestamps: string[],
@@ -649,6 +686,9 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
             break;
           case "discardDraft":
             result = await discardDraftHandler(msg.timestamp, msg.user, msg.isOnline);
+            break;
+          case "deleteNote":
+            result = await deleteNoteHandler(msg.filepath, msg.message, msg.user, msg.isOnline);
             break;
           case "sync":
             result = await syncHandler(msg.user, msg.draftTimestamps);

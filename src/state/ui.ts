@@ -1,4 +1,3 @@
-import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
 export type Theme = "light" | "dark" | "system";
@@ -13,13 +12,3 @@ export const weekStartAtom = atomWithStorage<WeekStart>("weekStart", 1, undefine
 export const calendarOpenAtom = atomWithStorage<boolean | null>("calendarOpen", null, undefined, {
   getOnInit: true,
 });
-
-// ---------------------------------------------------------------------------
-// Reference stack (editor right column)
-// ---------------------------------------------------------------------------
-
-export type ReferenceMode = "collapsed" | "excerpt" | "expanded";
-export type ReferenceEntry = { path: string; mode: ReferenceMode };
-
-/** Stack of notes pinned for reference while editing. Clears on note switch. */
-export const referenceStackAtom = atom<ReferenceEntry[]>([]);

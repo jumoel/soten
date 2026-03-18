@@ -5,9 +5,20 @@ const prettyDate = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
+const prettyDateTime = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "UTC",
+});
+
 export function formatNoteDate(date: Date | null): string | null {
   if (!date) return null;
-  return prettyDate.format(date);
+  const hasTime =
+    date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0 || date.getUTCSeconds() !== 0;
+  return hasTime ? prettyDateTime.format(date) : prettyDate.format(date);
 }
 
 /**

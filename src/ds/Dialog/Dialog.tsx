@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Icon } from "../Icon/Icon";
 import { Text } from "../Text/Text";
 
@@ -19,6 +19,7 @@ export function Dialog({
   children,
 }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -35,6 +36,8 @@ export function Dialog({
     <dialog
       ref={dialogRef}
       className="bg-surface rounded-lg border border-edge shadow-lg max-w-md w-full mx-auto p-0 backdrop:bg-black/50"
+      aria-labelledby={title ? titleId : undefined}
+      aria-modal="true"
       onClick={(e) => {
         if (e.target === dialogRef.current) {
           onClose();
@@ -49,14 +52,16 @@ export function Dialog({
     >
       {title && (
         <div className="flex items-center justify-between px-6 py-4 border-b border-edge">
-          <Text variant="h3">{title}</Text>
+          <Text variant="h3" id={titleId}>
+            {title}
+          </Text>
           <button
             type="button"
             onClick={onClose}
-            className="text-paper-dim hover:bg-surface-2 rounded-md p-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="text-paper hover:bg-surface-2 rounded-lg min-h-9 min-w-9 inline-flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             aria-label={closeLabel}
           >
-            <Icon name="close" size="4" />
+            <Icon name="close" size="5" />
           </button>
         </div>
       )}

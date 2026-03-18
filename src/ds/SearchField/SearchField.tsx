@@ -29,7 +29,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
   const inputId = id ?? generatedId;
 
   const inputClasses = [
-    "w-full rounded-md border border-edge-2 bg-surface py-1.5 pl-8 pr-8 text-sm text-paper placeholder:text-muted focus:border-transparent focus:outline-2 focus:outline-accent",
+    "w-full rounded-lg border border-edge-2 bg-surface min-h-11 py-2 pl-10 pr-10 text-sm text-paper placeholder:text-muted focus:border-transparent focus:outline-2 focus:outline-accent",
     className,
   ]
     .filter(Boolean)
@@ -45,10 +45,10 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
       </label>
       <div className="relative">
         <span
-          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-paper-dim"
           aria-hidden="true"
         >
-          <Icon name="search" size="4" />
+          <Icon name="search" size="5" />
         </span>
         <input
           ref={ref}
@@ -64,7 +64,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
             type="button"
             onClick={() => onChange("")}
             aria-label={clearLabel}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="absolute right-1 top-1/2 -translate-y-1/2 rounded-lg min-h-9 min-w-9 inline-flex items-center justify-center text-paper-dim hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <Icon name="close" size="4" />
           </button>

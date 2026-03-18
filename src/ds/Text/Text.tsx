@@ -27,7 +27,7 @@ const variantClass: Record<TextVariant, string> = {
   h4: "text-base font-medium leading-tight text-paper",
   body: "text-base font-normal leading-tight text-paper",
   "body-dim": "text-base font-normal leading-tight text-paper-dim",
-  meta: "text-sm font-semibold uppercase tracking-widest leading-none text-muted",
+  meta: "text-sm font-semibold uppercase tracking-widest leading-none text-paper-dim",
   label: "text-base font-medium leading-tight text-paper",
 };
 

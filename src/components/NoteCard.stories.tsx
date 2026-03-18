@@ -15,7 +15,7 @@ export const Default: Story = {
       <NoteCard
         title="March 10, 2025"
         date="Mar 10, 2025"
-        preview="Started working on the new design system today. Need to finalize color tokens."
+        previewHtml="Started working on the new design system today. Need to finalize color tokens."
         isPinned={false}
         isDraft={false}
         onPin={() => {}}
@@ -31,7 +31,7 @@ export const Pinned: Story = {
       <NoteCard
         title="Project Ideas"
         date="Feb 28, 2025"
-        preview="Collection of project ideas for Q2 planning."
+        previewHtml="Collection of project ideas for Q2 planning."
         isPinned={true}
         isDraft={false}
         onPin={() => {}}
@@ -47,7 +47,7 @@ export const Draft: Story = {
       <NoteCard
         title="10:30 AM"
         date="Mar 11, 2025"
-        preview="Work in progress..."
+        previewHtml="Work in progress..."
         isPinned={false}
         isDraft={true}
         onPin={() => {}}
@@ -63,7 +63,7 @@ export const PinnedDraft: Story = {
       <NoteCard
         title="Meeting Notes"
         date="Mar 9, 2025"
-        preview="Weekly standup with the team. Action items: follow up on deployment."
+        previewHtml="Weekly standup with the team. Action items: follow up on deployment."
         isPinned={true}
         isDraft={true}
         onPin={() => {}}
@@ -79,7 +79,7 @@ export const LongPreview: Story = {
       <NoteCard
         title="Research Notes"
         date={null}
-        preview="This is a much longer preview text that should be truncated after two lines. It contains a lot of information about the research topic including background context and preliminary findings."
+        previewHtml="This is a much longer preview text that should be truncated after two lines. It contains a lot of information about the research topic including background context and preliminary findings."
         isPinned={false}
         isDraft={false}
         onPin={() => {}}

@@ -2,9 +2,24 @@ import { atom } from "jotai";
 import { store } from "../state/store";
 
 export type Route =
-  | { view: "home"; query?: string }
-  | { view: "note"; path: string; draft?: string }
-  | { view: "draft"; timestamp: string }
+  | { view: "home"; query?: string; calFrom?: string; calTo?: string; calMonth?: string }
+  | {
+      view: "note";
+      path: string;
+      draft?: string;
+      query?: string;
+      calFrom?: string;
+      calTo?: string;
+      calMonth?: string;
+    }
+  | {
+      view: "draft";
+      timestamp: string;
+      query?: string;
+      calFrom?: string;
+      calTo?: string;
+      calMonth?: string;
+    }
   | { view: "settings" };
 
 export function parseHash(hash: string): Route {
@@ -20,11 +35,14 @@ export function parseHash(hash: string): Route {
 
   const query = hashParams?.get("q") ?? searchParams.get("q") ?? undefined;
   const draft = hashParams?.get("draft") ?? searchParams.get("draft") ?? undefined;
+  const calFrom = hashParams?.get("from") ?? undefined;
+  const calTo = hashParams?.get("to") ?? undefined;
+  const calMonth = hashParams?.get("month") ?? undefined;
 
   if (clean === "/" || clean === "" || !clean) {
     // Standalone draft route: #/?draft=TIMESTAMP
-    if (draft) return { view: "draft", timestamp: draft };
-    return { view: "home", query };
+    if (draft) return { view: "draft", timestamp: draft, query, calFrom, calTo, calMonth };
+    return { view: "home", query, calFrom, calTo, calMonth };
   }
 
   if (clean === "/settings") {
@@ -32,7 +50,17 @@ export function parseHash(hash: string): Route {
   }
 
   const path = clean.startsWith("/") ? clean.slice(1) : clean;
-  return { view: "note", path, draft };
+  return { view: "note", path, draft, query, calFrom, calTo, calMonth };
+}
+
+export function buildHash(path?: string, params?: Record<string, string | undefined>): string {
+  const base = path ? `#/${path}` : "#/";
+  const entries = Object.entries(params ?? {}).filter(
+    (kv): kv is [string, string] => kv[1] !== undefined && kv[1] !== "",
+  );
+  if (entries.length === 0) return base;
+  const qs = new URLSearchParams(entries).toString();
+  return `${base}?${qs}`;
 }
 
 export const routeAtom = atom<Route>(parseHash(window.location.hash));

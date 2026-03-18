@@ -68,8 +68,6 @@ export function createSearchAtoms() {
 }
 
 export const browserSearch = createSearchAtoms();
-export const referenceSearch = createSearchAtoms();
-export const ultrawideBrowserSearch = createSearchAtoms();
 
 export function useNoteSearch(atoms: ReturnType<typeof createSearchAtoms>) {
   const query = useAtomValue(atoms.queryAtom);
