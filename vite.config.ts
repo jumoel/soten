@@ -222,18 +222,25 @@ export default defineConfig({
     format: "es",
   },
 
+  define: {
+    global: "globalThis",
+  },
+
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          "markdown-render": [
+        manualChunks: (id) => {
+          const markdownDeps = [
             "remark-parse",
             "remark-frontmatter",
             "remark-gfm",
             "remark-rehype",
             "rehype-raw",
             "rehype-stringify",
-          ],
+          ];
+          if (markdownDeps.some((dep) => id.includes(`node_modules/${dep}`))) {
+            return "markdown-render";
+          }
         },
       },
     },
