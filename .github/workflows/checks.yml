@@ -48,7 +48,7 @@ jobs:
         run: |
           mkdir -p ../test-repo
           cd ../test-repo
-          git init
+          git init -b main
           git config user.email "ci@test.local"
           git config user.name "CI"
           cd -
