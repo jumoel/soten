@@ -1,10 +1,17 @@
 export type GitUser = { username: string; token: string; email: string };
 
 export type SearchEntry = { path: string; title: string };
+export type SearchResult = { path: string; score: number };
+
+export type ConflictEntry = {
+  path: string;
+  remoteContent: string;
+};
 
 export type RepoState = {
   filenames: string[];
   drafts: Array<{ timestamp: string; content: string }>;
+  conflicts: ConflictEntry[];
 };
 
 export type SyncStatus = "synced" | "local-only";
@@ -32,7 +39,6 @@ export type WorkerRequest =
       timestamp: string;
       content: string;
       user: { username: string; token: string };
-      hasRemote: boolean;
       isOnline: boolean;
     }
   | {
@@ -42,7 +48,6 @@ export type WorkerRequest =
       content: string;
       message: string;
       user: { username: string; token: string };
-      hasRemote: boolean;
       isOnline: boolean;
     }
   | {
@@ -50,7 +55,6 @@ export type WorkerRequest =
       type: "discardDraft";
       timestamp: string;
       user: { username: string; token: string };
-      hasRemote: boolean;
       isOnline: boolean;
     }
   | {
@@ -64,6 +68,14 @@ export type WorkerRequest =
       type: "domainClone";
       url: string;
       user: GitUser;
+    }
+  | {
+      id: number;
+      type: "deleteNote";
+      filepath: string;
+      message: string;
+      user: { username: string; token: string };
+      isOnline: boolean;
     }
   | { id: number; type: "getState" };
 

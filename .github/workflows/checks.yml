@@ -26,14 +26,56 @@ jobs:
         run: |
           npm run ${{ matrix.tool }}
 
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create test repo
+        run: |
+          mkdir -p ../test-repo
+          cd ../test-repo
+          git init -b main
+          git config user.email "ci@test.local"
+          git config user.name "CI"
+          cd -
+          node scripts/create-test-notes.mjs
+          cd ../test-repo
+          git add -A
+          git commit -m "seed test notes"
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: test-results/
+          retention-days: 7
+
   static-checks:
     if: always()
-    needs: checks
+    needs: [checks, e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all checks passed
         run: |
-          if [ "${{ needs.checks.result }}" != "success" ]; then
-            echo "One or more checks failed: ${{ needs.checks.result }}"
+          if [ "${{ needs.checks.result }}" != "success" ] || [ "${{ needs.e2e.result }}" != "success" ]; then
+            echo "One or more checks failed: checks=${{ needs.checks.result }}, e2e=${{ needs.e2e.result }}"
             exit 1
           fi

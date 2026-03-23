@@ -63,8 +63,12 @@ async function buildProcessor() {
           if (match.index > lastIndex) {
             parts.push({ type: "text", value: n.value.slice(lastIndex, match.index) });
           }
+          const target = match[1];
           const label = match[2] ?? match[1];
-          parts.push({ type: "html", value: `<span data-wikilink>${label}</span>` });
+          parts.push({
+            type: "html",
+            value: `<a href="#/${target}.md" data-wikilink="${target}">${label}</a>`,
+          });
           lastIndex = re.lastIndex;
         }
 
@@ -85,7 +89,7 @@ async function buildProcessor() {
     ...defaultSchema,
     attributes: {
       ...defaultSchema.attributes,
-      span: [...(defaultSchema.attributes?.span ?? []), "data-wikilink"],
+      a: [...(defaultSchema.attributes?.a ?? []), "data-wikilink"],
     },
   };
 

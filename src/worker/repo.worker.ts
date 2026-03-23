@@ -5,6 +5,7 @@ import type {
   GitUser,
   RepoState,
   SearchEntry,
+  SearchResult,
   SyncStatus,
   WorkerRequest,
   WorkerResponse,
@@ -102,15 +103,6 @@ async function push(user: { username: string; token: string }, ref?: string): Pr
     onMessage: (msg) => console.debug("push onMessage", msg),
     onProgress: (prog) => console.debug("push onProgress", prog),
   });
-}
-
-async function isInitialized(): Promise<boolean> {
-  try {
-    const files = await pfs.readdir(REPO_DIR);
-    return files.includes(".git");
-  } catch {
-    return false;
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -227,10 +219,70 @@ async function listDraftBranches(): Promise<Array<{ timestamp: string; content: 
 // gatherState
 // ---------------------------------------------------------------------------
 
+// Module-level conflict state (persists across calls, cleared on successful pull)
+let detectedConflicts: Array<{ path: string; remoteContent: string }> = [];
+
+async function detectConflicts(user: {
+  username: string;
+  token: string;
+}): Promise<Array<{ path: string; remoteContent: string }>> {
+  const { git, http } = await getGit();
+  try {
+    // Fetch without merging to get remote state
+    await git.fetch({
+      fs,
+      http,
+      dir: REPO_DIR,
+      corsProxy,
+      singleBranch: true,
+      onAuth: () => ({ username: user.username, password: user.token }),
+    });
+
+    const localOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: "main" });
+    let remoteOid: string;
+    try {
+      remoteOid = await git.resolveRef({ fs, dir: REPO_DIR, ref: "refs/remotes/origin/main" });
+    } catch {
+      return []; // No remote tracking branch
+    }
+
+    if (localOid === remoteOid) return [];
+
+    const { commit: localCommit } = await git.readCommit({ fs, dir: REPO_DIR, oid: localOid });
+    const { commit: remoteCommit } = await git.readCommit({ fs, dir: REPO_DIR, oid: remoteOid });
+    const { tree: localEntries } = await git.readTree({ fs, dir: REPO_DIR, oid: localCommit.tree });
+    const { tree: remoteEntries } = await git.readTree({
+      fs,
+      dir: REPO_DIR,
+      oid: remoteCommit.tree,
+    });
+
+    const localMap = new Map(localEntries.map((e) => [e.path, e.oid]));
+    const remoteMap = new Map(remoteEntries.map((e) => [e.path, e.oid]));
+
+    const conflicts: Array<{ path: string; remoteContent: string }> = [];
+    for (const [path, remoteOidVal] of remoteMap) {
+      const localOidVal = localMap.get(path);
+      // File exists in both but differs
+      if (localOidVal && localOidVal !== remoteOidVal) {
+        try {
+          const { blob } = await git.readBlob({ fs, dir: REPO_DIR, oid: remoteOidVal });
+          conflicts.push({ path, remoteContent: new TextDecoder().decode(blob) });
+        } catch {
+          // Skip unreadable blobs
+        }
+      }
+    }
+    return conflicts;
+  } catch {
+    return [];
+  }
+}
+
 async function gatherState(opts?: { skipFilenames?: boolean }): Promise<RepoState> {
   const filenames = opts?.skipFilenames ? [] : await readRepoFiles();
   const drafts = await listDraftBranches();
-  return { filenames, drafts };
+  return { filenames, drafts, conflicts: detectedConflicts };
 }
 
 // ---------------------------------------------------------------------------
@@ -241,7 +293,6 @@ async function autosaveDraftHandler(
   timestamp: string,
   content: string,
   user: { username: string; token: string },
-  hasRemote: boolean,
   isOnline: boolean,
 ): Promise<DomainResult> {
   const { git } = await getGit();
@@ -280,7 +331,7 @@ async function autosaveDraftHandler(
   });
 
   let syncStatus: SyncStatus = "local-only";
-  if (hasRemote && isOnline) {
+  if (isOnline) {
     try {
       await push(user, branch);
       syncStatus = "synced";
@@ -297,7 +348,6 @@ async function publishDraftHandler(
   content: string,
   message: string,
   user: { username: string; token: string },
-  hasRemote: boolean,
   isOnline: boolean,
 ): Promise<DomainResult> {
   const { git } = await getGit();
@@ -364,7 +414,7 @@ async function publishDraftHandler(
 
   // Push main + push branch deletion if online
   let syncStatus: SyncStatus = "local-only";
-  if (hasRemote && isOnline) {
+  if (isOnline) {
     let allPushed = true;
     try {
       await push(user, "main");
@@ -385,7 +435,6 @@ async function publishDraftHandler(
 async function discardDraftHandler(
   timestamp: string,
   user: { username: string; token: string },
-  hasRemote: boolean,
   isOnline: boolean,
 ): Promise<DomainResult> {
   const filepath = `${timestamp}.md`;
@@ -417,12 +466,49 @@ async function discardDraftHandler(
 
   // Push branch deletion if online
   let syncStatus: SyncStatus = "local-only";
-  if (hasRemote && isOnline) {
+  if (isOnline) {
     try {
       await push(user, `:refs/heads/${branch}`);
       syncStatus = "synced";
     } catch {
       // Remote branch may not exist
+    }
+  }
+
+  return { state: await gatherState(), syncStatus };
+}
+
+async function deleteNoteHandler(
+  filepath: string,
+  message: string,
+  user: { username: string; token: string },
+  isOnline: boolean,
+): Promise<DomainResult> {
+  const { git } = await getGit();
+
+  // Remove the file and commit on main
+  try {
+    await pfs.unlink(`${REPO_DIR}/${filepath}`);
+  } catch {
+    // File may already be gone
+  }
+
+  await git.remove({ fs, dir: REPO_DIR, filepath });
+  await git.commit({
+    fs,
+    dir: REPO_DIR,
+    message,
+    author: { name: "soten", email: "soten@local" },
+  });
+
+  // Push if online
+  let syncStatus: SyncStatus = "local-only";
+  if (isOnline) {
+    try {
+      await push(user, "main");
+      syncStatus = "synced";
+    } catch {
+      // Push failed, stays local
     }
   }
 
@@ -451,27 +537,35 @@ async function syncHandler(
     allPushed = false;
   }
 
-  // Pull (non-fatal)
+  // Pull (non-fatal). If it fails (non-fast-forward), detect conflicts.
   try {
     await pull(user);
+    detectedConflicts = []; // Successful pull clears conflicts
   } catch {
     allPushed = false;
+    detectedConflicts = await detectConflicts(user);
   }
 
   const syncStatus: SyncStatus = allPushed ? "synced" : "local-only";
   return { state: await gatherState(), syncStatus };
 }
 
+/** Tracks whether we've ever successfully cloned in this worker session. */
+let repoReady = false;
+
 async function domainCloneHandler(url: string, user: GitUser): Promise<DomainResult> {
-  if (await isInitialized()) {
+  if (repoReady) {
+    // Warm path: repo already exists in IDB from a previous clone in this session.
     try {
       await pull(user);
     } catch {
-      await fs.promises.init(FILE_SYSTEM_NAME, { wipe: true });
       await clone(url, user);
     }
   } else {
+    // Cold path: skip the expensive IDB probe and clone directly.
+    // clone() calls fs.promises.init({ wipe: true }) which handles any stale state.
     await clone(url, user);
+    repoReady = true;
   }
 
   return { state: await gatherState(), syncStatus: "synced" };
@@ -538,11 +632,11 @@ async function updateSearchIndex(
   }
 }
 
-function search(query: string): string[] {
+function search(query: string): SearchResult[] {
   if (!searchIndex) return [];
   return searchIndex
     .search(query, { prefix: true, fuzzy: 0.2, boost: { title: 2 } })
-    .map((r) => r.id);
+    .map((r) => ({ path: r.id, score: r.score }));
 }
 
 function clearSearchIndex(): void {
@@ -579,13 +673,7 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
             corsProxy = msg.value;
             break;
           case "autosaveDraft":
-            result = await autosaveDraftHandler(
-              msg.timestamp,
-              msg.content,
-              msg.user,
-              msg.hasRemote,
-              msg.isOnline,
-            );
+            result = await autosaveDraftHandler(msg.timestamp, msg.content, msg.user, msg.isOnline);
             break;
           case "publishDraft":
             result = await publishDraftHandler(
@@ -593,17 +681,14 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
               msg.content,
               msg.message,
               msg.user,
-              msg.hasRemote,
               msg.isOnline,
             );
             break;
           case "discardDraft":
-            result = await discardDraftHandler(
-              msg.timestamp,
-              msg.user,
-              msg.hasRemote,
-              msg.isOnline,
-            );
+            result = await discardDraftHandler(msg.timestamp, msg.user, msg.isOnline);
+            break;
+          case "deleteNote":
+            result = await deleteNoteHandler(msg.filepath, msg.message, msg.user, msg.isOnline);
             break;
           case "sync":
             result = await syncHandler(msg.user, msg.draftTimestamps);

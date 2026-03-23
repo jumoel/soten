@@ -5,7 +5,8 @@
   "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "node scripts/dev.js",
+    "dev:vite": "vite dev",
     "dev:proxy": "wrangler pages dev",
     "build": "vite build",
     "preview": "vite preview",
@@ -14,12 +15,12 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "types": "tsc --noEmit"
   },
   "dependencies": {
     "@isomorphic-git/lightning-fs": "^4.6.2",
     "@tailwindcss/vite": "^4.1.11",
-    "@tanstack/react-router": "^1.163.3",
     "@total-typescript/ts-reset": "^0.6.1",
     "buffer": "^6.0.3",
     "isomorphic-git": "^1.32.2",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
+    "@playwright/test": "^1.58.2",
     "@storybook/react-vite": "^10.2.16",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^25.4.0",

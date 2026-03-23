@@ -1,4 +1,11 @@
-import type { DomainResult, GitUser, RepoState, SearchEntry, WorkerResponse } from "./protocol";
+import type {
+  DomainResult,
+  GitUser,
+  RepoState,
+  SearchEntry,
+  SearchResult,
+  WorkerResponse,
+} from "./protocol";
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void };
 
@@ -46,8 +53,8 @@ class RepoWorkerClient {
     }) as Promise<void>;
   }
 
-  search(query: string): Promise<string[]> {
-    return this.call({ type: "search", query }) as Promise<string[]>;
+  search(query: string): Promise<SearchResult[]> {
+    return this.call({ type: "search", query }) as Promise<SearchResult[]>;
   }
 
   clearSearchIndex(): Promise<void> {
@@ -62,7 +69,6 @@ class RepoWorkerClient {
     timestamp: string,
     content: string,
     user: { username: string; token: string },
-    hasRemote: boolean,
     isOnline: boolean,
   ): Promise<DomainResult> {
     return this.call({
@@ -70,7 +76,6 @@ class RepoWorkerClient {
       timestamp,
       content,
       user,
-      hasRemote,
       isOnline,
     }) as Promise<DomainResult>;
   }
@@ -80,7 +85,6 @@ class RepoWorkerClient {
     content: string,
     message: string,
     user: { username: string; token: string },
-    hasRemote: boolean,
     isOnline: boolean,
   ): Promise<DomainResult> {
     return this.call({
@@ -89,7 +93,6 @@ class RepoWorkerClient {
       content,
       message,
       user,
-      hasRemote,
       isOnline,
     }) as Promise<DomainResult>;
   }
@@ -97,14 +100,12 @@ class RepoWorkerClient {
   discardDraft(
     timestamp: string,
     user: { username: string; token: string },
-    hasRemote: boolean,
     isOnline: boolean,
   ): Promise<DomainResult> {
     return this.call({
       type: "discardDraft",
       timestamp,
       user,
-      hasRemote,
       isOnline,
     }) as Promise<DomainResult>;
   }
@@ -118,6 +119,21 @@ class RepoWorkerClient {
 
   domainClone(url: string, user: GitUser): Promise<DomainResult> {
     return this.call({ type: "domainClone", url, user }) as Promise<DomainResult>;
+  }
+
+  deleteNote(
+    filepath: string,
+    message: string,
+    user: { username: string; token: string },
+    isOnline: boolean,
+  ): Promise<DomainResult> {
+    return this.call({
+      type: "deleteNote",
+      filepath,
+      message,
+      user,
+      isOnline,
+    }) as Promise<DomainResult>;
   }
 
   getState(): Promise<RepoState> {

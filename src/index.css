@@ -6,6 +6,7 @@
 
 @theme {
   --animate-fade-in: fade-in 0.3s ease-out backwards;
+  --animate-slide-in-right: slide-in-right 0.2s ease-out backwards;
 
   /* Light theme — Warm Ink */
 
@@ -129,5 +130,14 @@ html.dark {
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
   }
 }
