@@ -46,11 +46,11 @@
     }
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.6",
-    "@playwright/test": "^1.58.2",
-    "@storybook/react-vite": "^10.2.16",
+    "@biomejs/biome": "^2.4.10",
+    "@playwright/test": "^1.59.1",
+    "@storybook/react-vite": "^10.3.4",
     "@tailwindcss/typography": "^0.5.19",
-    "@types/node": "^25.4.0",
+    "@types/node": "^25.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.1",
@@ -60,9 +60,9 @@
     "storybook": "^10.2.16",
     "tailwindcss": "^4.1.11",
     "typescript": "^5",
-    "vite": "^8.0.2",
+    "vite": "^8.0.5",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.0.18",
-    "wrangler": "^4.59.1"
+    "vitest": "^4.1.2",
+    "wrangler": "^4.80.0"
   }
 }
